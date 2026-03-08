@@ -1,0 +1,138 @@
+Group {
+  Anchor: (Left: 0, Top: 0, Width: 1920, Height: 1080);
+
+  Panel #Card {
+    Anchor: (Left: 40, Top: 120, Width: 520, Height: 560);
+    Background: #162235(0.92);
+  }
+
+  Panel #Header {
+    Anchor: (Left: 40, Top: 120, Width: 520, Height: 74);
+    Background: #253955(0.95);
+  }
+
+  Label #TitleLabel {
+    Anchor: (Left: 64, Top: 140, Width: 360, Height: 30);
+    Text: "Horda PVE - Estado";
+    Style: (FontSize: 24, TextColor: #f3f7ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #StateLabel {
+    Anchor: (Left: 64, Top: 214, Width: 220, Height: 28);
+    Text: "Estado";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #StateValue {
+    Anchor: (Left: 300, Top: 214, Width: 230, Height: 28);
+    Text: "-";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #WorldLabel {
+    Anchor: (Left: 64, Top: 252, Width: 220, Height: 28);
+    Text: "Mundo";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #WorldValue {
+    Anchor: (Left: 300, Top: 252, Width: 230, Height: 28);
+    Text: "-";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #RoundLabel {
+    Anchor: (Left: 64, Top: 290, Width: 220, Height: 28);
+    Text: "Ronda";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #RoundValue {
+    Anchor: (Left: 300, Top: 290, Width: 230, Height: 28);
+    Text: "0/0";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #AliveLabel {
+    Anchor: (Left: 64, Top: 328, Width: 220, Height: 28);
+    Text: "Enemigos vivos";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #AliveValue {
+    Anchor: (Left: 300, Top: 328, Width: 230, Height: 28);
+    Text: "0";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #SpawnedLabel {
+    Anchor: (Left: 64, Top: 366, Width: 220, Height: 28);
+    Text: "Spawn total";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #SpawnedValue {
+    Anchor: (Left: 300, Top: 366, Width: 230, Height: 28);
+    Text: "0";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #KillsLabel {
+    Anchor: (Left: 64, Top: 404, Width: 220, Height: 28);
+    Text: "Kills detectadas";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #KillsValue {
+    Anchor: (Left: 300, Top: 404, Width: 230, Height: 28);
+    Text: "0";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #ElapsedLabel {
+    Anchor: (Left: 64, Top: 442, Width: 220, Height: 28);
+    Text: "Tiempo total";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #ElapsedValue {
+    Anchor: (Left: 300, Top: 442, Width: 230, Height: 28);
+    Text: "00m 00s";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #NextRoundLabel {
+    Anchor: (Left: 64, Top: 480, Width: 220, Height: 28);
+    Text: "Siguiente ronda";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #NextRoundValue {
+    Anchor: (Left: 300, Top: 480, Width: 230, Height: 28);
+    Text: "-";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  Label #RoleLabel {
+    Anchor: (Left: 64, Top: 518, Width: 220, Height: 28);
+    Text: "Rol NPC";
+    Style: (FontSize: 16, TextColor: #bcd0ea, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #RoleValue {
+    Anchor: (Left: 300, Top: 518, Width: 230, Height: 28);
+    Text: "auto";
+    Style: (FontSize: 16, TextColor: #ffffff, VerticalAlignment: Center);
+  }
+
+  TextButton #CloseButton {
+    Anchor: (Left: 378, Top: 616, Width: 156, Height: 44);
+    Text: "Cerrar";
+    Style: TextButtonStyle(
+      Default: (Background: #2d4565, LabelStyle: (FontSize: 15, TextColor: #f3f7ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #3b5f8d, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #233751, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+}
+

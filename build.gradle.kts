@@ -6,20 +6,20 @@ plugins {
     java
 }
 
-group = (findProperty("maven_group") as String? ?: "com.example.hytale.template")
-version = (findProperty("version") as String? ?: "0.1.0")
+group = (findProperty("maven_group") as String? ?: "com.hyhorde.arenapve")
+version = (findProperty("version") as String? ?: "1.0.1")
 
 val javaVersion = (findProperty("java_version") as String? ?: "25").toInt()
 val patchline = (findProperty("patchline") as String? ?: "release")
 val includesPack = (findProperty("includes_pack") as String? ?: "false").toBoolean()
 val skipHytaleChecks = (findProperty("skip_hytale_checks") as String? ?: "false").toBoolean()
 
-val modGroup = (findProperty("mod_group") as String? ?: "Example")
-val modName = (findProperty("mod_name") as String? ?: "HyTemplate")
-val modDescription = (findProperty("mod_description") as String? ?: "Plantilla base para mods de Hytale.")
-val modAuthor = (findProperty("mod_author") as String? ?: "YourName")
-val modWebsite = (findProperty("mod_website") as String? ?: "https://github.com/your-user/hy-template")
-val modMainClass = (findProperty("mod_main_class") as String? ?: "com.example.hytale.template.HyTemplatePlugin")
+val modGroup = (findProperty("mod_group") as String? ?: "HyHorde")
+val modName = (findProperty("mod_name") as String? ?: "ArenaPVE")
+val modDescription = (findProperty("mod_description") as String? ?: "Sistema de hordas PVE para Hytale.")
+val modAuthor = (findProperty("mod_author") as String? ?: "Jaime")
+val modWebsite = (findProperty("mod_website") as String? ?: "https://github.com/Jaime/HyHorde-Arena-PVE")
+val modMainClass = (findProperty("mod_main_class") as String? ?: "com.hyhorde.arenapve.HyHordeArenaPvePlugin")
 
 val configuredHytaleHome = findProperty("hytale_home") as String?
 val configuredServerJarPath = findProperty("hytale_server_jar") as String?

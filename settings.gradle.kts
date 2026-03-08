@@ -1,1 +1,1 @@
-rootProject.name = "Hy-Template"
+rootProject.name = "HyHorde-Arena-PVE"

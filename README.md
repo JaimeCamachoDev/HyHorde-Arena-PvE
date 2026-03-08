@@ -1,124 +1,85 @@
-# Hytale Mod Template
+# HyHorde Arena PVE
 
-Template base para crear mods de Hytale en Java con un comando unico: `/hola`.
+Mod de Hytale centrado en un sistema de hordas PVE configurable, con interfaz dentro del juego, panel de estado en vivo y recompensas por rondas.
 
-## Estructura
+## Caracteristicas
 
-- Entrada del plugin: `src/main/java/com/example/hytale/template/HyTemplatePlugin.java`
-- Comando ejemplo: `src/main/java/com/example/hytale/template/HolaCommand.java`
-- Manifest para carga desde carpeta: `src/main/resources/manifest.json`
-- Manifest template para build: `src/main/resources/manifest.template.json`
-- Parametros iniciales: `gradle.properties`
+- Sistema de rondas con escalado de enemigos.
+- Spawn radial alrededor de un centro configurable.
+- Seleccion manual o automatica del rol NPC.
+- Configuracion desde UI (`HordeConfigPage`) y estado en vivo (`HordeStatusPage`).
+- Recompensas por rondas mediante comandos configurables.
+- Recarga de configuracion en caliente (`/hordareload config`).
 
-## Paso 1: Crear tu repo en GitHub
+## Estructura principal
 
-1. En GitHub, pulsa `Use this template` sobre este repositorio.
-2. Crea tu nuevo repo (publico o privado).
-3. Clona tu repo nuevo:
+- Plugin principal: `src/main/java/com/hyhorde/arenapve/HyHordeArenaPvePlugin.java`
+- Servicio de hordas: `src/main/java/com/hyhorde/arenapve/horde/HordeService.java`
+- Comandos: `src/main/java/com/hyhorde/arenapve/commands/`
+- UI: `src/main/resources/Common/UI/Custom/Pages/`
+- Manifest estatico: `src/main/resources/manifest.json`
+- Manifest para build: `src/main/resources/manifest.template.json`
+- Parametros del mod: `gradle.properties`
 
-```powershell
-git clone https://github.com/<tu-usuario>/<tu-repo>.git
-cd <tu-repo>
-```
+## Comandos del mod
 
-## Paso 2: Configurar parametros iniciales limpios
+- `/hordapve` abre la UI de configuracion.
+- `/hordapve start|stop|status`
+- `/hordapve hud` abre panel de estado.
+- `/hordapve setspawn` guarda tu posicion como centro.
+- `/hordapve role <rol|auto>`
+- `/hordapve roles` lista roles disponibles.
+- `/hordapve reward <rondas>` define frecuencia de recompensas.
+- `/hordareload config` recarga `horde-config.json`.
+- `/hordareload mod` intenta recargar el plugin completo.
+- `/horda` genera una horda rapida alrededor del jugador.
+- `/holi` comando de prueba simple.
+- `/cerrar` apaga el servidor.
 
-Edita `gradle.properties` y cambia como minimo:
+## Configuracion
 
-- `version`: version inicial de tu mod (ejemplo `0.1.0`)
-- `maven_group`: package base (ejemplo `com.tuusuario.tumod`)
-- `mod_group`: grupo visible en manifest
-- `mod_name`: nombre del mod
-- `mod_description`: descripcion corta
-- `mod_author`: autor
-- `mod_website`: URL de GitHub del repo
-- `mod_main_class`: clase principal completa (FQCN)
-- `patchline`: `release` o `pre-release`
+`HordeService` guarda su configuracion en `horde-config.json` dentro del directorio de datos del plugin. Valores clave:
 
-Nota: el JAR usa `manifest.template.json` (con placeholders) y lo resuelve en build.
-Si cargas el mod como carpeta, se usa `manifest.json` (valores estaticos validos).
+- `rounds`
+- `baseEnemiesPerRound`
+- `enemiesPerRoundIncrement`
+- `waveDelaySeconds`
+- `minSpawnRadius` / `maxSpawnRadius`
+- `npcRole`
+- `rewardEveryRounds`
+- `rewardCommands`
 
-Si usas una instalacion custom de Hytale:
+## Build
 
-- Descomenta `hytale_home=...`
-  o
-- Descomenta `hytale_server_jar=...`
-
-## Paso 3: Ajustar package/clases (recomendado)
-
-Por defecto el template usa:
-
-- package: `com.example.hytale.template`
-- clase principal: `HyTemplatePlugin`
-
-Si cambias package o nombre de clase:
-
-1. Renombra los archivos en `src/main/java/...`
-2. Actualiza `mod_main_class` en `gradle.properties`
-
-## Paso 4: Compilar el JAR
-
-En Windows:
-
-```powershell
-.\gradlew.bat clean jar
-```
-
-Si te sale `JAVA_HOME is not set`, puedes usar el runtime de Hytale:
+1. Configura `gradle.properties`:
+   - `version`
+   - `maven_group`
+   - `mod_group`
+   - `mod_name`
+   - `mod_description`
+   - `mod_author`
+   - `mod_website`
+   - `mod_main_class`
+2. Asegura acceso a `HytaleServer.jar` con `hytale_home` o `hytale_server_jar`.
+3. Compila:
 
 ```powershell
-$env:JAVA_HOME="$env:APPDATA\Hytale\install\release\package\jre\latest"
-$env:Path="$env:JAVA_HOME\bin;$env:Path"
 .\gradlew.bat clean jar
 ```
 
 Salida esperada:
 
-- `build/libs/<nombre-del-proyecto>-<version>.jar`
+- `build/libs/HyHorde-Arena-PVE-<version>.jar`
 
-## Paso 5: Probar en servidor local de Hytale
-
-Opcion automatica:
+## Despliegue local
 
 ```powershell
 .\gradlew.bat deployToLocalMods
 ```
 
-Opcion manual:
+El task copia el JAR a `%APPDATA%\Hytale\UserData\Mods`.
 
-1. Copia el JAR de `build/libs/`
-2. Pegalo en `%APPDATA%\\Hytale\\UserData\\Mods`
-3. Arranca tu servidor y ejecuta `/hola`
+## Notas
 
-Respuesta esperada:
-
-- `Hola mundo desde HyTemplate!`
-
-## Paso 6: Publicar limpio en GitHub
-
-1. Verifica cambios:
-
-```powershell
-git status
-```
-
-2. Commit inicial:
-
-```powershell
-git add .
-git commit -m "chore: init clean hytale mod template"
-```
-
-3. Push a `main`:
-
-```powershell
-git push origin main
-```
-
-## CI en GitHub Actions
-
-Este repo incluye un workflow de verificacion minima en:
-
-- `.github/workflows/ci.yml`
-
-Ejecuta `gradlew help` en CI sin requerir instalacion de Hytale local (`-Pskip_hytale_checks=true`).
+- `manifest.template.json` se usa para generar el `manifest.json` final durante el build.
+- `src/main/resources/manifest.json` es valido para carga como carpeta/mod descomprimido.

@@ -1,0 +1,41 @@
+package com.hyhorde.arenapve;
+
+import com.hypixel.hytale.server.core.command.system.AbstractCommand;
+import com.hypixel.hytale.server.core.plugin.JavaPlugin;
+import com.hypixel.hytale.server.core.plugin.JavaPluginInit;
+import com.hypixel.hytale.server.core.plugin.PluginBase;
+import com.hyhorde.arenapve.commands.HelloCommand;
+import com.hyhorde.arenapve.commands.HordeCommand;
+import com.hyhorde.arenapve.commands.HordePveCommand;
+import com.hyhorde.arenapve.commands.HordeReloadCommand;
+import com.hyhorde.arenapve.commands.ShutdownCommand;
+import com.hyhorde.arenapve.horde.HordeService;
+import javax.annotation.Nonnull;
+
+public class HyHordeArenaPvePlugin
+extends JavaPlugin {
+    private HordeService hordeService;
+
+    public HyHordeArenaPvePlugin(@Nonnull JavaPluginInit init) {
+        super(init);
+    }
+
+    protected void setup() {
+        super.setup();
+        this.hordeService = new HordeService((PluginBase)this);
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HelloCommand("holi", "dice hola al jugador"));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeCommand("horda", "crea una horda de enemigos alrededor de ti"));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("hordapve", "controla el sistema de hordas PVE", this.hordeService));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeReloadCommand("hordareload", "recarga config/mod de horda", (PluginBase)this, this.hordeService));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new ShutdownCommand("cerrar", "cierra el servidor de hytale"));
+    }
+
+    protected void shutdown() {
+        if (this.hordeService != null) {
+            this.hordeService.shutdown();
+        }
+        super.shutdown();
+    }
+}
+
+
