@@ -1,0 +1,144 @@
+Group {
+  Anchor: (Left: 0, Top: 0, Width: 1920, Height: 1080);
+
+  Panel #Card {
+    Anchor: (Left: 70, Top: 120, Width: 760, Height: 760);
+    Background: #152338(0.95);
+  }
+
+  Panel #Header {
+    Anchor: (Left: 70, Top: 120, Width: 760, Height: 86);
+    Background: #263c59(0.95);
+  }
+
+  Label #TitleLabel {
+    Anchor: (Left: 94, Top: 142, Width: 680, Height: 34);
+    Text: "Horda PVE - Ayuda rapida";
+    Style: (FontSize: 26, TextColor: #f4f8ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #QuickSummaryLabel {
+    Anchor: (Left: 94, Top: 224, Width: 160, Height: 24);
+    Text: "Config actual";
+    Style: (FontSize: 14, TextColor: #9bb4d4, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #QuickSummary {
+    Anchor: (Left: 94, Top: 248, Width: 706, Height: 50);
+    Text: "";
+    Style: (FontSize: 14, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #StepTitle {
+    Anchor: (Left: 94, Top: 306, Width: 300, Height: 28);
+    Text: "Pasos recomendados";
+    Style: (FontSize: 18, TextColor: #f4f8ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #Step1 {
+    Anchor: (Left: 94, Top: 340, Width: 706, Height: 28);
+    Text: "1) /hordapve para abrir la configuracion.";
+    Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #Step2 {
+    Anchor: (Left: 94, Top: 370, Width: 706, Height: 28);
+    Text: "2) Usa setspawn o el boton \"Usar mi posicion actual\".";
+    Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #Step3 {
+    Anchor: (Left: 94, Top: 400, Width: 706, Height: 28);
+    Text: "3) Ajusta rondas, enemigos y recompensas de item.";
+    Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #Step4 {
+    Anchor: (Left: 94, Top: 430, Width: 706, Height: 28);
+    Text: "4) Guarda y pulsa iniciar horda (o /hordapve start).";
+    Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #Step5 {
+    Anchor: (Left: 94, Top: 460, Width: 706, Height: 28);
+    Text: "5) /hordapve hud para ver estado en vivo cuando quieras.";
+    Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
+  }
+
+  Label #CmdTitle {
+    Anchor: (Left: 94, Top: 506, Width: 320, Height: 28);
+    Text: "Comandos utiles";
+    Style: (FontSize: 18, TextColor: #f4f8ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #Cmd1 {
+    Anchor: (Left: 94, Top: 540, Width: 706, Height: 24);
+    Text: "/hordapve start | stop | status | logs | hud";
+    Style: (FontSize: 14, TextColor: #c0d5ef, VerticalAlignment: Center);
+  }
+
+  Label #Cmd2 {
+    Anchor: (Left: 94, Top: 566, Width: 706, Height: 24);
+    Text: "/hordapve enemy <tipo> | /hordapve tipos";
+    Style: (FontSize: 14, TextColor: #c0d5ef, VerticalAlignment: Center);
+  }
+
+  Label #Cmd3 {
+    Anchor: (Left: 94, Top: 592, Width: 706, Height: 24);
+    Text: "/hordapve reward <rondas> | /hordareload config";
+    Style: (FontSize: 14, TextColor: #c0d5ef, VerticalAlignment: Center);
+  }
+
+  Label #Cmd4 {
+    Anchor: (Left: 94, Top: 618, Width: 706, Height: 24);
+    Text: "Tipos: auto, random, bandit, goblin, skeleton, zombie, spider, wolf, wraith, void, demon, beast";
+    Style: (FontSize: 13, TextColor: #9db6d6, VerticalAlignment: Center);
+  }
+
+  Label #StatusTitle {
+    Anchor: (Left: 94, Top: 652, Width: 300, Height: 24);
+    Text: "Estado actual";
+    Style: (FontSize: 15, TextColor: #f4f8ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #StatusPanel {
+    Anchor: (Left: 94, Top: 676, Width: 706, Height: 90);
+    Background: #0e1826;
+  }
+
+  Label #StatusValue {
+    Anchor: (Left: 106, Top: 688, Width: 682, Height: 66);
+    Text: "";
+    Style: (FontSize: 13, TextColor: #cfdef1, VerticalAlignment: Center);
+  }
+
+  TextButton #OpenConfigButton {
+    Anchor: (Left: 94, Top: 792, Width: 222, Height: 44);
+    Text: "Abrir configuracion";
+    Style: TextButtonStyle(
+      Default: (Background: #2a5f3f, LabelStyle: (FontSize: 15, TextColor: #f4fff9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #357850, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #204a32, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextButton #ChatHelpButton {
+    Anchor: (Left: 328, Top: 792, Width: 214, Height: 44);
+    Text: "Enviar al chat";
+    Style: TextButtonStyle(
+      Default: (Background: #2f4668, LabelStyle: (FontSize: 15, TextColor: #edf4ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #3a5a84, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #243853, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextButton #CloseButton {
+    Anchor: (Left: 646, Top: 792, Width: 154, Height: 44);
+    Text: "Cerrar";
+    Style: TextButtonStyle(
+      Default: (Background: #2f4668, LabelStyle: (FontSize: 15, TextColor: #edf4ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #3a5a84, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #243853, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+}

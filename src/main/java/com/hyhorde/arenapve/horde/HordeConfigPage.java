@@ -39,8 +39,8 @@ extends CustomUIPage {
     public void build(Ref<EntityStore> playerEntityRef, UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, Store<EntityStore> store) {
         HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
         boolean active = this.hordeService.isActive();
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardCommands.Value", HordeConfigPage.formatRewardCommands(config.rewardCommands)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
+        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
     }
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
@@ -69,6 +69,18 @@ extends CustomUIPage {
                 this.sendEnemyTypesPreview();
                 break;
             }
+            case "enemy_prev": {
+                result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, -1);
+                break;
+            }
+            case "enemy_next": {
+                result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, 1);
+                break;
+            }
+            case "reward_types": {
+                this.sendRewardTypesPreview();
+                break;
+            }
             case "save": {
                 result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
                 break;
@@ -94,12 +106,33 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@EnemyType", "#EnemyType.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCommands", "#RewardCommands.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value");
     }
 
     private void sendEnemyTypesPreview() {
         List<String> enemyTypes = this.hordeService.getEnemyTypeOptions();
         this.playerRef.sendMessage(Message.raw((String)("Tipos de enemigo: " + String.join(", ", enemyTypes))));
+    }
+
+    private void sendRewardTypesPreview() {
+        List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        this.playerRef.sendMessage(Message.raw((String)("Sugerencias de items recompensa: " + String.join(", ", suggestions))));
+        this.playerRef.sendMessage(Message.raw((String)"Si un item no existe en tu pack, usa otro ID valido en RewardItemId."));
+    }
+
+    private HordeService.OperationResult cycleEnemyType(Map<String, String> values, World world, int offset) {
+        List<String> enemyTypes = this.hordeService.getEnemyTypeOptions();
+        if (enemyTypes.isEmpty()) {
+            return HordeService.OperationResult.fail("No hay tipos de enemigo disponibles.");
+        }
+        String currentType = HordeConfigPage.normalizeEnemyTypeInput(values.get("enemyType"));
+        int currentIndex = enemyTypes.indexOf(currentType);
+        if (currentIndex < 0) {
+            currentIndex = 0;
+        }
+        int nextIndex = Math.floorMod(currentIndex + offset, enemyTypes.size());
+        values.put("enemyType", enemyTypes.get(nextIndex));
+        return this.hordeService.applyUiConfig(values, world);
     }
 
     private static Map<String, String> extractConfigValues(JsonObject payload) {
@@ -113,9 +146,11 @@ extends CustomUIPage {
         values.put("baseEnemies", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "baseEnemies"), HordeConfigPage.read(payload, "@BaseEnemies"), HordeConfigPage.read(payload, "BaseEnemies")));
         values.put("enemiesPerRound", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemiesPerRound"), HordeConfigPage.read(payload, "@EnemiesPerRound"), HordeConfigPage.read(payload, "EnemiesPerRound")));
         values.put("waveDelay", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "waveDelay"), HordeConfigPage.read(payload, "@WaveDelay"), HordeConfigPage.read(payload, "WaveDelay")));
+        values.put("playerMultiplier", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "playerMultiplier"), HordeConfigPage.read(payload, "@PlayerMultiplier"), HordeConfigPage.read(payload, "PlayerMultiplier")));
         values.put("enemyType", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyType"), HordeConfigPage.read(payload, "@EnemyType"), HordeConfigPage.read(payload, "EnemyType"), HordeConfigPage.read(payload, "role"), HordeConfigPage.read(payload, "@Role"), HordeConfigPage.read(payload, "Role")));
         values.put("rewardEveryRounds", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardEveryRounds"), HordeConfigPage.read(payload, "@RewardEveryRounds"), HordeConfigPage.read(payload, "RewardEveryRounds")));
-        values.put("rewardCommands", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardCommands"), HordeConfigPage.read(payload, "@RewardCommands"), HordeConfigPage.read(payload, "RewardCommands")));
+        values.put("rewardItemId", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemId"), HordeConfigPage.read(payload, "@RewardItemId"), HordeConfigPage.read(payload, "RewardItemId")));
+        values.put("rewardItemQuantity", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemQuantity"), HordeConfigPage.read(payload, "@RewardItemQuantity"), HordeConfigPage.read(payload, "RewardItemQuantity")));
         return values;
     }
 
@@ -130,11 +165,18 @@ extends CustomUIPage {
         return String.format(Locale.ROOT, "%.2f", value);
     }
 
-    private static String formatRewardCommands(List<String> rewardCommands) {
-        if (rewardCommands == null || rewardCommands.isEmpty()) {
-            return "";
+    private static String normalizeEnemyTypeInput(String value) {
+        if (value == null || value.isBlank()) {
+            return "auto";
         }
-        return String.join((CharSequence)"; ", rewardCommands);
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        if ("role".equals(normalized)) {
+            return "auto";
+        }
+        if ("aleatorio".equals(normalized) || "rand".equals(normalized) || "rnd".equals(normalized)) {
+            return "random";
+        }
+        return normalized;
     }
 
     private static String read(JsonObject object, String key) {

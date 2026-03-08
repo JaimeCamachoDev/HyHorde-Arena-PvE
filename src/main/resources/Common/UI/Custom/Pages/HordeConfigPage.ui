@@ -152,23 +152,57 @@ Group {
     Background: #0f1825;
   }
 
+  Label #PlayerMultiplierLabel {
+    Anchor: (Left: 902, Top: 532, Width: 180, Height: 28);
+    Text: "Jugadores (x)";
+    Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextField #PlayerMultiplier {
+    Anchor: (Left: 1088, Top: 532, Width: 120, Height: 34);
+    Value: "1";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
   Label #RoleLabel {
     Anchor: (Left: 448, Top: 586, Width: 220, Height: 28);
     Text: "Tipo enemigo";
     Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
+  TextButton #EnemyTypePrevButton {
+    Anchor: (Left: 674, Top: 586, Width: 52, Height: 34);
+    Text: "<";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
   TextField #EnemyType {
-    Anchor: (Left: 674, Top: 586, Width: 444, Height: 34);
+    Anchor: (Left: 732, Top: 586, Width: 288, Height: 34);
     Value: "auto";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
   }
 
+  TextButton #EnemyTypeNextButton {
+    Anchor: (Left: 1026, Top: 586, Width: 52, Height: 34);
+    Text: ">";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
   Label #RoleHelpLabel {
-    Anchor: (Left: 1130, Top: 588, Width: 330, Height: 30);
-    Text: "auto, bandit, goblin, skeleton, zombie...";
+    Anchor: (Left: 1088, Top: 588, Width: 372, Height: 30);
+    Text: "auto, random, bandit, goblin, skeleton...";
     Style: (FontSize: 13, TextColor: #9fb3cb, VerticalAlignment: Center);
   }
 
@@ -188,22 +222,46 @@ Group {
 
   Label #RewardCommandsLabel {
     Anchor: (Left: 448, Top: 694, Width: 220, Height: 28);
-    Text: "Comandos recompensa";
+    Text: "Item recompensa";
     Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextField #RewardCommands {
-    Anchor: (Left: 674, Top: 694, Width: 786, Height: 34);
+  TextField #RewardItemId {
+    Anchor: (Left: 674, Top: 694, Width: 550, Height: 34);
     Value: "";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
   }
 
+  TextButton #RewardTypesButton {
+    Anchor: (Left: 1236, Top: 694, Width: 224, Height: 34);
+    Text: "Ver rewards";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 14, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
   Label #RewardCommandsHelpLabel {
-    Anchor: (Left: 674, Top: 731, Width: 786, Height: 22);
-    Text: "Separar por ; Ejemplo: /give %player% coin 10 ; /xp add %player% 50";
+    Anchor: (Left: 674, Top: 731, Width: 360, Height: 22);
+    Text: "Ejemplo: item/weapon/sword-iron";
     Style: (FontSize: 12, TextColor: #9fb3cb, VerticalAlignment: Center);
+  }
+
+  Label #RewardItemQuantityLabel {
+    Anchor: (Left: 1048, Top: 731, Width: 180, Height: 22);
+    Text: "Cantidad";
+    Style: (FontSize: 12, TextColor: #9fb3cb, VerticalAlignment: Center);
+  }
+
+  TextField #RewardItemQuantity {
+    Anchor: (Left: 1228, Top: 726, Width: 232, Height: 28);
+    Value: "1";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
   }
 
   Label #StatusTitleLabel {

@@ -13,6 +13,7 @@ import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hyhorde.arenapve.horde.HordeConfigPage;
+import com.hyhorde.arenapve.horde.HordeHelpPage;
 import com.hyhorde.arenapve.horde.HordeService;
 import java.util.List;
 import java.util.Locale;
@@ -39,6 +40,12 @@ extends AbstractPlayerCommand {
                 this.openUi(store, ref, playerRef);
                 return;
             }
+            case "help":
+            case "ayuda":
+            case "?": {
+                this.openHelp(store, ref, playerRef);
+                return;
+            }
             case "start": {
                 playerRef.sendMessage(Message.raw((String)this.hordeService.start(store, playerRef, world).getMessage()));
                 return;
@@ -49,6 +56,11 @@ extends AbstractPlayerCommand {
             }
             case "status": {
                 playerRef.sendMessage(Message.raw((String)this.hordeService.getStatusLine()));
+                return;
+            }
+            case "logs":
+            case "log": {
+                playerRef.sendMessage(Message.raw((String)("Ruta de logs: " + this.hordeService.getLogsPathHint())));
                 return;
             }
             case "hud": 
@@ -88,15 +100,25 @@ extends AbstractPlayerCommand {
     private void openUi(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef) {
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Prueba /hordapve help."));
+            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Prueba /hordahelp."));
             return;
         }
         HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
     }
 
+    private void openHelp(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef) {
+        Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
+        if (player == null) {
+            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la ayuda en ventana. Mostrando ayuda por chat."));
+            this.sendHelp(playerRef);
+            return;
+        }
+        HordeHelpPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
+    }
+
     private void handleEnemyType(CommandContext commandContext, PlayerRef playerRef) {
         if (!commandContext.provided(this.valueArg)) {
-            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve enemy <auto|bandit|goblin|skeleton|zombie|spider|wolf|wraith|void|demon|beast>"));
+            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve enemy <auto|random|bandit|goblin|skeleton|zombie|spider|wolf|wraith|void|demon|beast>"));
             return;
         }
         String enemyType = (String)commandContext.get(this.valueArg);
@@ -109,14 +131,7 @@ extends AbstractPlayerCommand {
     }
 
     private void sendHelp(PlayerRef playerRef) {
-        playerRef.sendMessage(Message.raw((String)"Comandos de horda PVE:"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve -> abre interfaz"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve start|stop|status"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve hud -> abre panel de estado en vivo"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve reward <x> -> alternativa rapida para configurar recompensas"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve setspawn -> guarda tu posicion como centro"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve enemy <tipo>"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve tipos -> lista de tipos de enemigo"));
+        HordeHelpCommand.sendChatHelp(playerRef);
     }
 
     private void handleReward(CommandContext commandContext, PlayerRef playerRef) {
