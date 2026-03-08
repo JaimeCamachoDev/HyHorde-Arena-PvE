@@ -102,8 +102,20 @@ extends EntityTickingSystem<EntityStore> {
         if (removedHud == null && removedCounter == null) {
             return;
         }
-        // Avoid sending reset CustomUI commands during teardown because
-        // some clients crash when horde completion and HUD teardown overlap.
+        if (removedHud != null) {
+            try {
+                removedHud.hide();
+            }
+            catch (Exception ex) {
+                LOGGER.log(Level.FINE, "Failed to hide Horde HUD for player: " + playerRef.getUsername(), ex);
+            }
+        }
+        try {
+            player.getHudManager().setCustomHud(playerRef, (CustomUIHud)null);
+        }
+        catch (Exception ex) {
+            LOGGER.log(Level.FINE, "Failed to clear Horde HUD binding for player: " + playerRef.getUsername(), ex);
+        }
     }
 
     private static final class HordeRuntimeHud
