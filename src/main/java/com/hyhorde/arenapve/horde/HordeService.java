@@ -12,6 +12,7 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.HytaleServer;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.item.config.Item;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
@@ -34,9 +35,11 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -67,6 +70,9 @@ public final class HordeService {
     private static final int MAX_WAVE_DELAY_SECONDS = 300;
     private static final double MIN_RADIUS = 1.0;
     private static final double MAX_RADIUS = 128.0;
+    private static final String LANGUAGE_SPANISH = "es";
+    private static final String LANGUAGE_ENGLISH = "en";
+    private static final List<String> LANGUAGE_OPTIONS = List.of(LANGUAGE_SPANISH, LANGUAGE_ENGLISH);
     private final PluginBase plugin;
     private final Gson gson;
     private final Path configPath;
@@ -92,11 +98,21 @@ public final class HordeService {
     }
 
     public synchronized String getStatusLine() {
+        String language = HordeService.normalizeLanguage(this.config.language);
         if (this.session == null) {
+            if (HordeService.isEnglishLanguage(language)) {
+                return "No active horde. Use /hordapve to open the interface.";
+            }
             return "Sin horda activa. Usa /hordapve para abrir la interfaz.";
         }
+        this.syncSessionPlayers(this.session);
         int alive = HordeService.countAlive(this.session.activeEnemies);
+        int totalDeaths = HordeService.getTotalDeaths(this.session.playerStats);
         String rewardInfo = this.config.rewardItemId == null || this.config.rewardItemId.isBlank() ? "sin item" : this.config.rewardItemId + " x" + this.config.rewardItemQuantity;
+        if (HordeService.isEnglishLanguage(language)) {
+            rewardInfo = this.config.rewardItemId == null || this.config.rewardItemId.isBlank() ? "no item" : this.config.rewardItemId + " x" + this.config.rewardItemQuantity;
+            return "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + this.session.playerMultiplier + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo;
+        }
         return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Recompensa cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
     }
 
@@ -141,7 +157,15 @@ public final class HordeService {
     }
 
     public synchronized List<String> getRewardItemSuggestions() {
-        return new ArrayList<String>(REWARD_ITEM_SUGGESTIONS);
+        return HordeService.buildResolvedRewardSuggestions();
+    }
+
+    public synchronized List<String> getLanguageOptions() {
+        return new ArrayList<String>(LANGUAGE_OPTIONS);
+    }
+
+    public synchronized String getLanguage() {
+        return HordeService.normalizeLanguage(this.config.language);
     }
 
     public synchronized String getConfiguredNpcRole() {
@@ -154,6 +178,57 @@ public final class HordeService {
 
     public synchronized StatusSnapshot getStatusSnapshot() {
         return this.createStatusSnapshot(this.session == null ? null : this.session.world);
+    }
+
+    public synchronized boolean isTrackingWorld(World world) {
+        if (world == null || this.session == null) {
+            return false;
+        }
+        return this.session.world == world;
+    }
+
+    public synchronized boolean isTrackedEnemy(Ref<EntityStore> enemyRef) {
+        if (this.session == null || enemyRef == null) {
+            return false;
+        }
+        return this.session.activeEnemies.contains(enemyRef);
+    }
+
+    public synchronized void registerEnemyKill(Ref<EntityStore> enemyRef, PlayerRef attackerPlayer) {
+        if (this.session == null || enemyRef == null || attackerPlayer == null) {
+            return;
+        }
+        if (!this.session.activeEnemies.contains(enemyRef)) {
+            return;
+        }
+        if (!this.session.accountedEnemyDeaths.add(enemyRef)) {
+            return;
+        }
+        PlayerCombatStats attackerStats = this.getOrCreatePlayerStats(this.session, attackerPlayer);
+        attackerStats.kills = attackerStats.kills + 1;
+        this.refreshStatusHud(this.session);
+    }
+
+    public synchronized void registerPlayerDeath(PlayerRef victimPlayer, Ref<EntityStore> attackerRef) {
+        if (this.session == null || victimPlayer == null || attackerRef == null) {
+            return;
+        }
+        if (!this.session.activeEnemies.contains(attackerRef)) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        UUID victimId = victimPlayer.getUuid();
+        if (victimId == null) {
+            return;
+        }
+        Long lastRecorded = this.session.lastPlayerDeathAt.get(victimId);
+        if (lastRecorded != null && now - lastRecorded.longValue() <= 750L) {
+            return;
+        }
+        this.session.lastPlayerDeathAt.put(victimId, now);
+        PlayerCombatStats victimStats = this.getOrCreatePlayerStats(this.session, victimPlayer);
+        victimStats.deaths = victimStats.deaths + 1;
+        this.refreshStatusHud(this.session);
     }
 
     public synchronized OperationResult reloadConfigFromDisk() {
@@ -239,6 +314,17 @@ public final class HordeService {
         return OperationResult.ok("Recompensas configuradas cada " + everyRounds + " ronda(s).");
     }
 
+    public synchronized OperationResult setLanguage(String languageInput) {
+        String language = HordeService.normalizeLanguage(languageInput);
+        this.config.language = language;
+        this.saveConfig();
+        this.refreshStatusHud(this.session);
+        if (HordeService.isEnglishLanguage(language)) {
+            return OperationResult.ok("Language updated to English.");
+        }
+        return OperationResult.ok("Idioma actualizado a Espanol.");
+    }
+
     public synchronized OperationResult setSpawnFromPlayer(PlayerRef playerRef, World world) {
         Transform transform = playerRef.getTransform();
         Vector3d position = transform.getPosition();
@@ -273,6 +359,12 @@ public final class HordeService {
         if (enemyTypeValue != null) {
             updated.enemyType = HordeService.normalizeEnemyType(enemyTypeValue);
         }
+        String languageValue = values.get("language");
+        if (languageValue != null && !languageValue.isBlank()) {
+            updated.language = HordeService.normalizeLanguage(languageValue);
+        } else {
+            updated.language = HordeService.normalizeLanguage(updated.language);
+        }
         if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
             return OperationResult.fail("enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
@@ -281,7 +373,7 @@ public final class HordeService {
         }
         String rewardItemIdRaw = values.get("rewardItemId");
         if (rewardItemIdRaw != null) {
-            updated.rewardItemId = rewardItemIdRaw.trim();
+            updated.rewardItemId = HordeService.normalizeRewardItemId(rewardItemIdRaw);
         }
         try {
             updated.rewardItemQuantity = HordeService.parseInt(values.get("rewardItemQuantity"), updated.rewardItemQuantity, "rewardItemQuantity");
@@ -293,8 +385,7 @@ public final class HordeService {
             return OperationResult.fail("rewardItemQuantity debe estar entre 1 y 9999.");
         }
         if (updated.rewardItemId != null && !updated.rewardItemId.isBlank()) {
-            ItemStack rewardStack = new ItemStack(updated.rewardItemId, updated.rewardItemQuantity);
-            if (!rewardStack.isValid() || rewardStack.isEmpty()) {
+            if (!HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity)) {
                 return OperationResult.fail("rewardItemId no es valido: " + updated.rewardItemId);
             }
         }
@@ -377,6 +468,7 @@ public final class HordeService {
         }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
         this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, supportedEnemyTypes, startRotation, START_COUNTDOWN_SECONDS);
+        this.syncSessionPlayers(newSession);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, 1000L, TimeUnit.MILLISECONDS);
         String roleSuffix = forcedRole == null ? selectedRole : selectedRole + " (forzado)";
         world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | inicio en %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, START_COUNTDOWN_SECONDS)));
@@ -416,10 +508,11 @@ public final class HordeService {
                 if (this.session != trackedSession) {
                     return;
                 }
-                int removed = HordeService.removeInvalidRefs(trackedSession.activeEnemies);
+                int removed = HordeService.removeInvalidRefs(trackedSession.activeEnemies, trackedSession.accountedEnemyDeaths);
                 if (removed > 0) {
                     trackedSession.totalKilled += removed;
                 }
+                this.syncSessionPlayers(trackedSession);
                 if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.startCountdownSeconds >= 0) {
                     if (trackedSession.startCountdownSeconds > 0) {
                         this.broadcastHordeCountdownAnnouncement(trackedSession.startCountdownSeconds, trackedSession.enemyType, trackedSession.role);
@@ -514,15 +607,16 @@ public final class HordeService {
         if (this.config.rewardItemId == null || this.config.rewardItemId.isBlank()) {
             return;
         }
-        ItemStack rewardStack = new ItemStack(this.config.rewardItemId, this.config.rewardItemQuantity);
-        if (!rewardStack.isValid() || rewardStack.isEmpty()) {
+        String rewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
+        if (!HordeService.isUsableRewardItemId(rewardItemId, this.config.rewardItemQuantity)) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: item invalido '%s'.", (Object)this.config.rewardItemId);
             return;
         }
+        ItemStack rewardStack = new ItemStack(rewardItemId, this.config.rewardItemQuantity);
         Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
         Holder itemEntityHolder = ItemComponent.generateItemDrop(trackedSession.store, rewardStack, dropPosition, Vector3f.ZERO, 0.0f, 0.35f, 0.0f);
         if (itemEntityHolder == null) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo generar la entidad de recompensa para '%s'.", (Object)this.config.rewardItemId);
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo generar la entidad de recompensa para '%s'.", (Object)rewardItemId);
             return;
         }
         ItemComponent itemComponent = (ItemComponent)itemEntityHolder.getComponent(ItemComponent.getComponentType());
@@ -530,7 +624,7 @@ public final class HordeService {
             itemComponent.setPickupDelay(0.6f);
         }
         trackedSession.store.addEntity(itemEntityHolder, AddReason.SPAWN);
-        trackedSession.world.sendMessage(Message.raw((String)("Item recompensa dropeado en el centro: " + this.config.rewardItemId + " x" + this.config.rewardItemQuantity + ".")));
+        trackedSession.world.sendMessage(Message.raw((String)("Item recompensa dropeado en el centro: " + rewardItemId + " x" + this.config.rewardItemQuantity + ".")));
     }
 
     private void broadcastHordeStartAnnouncement(String enemyType, String role, int playerMultiplier) {
@@ -616,15 +710,19 @@ public final class HordeService {
     }
 
     private StatusSnapshot createStatusSnapshot(World requestedWorld) {
+        String language = HordeService.normalizeLanguage(this.config.language);
         if (this.session == null) {
             String worldName = requestedWorld != null ? requestedWorld.getName() : this.config.worldName;
-            return StatusSnapshot.inactive(this.config.rounds, worldName, this.config.enemyType);
+            return StatusSnapshot.inactive(this.config.rounds, worldName, this.config.enemyType, language);
         }
+        this.syncSessionPlayers(this.session);
         int alive = HordeService.countAlive(this.session.activeEnemies);
+        int totalDeaths = HordeService.getTotalDeaths(this.session.playerStats);
         long now = System.currentTimeMillis();
         long elapsedSeconds = Math.max(0L, (now - this.session.startedAtMillis) / 1000L);
         long nextRoundInSeconds = this.session.roundActive ? 0L : Math.max(0L, (this.session.nextRoundAtMillis - now + 999L) / 1000L);
-        return StatusSnapshot.active(this.session.currentRound, this.config.rounds, alive, this.session.totalSpawned, this.session.totalKilled, this.session.enemyType + " -> " + this.session.role, elapsedSeconds, nextRoundInSeconds, this.session.world.getName());
+        List<PlayerSnapshot> players = HordeService.buildPlayerSnapshots(this.session.playerStats);
+        return StatusSnapshot.active(this.session.currentRound, this.config.rounds, alive, this.session.totalSpawned, this.session.totalKilled, totalDeaths, this.session.enemyType + " -> " + this.session.role, elapsedSeconds, nextRoundInSeconds, this.session.world.getName(), language, players);
     }
 
     private void refreshStatusHud(HordeSession trackedSession) {
@@ -665,6 +763,59 @@ public final class HordeService {
             catch (Exception exception) {}
         }
         this.statusPages.clear();
+    }
+
+    private void syncSessionPlayers(HordeSession trackedSession) {
+        if (trackedSession == null || trackedSession.world == null) {
+            return;
+        }
+        for (PlayerRef playerRef : trackedSession.world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null) continue;
+            this.getOrCreatePlayerStats(trackedSession, playerRef);
+        }
+    }
+
+    private PlayerCombatStats getOrCreatePlayerStats(HordeSession trackedSession, PlayerRef playerRef) {
+        UUID playerId;
+        if (trackedSession == null || playerRef == null || (playerId = playerRef.getUuid()) == null) {
+            return null;
+        }
+        PlayerCombatStats stats = trackedSession.playerStats.get(playerId);
+        if (stats == null) {
+            stats = new PlayerCombatStats(HordeService.safePlayerName(playerRef));
+            trackedSession.playerStats.put(playerId, stats);
+        } else {
+            stats.username = HordeService.safePlayerName(playerRef);
+        }
+        return stats;
+    }
+
+    private static String safePlayerName(PlayerRef playerRef) {
+        if (playerRef == null || playerRef.getUsername() == null || playerRef.getUsername().isBlank()) {
+            return "Jugador";
+        }
+        return playerRef.getUsername();
+    }
+
+    private static List<PlayerSnapshot> buildPlayerSnapshots(Map<UUID, PlayerCombatStats> statsByPlayer) {
+        ArrayList<PlayerSnapshot> lines = new ArrayList<PlayerSnapshot>();
+        for (Map.Entry<UUID, PlayerCombatStats> entry : statsByPlayer.entrySet()) {
+            UUID playerId = entry.getKey();
+            PlayerCombatStats stats = entry.getValue();
+            if (playerId == null || stats == null) continue;
+            lines.add(new PlayerSnapshot(playerId, stats.username, Math.max(0, stats.kills), Math.max(0, stats.deaths)));
+        }
+        lines.sort(Comparator.comparingInt((PlayerSnapshot row) -> row.kills).reversed().thenComparingInt(row -> row.deaths).thenComparing(row -> row.username, String.CASE_INSENSITIVE_ORDER));
+        return lines;
+    }
+
+    private static int getTotalDeaths(Map<UUID, PlayerCombatStats> statsByPlayer) {
+        int total = 0;
+        for (PlayerCombatStats stats : statsByPlayer.values()) {
+            if (stats == null) continue;
+            total += Math.max(0, stats.deaths);
+        }
+        return total;
     }
 
     private static String resolveRoleForEnemyType(List<String> roles, String selectedEnemyType) {
@@ -787,6 +938,35 @@ public final class HordeService {
         return false;
     }
 
+    public static boolean isEnglishLanguage(String language) {
+        return LANGUAGE_ENGLISH.equals(HordeService.normalizeLanguage(language));
+    }
+
+    public static String normalizeLanguage(String language) {
+        if (language == null || language.isBlank()) {
+            return LANGUAGE_SPANISH;
+        }
+        String normalized = language.trim().toLowerCase(Locale.ROOT);
+        if ("english".equals(normalized) || "ing".equals(normalized) || "en_us".equals(normalized) || "en-gb".equals(normalized) || normalized.contains("english") || normalized.endsWith("(en)")) {
+            return LANGUAGE_ENGLISH;
+        }
+        if ("espanol".equals(normalized) || "español".equals(normalized) || "spa".equals(normalized) || normalized.contains("espanol") || normalized.contains("español") || normalized.endsWith("(es)")) {
+            return LANGUAGE_SPANISH;
+        }
+        if (!LANGUAGE_OPTIONS.contains(normalized)) {
+            return LANGUAGE_SPANISH;
+        }
+        return normalized;
+    }
+
+    public static String getLanguageDisplay(String language) {
+        String normalized = HordeService.normalizeLanguage(language);
+        if (LANGUAGE_ENGLISH.equals(normalized)) {
+            return "English (en)";
+        }
+        return "Espanol (es)";
+    }
+
     private static String normalizeEnemyType(String input) {
         if (input == null || input.isBlank()) {
             return "auto";
@@ -832,17 +1012,105 @@ public final class HordeService {
 
     private static List<String> buildRewardItemSuggestions() {
         ArrayList<String> suggestions = new ArrayList<String>();
-        suggestions.add("item/weapon/sword-iron");
-        suggestions.add("item/weapon/bow-wood");
-        suggestions.add("item/armor/chestplate-iron");
+        suggestions.add("item/weapon/sword_iron");
+        suggestions.add("item/weapon/bow_wood");
+        suggestions.add("item/armor/chestplate_iron");
         suggestions.add("item/consumable/apple");
-        suggestions.add("item/consumable/potion-health-small");
-        suggestions.add("item/material/iron-ingot");
-        suggestions.add("item/material/gold-ingot");
+        suggestions.add("item/consumable/potion_health_small");
+        suggestions.add("item/material/iron_ingot");
+        suggestions.add("item/material/gold_ingot");
         suggestions.add("item/resource/wood");
         suggestions.add("item/resource/stone");
-        suggestions.add("item/tool/pickaxe-iron");
+        suggestions.add("item/tool/pickaxe_iron");
         return suggestions;
+    }
+
+    private static List<String> buildResolvedRewardSuggestions() {
+        LinkedHashSet<String> resolved = new LinkedHashSet<String>();
+        for (String suggestion : REWARD_ITEM_SUGGESTIONS) {
+            String normalized = HordeService.normalizeRewardItemId(suggestion);
+            if (!HordeService.isUsableRewardItemId(normalized, 1)) continue;
+            resolved.add(normalized);
+        }
+        if (resolved.isEmpty()) {
+            for (String fallback : HordeService.buildFallbackRewardSuggestions()) {
+                String normalized = HordeService.normalizeRewardItemId(fallback);
+                if (!HordeService.isUsableRewardItemId(normalized, 1)) continue;
+                resolved.add(normalized);
+                if (resolved.size() >= 16) break;
+            }
+        }
+        return new ArrayList<String>(resolved);
+    }
+
+    private static String normalizeRewardItemId(String input) {
+        if (input == null) {
+            return "";
+        }
+        String raw = input.trim();
+        if (raw.isBlank()) {
+            return "";
+        }
+        LinkedHashSet<String> candidates = new LinkedHashSet<String>();
+        candidates.add(raw);
+        candidates.add(raw.toLowerCase(Locale.ROOT));
+        if (!raw.startsWith("item/")) {
+            candidates.add("item/" + raw);
+            candidates.add("item/" + raw.toLowerCase(Locale.ROOT));
+        }
+        if (raw.contains("-")) {
+            candidates.add(raw.replace('-', '_'));
+            candidates.add(raw.replace('-', '_').toLowerCase(Locale.ROOT));
+        }
+        if (raw.contains("_")) {
+            candidates.add(raw.replace('_', '-'));
+            candidates.add(raw.replace('_', '-').toLowerCase(Locale.ROOT));
+        }
+        for (String candidate : candidates) {
+            if (!HordeService.isUsableRewardItemId(candidate, 1)) continue;
+            return candidate;
+        }
+        return raw;
+    }
+
+    private static boolean isUsableRewardItemId(String itemId, int quantity) {
+        if (itemId == null || itemId.isBlank()) {
+            return false;
+        }
+        try {
+            ItemStack stack = new ItemStack(itemId, Math.max(1, quantity));
+            if (!stack.isValid() || stack.isEmpty()) {
+                return false;
+            }
+            Item item = stack.getItem();
+            if (item == null || item == Item.UNKNOWN) {
+                return false;
+            }
+            String resolvedId = item.getId();
+            return resolvedId != null && !resolvedId.isBlank() && !"Unknown".equalsIgnoreCase(resolvedId);
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private static List<String> buildFallbackRewardSuggestions() {
+        ArrayList<String> fallback = new ArrayList<String>();
+        try {
+            Map<String, Item> items = Item.getAssetMap().getAssetMap();
+            for (Map.Entry<String, Item> entry : items.entrySet()) {
+                String itemId = entry.getKey();
+                if (itemId == null || itemId.isBlank() || !itemId.startsWith("item/")) continue;
+                String normalized = itemId.toLowerCase(Locale.ROOT);
+                if (!normalized.contains("weapon") && !normalized.contains("tool") && !normalized.contains("consumable") && !normalized.contains("material") && !normalized.contains("resource") && !normalized.contains("armor")) continue;
+                fallback.add(itemId);
+                if (fallback.size() >= 64) break;
+            }
+        }
+        catch (Exception exception) {
+            // ignore and keep fallback empty
+        }
+        return fallback;
     }
 
     private static boolean isRandomEnemyType(String enemyType) {
@@ -865,7 +1133,7 @@ public final class HordeService {
         return RANDOM_ENEMY_TYPE_OPTIONS.get(randomIndex);
     }
 
-    private static int removeInvalidRefs(Set<Ref<EntityStore>> refs) {
+    private static int removeInvalidRefs(Set<Ref<EntityStore>> refs, Set<Ref<EntityStore>> accountedEnemyDeaths) {
         int removed = 0;
         HashSet<Ref<EntityStore>> stale = new HashSet<Ref<EntityStore>>();
         for (Ref<EntityStore> ref : refs) {
@@ -874,6 +1142,9 @@ public final class HordeService {
         }
         for (Ref ref : stale) {
             refs.remove(ref);
+            if (accountedEnemyDeaths != null) {
+                accountedEnemyDeaths.remove(ref);
+            }
             ++removed;
         }
         return removed;
@@ -1039,7 +1310,10 @@ public final class HordeService {
         if (sanitized.rewardItemId == null) {
             sanitized.rewardItemId = "";
         } else {
-            sanitized.rewardItemId = sanitized.rewardItemId.trim();
+            sanitized.rewardItemId = HordeService.normalizeRewardItemId(sanitized.rewardItemId.trim());
+            if (!sanitized.rewardItemId.isBlank() && !HordeService.isUsableRewardItemId(sanitized.rewardItemId, sanitized.rewardItemQuantity)) {
+                sanitized.rewardItemId = "";
+            }
         }
         sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, 1.0, 128.0);
         sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, 1.0, 128.0);
@@ -1056,6 +1330,7 @@ public final class HordeService {
         if ("auto".equalsIgnoreCase(sanitized.npcRole) || "none".equalsIgnoreCase(sanitized.npcRole) || "clear".equalsIgnoreCase(sanitized.npcRole) || "default".equalsIgnoreCase(sanitized.npcRole)) {
             sanitized.npcRole = "";
         }
+        sanitized.language = HordeService.normalizeLanguage(sanitized.language);
         sanitized.worldName = sanitized.worldName == null || sanitized.worldName.isBlank() ? "default" : sanitized.worldName;
         return sanitized;
     }
@@ -1085,6 +1360,7 @@ public final class HordeService {
         public int playerMultiplier;
         public String enemyType;
         public String npcRole;
+        public String language;
         public int rewardEveryRounds;
         public String rewardItemId;
         public int rewardItemQuantity;
@@ -1105,6 +1381,7 @@ public final class HordeService {
             defaults.playerMultiplier = 1;
             defaults.enemyType = "auto";
             defaults.npcRole = "";
+            defaults.language = LANGUAGE_SPANISH;
             defaults.rewardEveryRounds = 2;
             defaults.rewardItemId = "";
             defaults.rewardItemQuantity = 1;
@@ -1127,10 +1404,23 @@ public final class HordeService {
             copy.playerMultiplier = this.playerMultiplier;
             copy.enemyType = this.enemyType;
             copy.npcRole = this.npcRole;
+            copy.language = this.language;
             copy.rewardEveryRounds = this.rewardEveryRounds;
             copy.rewardItemId = this.rewardItemId;
             copy.rewardItemQuantity = this.rewardItemQuantity;
             return copy;
+        }
+    }
+
+    private static final class PlayerCombatStats {
+        private String username;
+        private int kills;
+        private int deaths;
+
+        private PlayerCombatStats(String username) {
+            this.username = username == null || username.isBlank() ? "Jugador" : username;
+            this.kills = 0;
+            this.deaths = 0;
         }
     }
 
@@ -1145,6 +1435,9 @@ public final class HordeService {
         private final int playerMultiplier;
         private final Vector3f startRotation;
         private final Set<Ref<EntityStore>> activeEnemies;
+        private final Set<Ref<EntityStore>> accountedEnemyDeaths;
+        private final Map<UUID, PlayerCombatStats> playerStats;
+        private final Map<UUID, Long> lastPlayerDeathAt;
         private int currentRound;
         private int totalSpawned;
         private int totalKilled;
@@ -1165,6 +1458,9 @@ public final class HordeService {
             this.playerMultiplier = Math.max(MIN_PLAYER_MULTIPLIER, playerMultiplier);
             this.startRotation = startRotation == null ? Vector3f.ZERO : new Vector3f(startRotation);
             this.activeEnemies = new HashSet<Ref<EntityStore>>();
+            this.accountedEnemyDeaths = new HashSet<Ref<EntityStore>>();
+            this.playerStats = new HashMap<UUID, PlayerCombatStats>();
+            this.lastPlayerDeathAt = new HashMap<UUID, Long>();
             this.currentRound = 0;
             this.totalSpawned = 0;
             this.totalKilled = 0;
@@ -1175,6 +1471,20 @@ public final class HordeService {
         }
     }
 
+    public static final class PlayerSnapshot {
+        public final UUID playerId;
+        public final String username;
+        public final int kills;
+        public final int deaths;
+
+        private PlayerSnapshot(UUID playerId, String username, int kills, int deaths) {
+            this.playerId = playerId;
+            this.username = username == null || username.isBlank() ? "Jugador" : username;
+            this.kills = Math.max(0, kills);
+            this.deaths = Math.max(0, deaths);
+        }
+    }
+
     public static final class StatusSnapshot {
         public final boolean active;
         public final int currentRound;
@@ -1182,30 +1492,47 @@ public final class HordeService {
         public final int aliveEnemies;
         public final int totalSpawned;
         public final int totalKilled;
+        public final int totalDeaths;
         public final String role;
         public final long elapsedSeconds;
         public final long nextRoundInSeconds;
         public final String worldName;
+        public final String language;
+        public final List<PlayerSnapshot> players;
 
-        private StatusSnapshot(boolean active, int currentRound, int totalRounds, int aliveEnemies, int totalSpawned, int totalKilled, String role, long elapsedSeconds, long nextRoundInSeconds, String worldName) {
+        private StatusSnapshot(boolean active, int currentRound, int totalRounds, int aliveEnemies, int totalSpawned, int totalKilled, int totalDeaths, String role, long elapsedSeconds, long nextRoundInSeconds, String worldName, String language, List<PlayerSnapshot> players) {
             this.active = active;
             this.currentRound = currentRound;
             this.totalRounds = totalRounds;
             this.aliveEnemies = aliveEnemies;
             this.totalSpawned = totalSpawned;
             this.totalKilled = totalKilled;
+            this.totalDeaths = totalDeaths;
             this.role = role == null ? "" : role;
             this.elapsedSeconds = Math.max(0L, elapsedSeconds);
             this.nextRoundInSeconds = Math.max(0L, nextRoundInSeconds);
             this.worldName = worldName == null ? "default" : worldName;
+            this.language = HordeService.normalizeLanguage(language);
+            this.players = players == null ? List.of() : List.copyOf(players);
         }
 
-        public static StatusSnapshot inactive(int totalRounds, String worldName, String enemyType) {
-            return new StatusSnapshot(false, 0, totalRounds, 0, 0, 0, enemyType, 0L, 0L, worldName);
+        public PlayerSnapshot findPlayer(UUID playerId) {
+            if (playerId == null || this.players.isEmpty()) {
+                return null;
+            }
+            for (PlayerSnapshot row : this.players) {
+                if (row.playerId == null || !row.playerId.equals((Object)playerId)) continue;
+                return row;
+            }
+            return null;
         }
 
-        public static StatusSnapshot active(int currentRound, int totalRounds, int aliveEnemies, int totalSpawned, int totalKilled, String role, long elapsedSeconds, long nextRoundInSeconds, String worldName) {
-            return new StatusSnapshot(true, currentRound, totalRounds, aliveEnemies, totalSpawned, totalKilled, role, elapsedSeconds, nextRoundInSeconds, worldName);
+        public static StatusSnapshot inactive(int totalRounds, String worldName, String enemyType, String language) {
+            return new StatusSnapshot(false, 0, totalRounds, 0, 0, 0, 0, enemyType, 0L, 0L, worldName, language, List.of());
+        }
+
+        public static StatusSnapshot active(int currentRound, int totalRounds, int aliveEnemies, int totalSpawned, int totalKilled, int totalDeaths, String role, long elapsedSeconds, long nextRoundInSeconds, String worldName, String language, List<PlayerSnapshot> players) {
+            return new StatusSnapshot(true, currentRound, totalRounds, aliveEnemies, totalSpawned, totalKilled, totalDeaths, role, elapsedSeconds, nextRoundInSeconds, worldName, language, players);
         }
     }
 

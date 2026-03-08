@@ -24,7 +24,7 @@ Group {
 
   Label #SubTitleLabel {
     Anchor: (Left: 492, Top: 146, Width: 740, Height: 24);
-    Text: "Config minima: centro, dificultad, enemigo y recompensa";
+    Text: "Config minima: centro, dificultad, enemigo, idioma y recompensa";
     Style: (FontSize: 14, TextColor: #b8cadf, VerticalAlignment: Center);
   }
 
@@ -207,6 +207,40 @@ Group {
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 13, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  Label #LanguageLabel {
+    Anchor: (Left: 1162, Top: 422, Width: 66, Height: 34);
+    Text: "Idioma";
+    Style: (FontSize: 13, TextColor: #b8cadf, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextButton #LanguagePrevButton {
+    Anchor: (Left: 1230, Top: 422, Width: 34, Height: 34);
+    Text: "<";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextField #Language {
+    Anchor: (Left: 1268, Top: 422, Width: 118, Height: 34);
+    Value: "Espanol (es)";
+    Style: (FontSize: 12, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  TextButton #LanguageNextButton {
+    Anchor: (Left: 1390, Top: 422, Width: 34, Height: 34);
+    Text: ">";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
   }
 

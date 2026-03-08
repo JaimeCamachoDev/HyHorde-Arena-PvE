@@ -142,7 +142,7 @@ extends AbstractPlayerCommand {
     }
 
     private void sendHelp(PlayerRef playerRef) {
-        HordeHelpCommand.sendChatHelp(playerRef);
+        HordeHelpCommand.sendChatHelp(playerRef, this.hordeService);
     }
 
     private void handleRole(CommandContext commandContext, PlayerRef playerRef) {

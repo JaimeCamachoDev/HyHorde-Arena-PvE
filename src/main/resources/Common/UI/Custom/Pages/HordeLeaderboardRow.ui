@@ -1,0 +1,57 @@
+Group #HordeLeaderboardLabel {
+  LayoutMode: Left;
+  FlexWeight: 1;
+  Anchor: (Bottom: 4);
+
+  Label #RowName {
+    Anchor: (Width: 300);
+    Text: "Jugador";
+    Style: (
+      FontSize: 14,
+      TextColor: #e8f1ff,
+      VerticalAlignment: Center
+    );
+  }
+
+  Label #RowKills {
+    Anchor: (Width: 48);
+    Text: "0";
+    Style: (
+      FontSize: 14,
+      TextColor: #90ff90,
+      VerticalAlignment: Center
+    );
+  }
+
+  Label #RowKillsMessage {
+    Anchor: (Width: 78);
+    Text: " kills";
+    Style: (
+      FontSize: 14,
+      TextColor: #d4e2f5,
+      RenderBold: true,
+      VerticalAlignment: Center
+    );
+  }
+
+  Label #RowDeaths {
+    Anchor: (Width: 48);
+    Text: "0";
+    Style: (
+      FontSize: 14,
+      TextColor: #ff9a9a,
+      VerticalAlignment: Center
+    );
+  }
+
+  Label #RowDeathsMessage {
+    Text: " deaths";
+    Style: (
+      FontSize: 14,
+      TextColor: #d4e2f5,
+      RenderBold: true,
+      VerticalAlignment: Center
+    );
+  }
+}
+

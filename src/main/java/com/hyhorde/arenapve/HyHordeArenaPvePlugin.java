@@ -8,6 +8,7 @@ import com.hyhorde.arenapve.commands.HordeCommand;
 import com.hyhorde.arenapve.commands.HordeHelpCommand;
 import com.hyhorde.arenapve.commands.HordePveCommand;
 import com.hyhorde.arenapve.commands.HordeReloadCommand;
+import com.hyhorde.arenapve.horde.HordeDamageTrackerSystem;
 import com.hyhorde.arenapve.horde.HordeService;
 import javax.annotation.Nonnull;
 
@@ -22,7 +23,8 @@ extends JavaPlugin {
     protected void setup() {
         super.setup();
         this.hordeService = new HordeService((PluginBase)this);
-        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeCommand("horda", "crea una horda de enemigos alrededor de ti"));
+        this.getEntityStoreRegistry().registerSystem(new HordeDamageTrackerSystem(this.hordeService));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeCommand("horda", "crea una horda de enemigos alrededor de ti", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("hordapve", "controla el sistema de hordas PVE", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("hordepve", "alias de hordapve", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordeHelpCommand("hordahelp", "abre guia rapida del sistema de hordas", this.hordeService));

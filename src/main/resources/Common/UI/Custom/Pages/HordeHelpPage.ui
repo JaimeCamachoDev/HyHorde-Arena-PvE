@@ -49,7 +49,7 @@ Group {
 
   Label #Step3 {
     Anchor: (Left: 94, Top: 400, Width: 706, Height: 28);
-    Text: "3) Ajusta rondas, enemigos y recompensas con los botones < >.";
+    Text: "3) Ajusta rondas, enemigos, idioma y recompensas con los botones < >.";
     Style: (FontSize: 15, TextColor: #d5e4f8, VerticalAlignment: Center);
   }
 
@@ -91,7 +91,7 @@ Group {
 
   Label #Cmd4 {
     Anchor: (Left: 94, Top: 618, Width: 706, Height: 24);
-    Text: "/hordapve reward <rondas> | /hordareload config | alias: /hordepve";
+    Text: "/hordapve reward <rondas> | /horda help | /hordareload config | alias: /hordepve";
     Style: (FontSize: 13, TextColor: #9db6d6, VerticalAlignment: Center);
   }
 

@@ -55,7 +55,7 @@ extends CustomUIPage {
                 return;
             }
             case "chat_help": {
-                HordeHelpCommand.sendChatHelp(this.playerRef);
+                HordeHelpCommand.sendChatHelp(this.playerRef, this.hordeService);
                 return;
             }
             case "open_config": {

@@ -7,11 +7,15 @@ import com.hypixel.hytale.math.vector.Vector3d;
 import com.hypixel.hytale.math.vector.Vector3f;
 import com.hypixel.hytale.server.core.Message;
 import com.hypixel.hytale.server.core.command.system.CommandContext;
+import com.hypixel.hytale.server.core.command.system.arguments.system.OptionalArg;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgTypes;
+import com.hypixel.hytale.server.core.command.system.arguments.types.ArgumentType;
 import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayerCommand;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.npc.NPCPlugin;
+import com.hyhorde.arenapve.horde.HordeService;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
@@ -23,12 +27,23 @@ extends AbstractPlayerCommand {
     private static final double MIN_RADIUS = 3.0;
     private static final double MAX_RADIUS = 8.0;
     private static final String[] ENEMY_ROLE_HINTS = new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"};
+    private final HordeService hordeService;
+    private final OptionalArg<String> actionArg;
 
-    public HordeCommand(@Nonnull String name, @Nonnull String description) {
+    public HordeCommand(@Nonnull String name, @Nonnull String description, HordeService hordeService) {
         super(name, description);
+        this.hordeService = hordeService;
+        this.actionArg = this.withOptionalArg("accion", "accion", (ArgumentType)ArgTypes.STRING);
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+        if (commandContext.provided(this.actionArg)) {
+            String action = ((String)commandContext.get(this.actionArg)).trim().toLowerCase(Locale.ROOT);
+            if ("help".equals(action) || "ayuda".equals(action) || "?".equals(action)) {
+                HordeHelpCommand.sendChatHelp(playerRef, this.hordeService);
+                return;
+            }
+        }
         NPCPlugin npcPlugin = NPCPlugin.get();
         List spawnableRoles = npcPlugin.getRoleTemplateNames(true);
         if (spawnableRoles.isEmpty()) {

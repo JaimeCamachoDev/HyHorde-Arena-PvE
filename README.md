@@ -12,7 +12,12 @@ Mod de Hytale para crear hordas PVE por rondas con configuracion en UI.
 - Anuncio grande en pantalla al inicio y al final de la horda.
 - Cuenta atras global `3..2..1` antes de empezar la primera ronda.
 - Anuncio grande al completar cada ronda con datos clave (siguiente ronda, kills, spawn, recompensa).
-- Panel de estado opcional (`/hordapve hud`).
+- Panel de estado opcional (`/hordapve hud`) con:
+  - Contador `Quedan X enemigos`.
+  - Tabla de jugadores con kills/deaths durante la horda.
+  - Resumen personal (tus kills/deaths).
+- Selector de idioma `Espanol/English` con botones `< >` en la UI de configuracion.
+- Validacion reforzada de `rewardItemId` para evitar drops de items corruptos/Unknown.
 
 ## Guia rapida (paso a paso)
 
@@ -22,6 +27,7 @@ Mod de Hytale para crear hordas PVE por rondas con configuracion en UI.
 4. Ajusta lo basico:
    - `Rondas`, `Base ronda`, `Inc. por ronda`, `Delay (s)`, `Jugadores (x)`.
    - `Tipo enemigo` con botones `< >` (la UI prioriza tipos compatibles detectados).
+   - `Idioma` con botones `< >` (`Espanol` / `English`).
    - `Recompensa cada`, `Item recompensa` (tambien con `< >`) y `Cant.`.
 5. Pulsa `Guardar config`.
 6. Inicia con `Iniciar horda` o `/hordapve start`.
@@ -30,6 +36,8 @@ Mod de Hytale para crear hordas PVE por rondas con configuracion en UI.
 
 ## Comandos reales
 
+- `/horda help` muestra ayuda de comandos en chat.
+- `/horda` comando rapido de pruebas para spawnear una horda simple alrededor del jugador.
 - `/hordahelp` abre ayuda en UI.
 - `/hordahelp chat` envia ayuda en chat.
 - `/hordapve` abre UI de configuracion.
@@ -48,7 +56,6 @@ Mod de Hytale para crear hordas PVE por rondas con configuracion en UI.
 - `/hordapve reward <rondas>` cambia frecuencia de recompensa.
 - `/hordareload config` recarga `horde-config.json`.
 - `/hordareload mod` intenta recargar el plugin completo.
-- `/horda` comando rapido de pruebas para spawnear una horda simple alrededor del jugador.
 
 No existen comandos `/cerrar` ni `/holi`.
 
@@ -79,7 +86,8 @@ Nota: los roles tipo gato/mascota se filtran para que no salgan como enemigos de
   - `rewardEveryRounds`
   - `rewardItemId`
   - `rewardItemQuantity`
-- Al completar la ronda objetivo, el item se dropea en el centro de horda.
+- El plugin normaliza y valida el ID antes de dropear para evitar `Unknown/corrupt`.
+- Al completar la ronda objetivo, el item valido se dropea en el centro de horda.
 
 ## Logs
 
