@@ -1,0 +1,20 @@
+{
+    "Group": "${modGroup}",
+    "Name": "${modName}",
+    "Version": "${modVersion}",
+    "Description": "${modDescription}",
+    "Authors": [
+        {
+            "Name": "${modAuthor}"
+        }
+    ],
+    "Website": "${modWebsite}",
+    "ServerVersion": "*",
+    "Dependencies": {
+    },
+    "OptionalDependencies": {
+    },
+    "DisabledByDefault": false,
+    "Main": "${modMainClass}",
+    "IncludesAssetPack": ${includesPack}
+}

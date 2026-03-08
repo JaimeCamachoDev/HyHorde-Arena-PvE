@@ -1,0 +1,20 @@
+{
+    "Group": "Example",
+    "Name": "HyTemplate",
+    "Version": "0.1.0",
+    "Description": "Plantilla base para mods de Hytale con comando /hola.",
+    "Authors": [
+        {
+            "Name": "YourName"
+        }
+    ],
+    "Website": "https://github.com/your-user/hy-template",
+    "ServerVersion": "*",
+    "Dependencies": {
+    },
+    "OptionalDependencies": {
+    },
+    "DisabledByDefault": false,
+    "Main": "com.example.hytale.template.HyTemplatePlugin",
+    "IncludesAssetPack": false
+}
