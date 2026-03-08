@@ -92,7 +92,7 @@ extends AbstractPlayerCommand {
                 return;
             }
             default: {
-                playerRef.sendMessage(Message.raw((String)("Subcomando no valido: " + action + ". Usa /horda help.")));
+                playerRef.sendMessage(Message.raw((String)("Subcomando no valido: " + action + ". Usa /hordahelp.")));
             }
         }
     }
@@ -100,7 +100,7 @@ extends AbstractPlayerCommand {
     private void openUi(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef) {
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Usa /horda help."));
+            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Usa /hordahelp."));
             return;
         }
         HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);

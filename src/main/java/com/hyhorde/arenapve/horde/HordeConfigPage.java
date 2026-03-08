@@ -130,7 +130,7 @@ extends CustomUIPage {
 
     private void sendEnemyTypesPreview() {
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        this.playerRef.sendMessage(Message.raw((String)"Tipos de enemigo y rol detectado:"));
+        this.playerRef.sendMessage(Message.raw((String)("Tipos detectados (" + diagnostics.size() + "):")));
         for (String line : diagnostics) {
             this.playerRef.sendMessage(Message.raw((String)(" - " + line)));
         }
@@ -138,6 +138,11 @@ extends CustomUIPage {
 
     private void sendRewardTypesPreview() {
         List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        if (suggestions.isEmpty()) {
+            this.playerRef.sendMessage(Message.raw((String)"No hay items recompensa validos detectados en este modpack."));
+            return;
+        }
+        this.playerRef.sendMessage(Message.raw((String)("Item de test recomendado (seguro): " + suggestions.get(0))));
         this.playerRef.sendMessage(Message.raw((String)("Sugerencias de items recompensa: " + String.join(", ", suggestions))));
         this.playerRef.sendMessage(Message.raw((String)"Si un item no existe en tu pack, usa otro ID valido en RewardItemId."));
     }
@@ -147,14 +152,13 @@ extends CustomUIPage {
         if (enemyTypes.isEmpty()) {
             return HordeService.OperationResult.fail("No hay tipos de enemigo disponibles.");
         }
-        String currentType = HordeConfigPage.normalizeEnemyTypeInput(values.get("enemyType"));
+        String currentType = HordeConfigPage.normalizeEnemyTypeInput(HordeConfigPage.firstNonEmpty(values.get("enemyType"), this.hordeService.getConfigSnapshot().enemyType));
         int currentIndex = enemyTypes.indexOf(currentType);
         if (currentIndex < 0) {
             currentIndex = offset > 0 ? -1 : 0;
         }
         int nextIndex = Math.floorMod(currentIndex + offset, enemyTypes.size());
-        values.put("enemyType", enemyTypes.get(nextIndex));
-        return this.hordeService.applyUiConfig(values, world);
+        return this.hordeService.setEnemyType(enemyTypes.get(nextIndex));
     }
 
     private HordeService.OperationResult cycleRewardItem(Map<String, String> values, World world, int offset) {
@@ -177,14 +181,13 @@ extends CustomUIPage {
         if (options.isEmpty()) {
             return HordeService.OperationResult.fail("No hay idiomas disponibles.");
         }
-        String current = HordeService.normalizeLanguage(HordeConfigPage.extractLanguage(values.get("language")));
+        String current = HordeService.normalizeLanguage(HordeConfigPage.extractLanguage(HordeConfigPage.firstNonEmpty(values.get("language"), this.hordeService.getLanguage())));
         int currentIndex = options.indexOf(current);
         if (currentIndex < 0) {
             currentIndex = offset > 0 ? -1 : 0;
         }
         int nextIndex = Math.floorMod(currentIndex + offset, options.size());
-        values.put("language", options.get(nextIndex));
-        return this.hordeService.applyUiConfig(values, world);
+        return this.hordeService.setLanguage(options.get(nextIndex));
     }
 
     private static Map<String, String> extractConfigValues(JsonObject payload) {
@@ -225,11 +228,37 @@ extends CustomUIPage {
             return english ? "No enemy types available in this modpack." : "No hay tipos de enemigo disponibles en este modpack.";
         }
         String prefix = english ? "Available now: " : "Disponibles ahora: ";
-        return prefix + String.join(", ", enemyTypeOptions);
+        int maxPreview = 8;
+        int total = enemyTypeOptions.size();
+        List<String> preview = total > maxPreview ? enemyTypeOptions.subList(0, maxPreview) : enemyTypeOptions;
+        String suffix = total > maxPreview ? (english ? " ... (+" + (total - maxPreview) + " more)" : " ... (+" + (total - maxPreview) + " mas)") : "";
+        return prefix + String.join(", ", preview) + suffix;
     }
 
     private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english) {
-        commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config").set("#SubTitleLabel.Text", english ? "Minimal setup: center, difficulty, enemy type, language and rewards" : "Config minima: centro, dificultad, enemigo, idioma y recompensa").set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)").set("#SetSpawnButton.Text", english ? "Use my current position" : "Usar mi posicion actual").set("#RadiusLabel.Text", english ? "Min / max radius" : "Radio min / max").set("#RoundLabel.Text", english ? "Rounds" : "Rondas").set("#BaseEnemiesLabel.Text", english ? "Base / round" : "Base ronda").set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda").set("#PlayerMultiplierLabel.Text", english ? "Players (x)" : "Jugadores (x)").set("#RoleLabel.Text", english ? "Enemy type" : "Tipo enemigo").set("#RolesButton.Text", english ? "View types" : "Ver tipos").set("#LanguageLabel.Text", english ? "Language" : "Idioma").set("#RewardEveryRoundsLabel.Text", english ? "Reward every" : "Recompensa cada").set("#RewardCommandsLabel.Text", english ? "Reward item" : "Item recompensa").set("#RewardTypesButton.Text", english ? "View list" : "Ver lista").set("#RewardCommandsHelpLabel.Text", english ? "If it does not exist in your pack, type a valid item id manually." : "Si no existe en tu pack, escribe un item id valido manualmente.").set("#RewardItemQuantityLabel.Text", english ? "Qty." : "Cant.").set("#StatusTitleLabel.Text", english ? "Current status" : "Estado actual").set("#SaveButton.Text", english ? "Save config" : "Guardar config").set("#StartButton.Text", english ? "Start horde" : "Iniciar horda").set("#StopButton.Text", english ? "Stop horde" : "Detener horda").set("#CloseButton.Text", english ? "Close" : "Cerrar");
+        commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config")
+                .set("#SubTitleLabel.Text", english ? "Minimal setup: center, waves, enemies, rewards and language" : "Config minima: centro, oleadas, enemigos, recompensas e idioma")
+                .set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)")
+                .set("#SetSpawnButton.Text", english ? "Use my current position" : "Usar mi posicion actual")
+                .set("#RadiusLabel.Text", english ? "Min / max radius" : "Radio min / max")
+                .set("#RoundLabel.Text", english ? "Rounds" : "Rondas")
+                .set("#BaseEnemiesLabel.Text", english ? "Base / round" : "Base ronda")
+                .set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda")
+                .set("#WaveDelayLabel.Text", english ? "Delay (s)" : "Espera (s)")
+                .set("#PlayerMultiplierLabel.Text", english ? "Players (x)" : "Jugadores (x)")
+                .set("#RoleLabel.Text", english ? "Enemy type" : "Tipo enemigo")
+                .set("#RolesButton.Text", english ? "Valid types" : "Tipos validos")
+                .set("#LanguageLabel.Text", english ? "Interface language" : "Idioma interfaz")
+                .set("#RewardEveryRoundsLabel.Text", english ? "Reward every round(s)" : "Recompensa por ronda(s)")
+                .set("#RewardCommandsLabel.Text", english ? "Reward item" : "Item recompensa")
+                .set("#RewardTypesButton.Text", english ? "View loot" : "Ver loot")
+                .set("#RewardCommandsHelpLabel.Text", english ? "Tip: first suggestion is a tested item for this modpack." : "Tip: la primera sugerencia es un item testado para este modpack.")
+                .set("#RewardItemQuantityLabel.Text", english ? "Qty." : "Cant.")
+                .set("#StatusTitleLabel.Text", english ? "Current status" : "Estado actual")
+                .set("#SaveButton.Text", english ? "Save config" : "Guardar config")
+                .set("#StartButton.Text", english ? "Start horde" : "Iniciar horda")
+                .set("#StopButton.Text", english ? "Stop horde" : "Detener horda")
+                .set("#CloseButton.Text", english ? "Close" : "Cerrar");
     }
 
     private static String formatDouble(double value) {

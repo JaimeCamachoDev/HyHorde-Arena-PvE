@@ -52,6 +52,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public final class HordeService {
+    private static final List<String> PREFERRED_REWARD_TEST_ITEMS = List.of("item/resource/wood", "item/resource/stone", "item/consumable/apple", "item/material/iron_ingot", "item/weapon/sword_iron");
     private static final Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
     private static final List<String> ENEMY_TYPE_OPTIONS = new ArrayList<String>(ENEMY_TYPE_HINTS.keySet());
     private static final List<String> RANDOM_ENEMY_TYPE_OPTIONS = HordeService.buildRandomEnemyTypePool();
@@ -62,13 +63,15 @@ public final class HordeService {
     private static final int MIN_ROUNDS = 1;
     private static final int MAX_ROUNDS = 200;
     private static final int MIN_ENEMIES_PER_ROUND = 1;
-    private static final int MAX_ENEMIES_PER_ROUND = 250;
+    private static final int MAX_ENEMIES_PER_ROUND = 400;
     private static final int MIN_ENEMY_INCREMENT = 0;
-    private static final int MAX_ENEMY_INCREMENT = 250;
+    private static final int MAX_ENEMY_INCREMENT = 400;
     private static final int MIN_PLAYER_MULTIPLIER = 1;
     private static final int MAX_PLAYER_MULTIPLIER = 20;
     private static final int MIN_WAVE_DELAY_SECONDS = 0;
     private static final int MAX_WAVE_DELAY_SECONDS = 300;
+    private static final int MIN_REWARD_ITEM_QUANTITY = 1;
+    private static final int MAX_REWARD_ITEM_QUANTITY = 9999;
     private static final double MIN_RADIUS = 1.0;
     private static final double MAX_RADIUS = 128.0;
     private static final String LANGUAGE_SPANISH = "es";
@@ -114,7 +117,7 @@ public final class HordeService {
             rewardInfo = this.config.rewardItemId == null || this.config.rewardItemId.isBlank() ? "no item" : this.config.rewardItemId + " x" + this.config.rewardItemQuantity;
             return "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + this.session.playerMultiplier + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo;
         }
-        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Recompensa cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
+        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
     }
 
     public synchronized List<String> getAvailableRoles() {
@@ -369,6 +372,12 @@ public final class HordeService {
         if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
             return OperationResult.fail("enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
+        if (!"auto".equals(updated.enemyType) && !"random".equals(updated.enemyType)) {
+            List<String> roles = this.getAvailableRoles();
+            if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
+                return OperationResult.fail("enemyType '" + updated.enemyType + "' no tiene rol NPC compatible en este modpack.");
+            }
+        }
         if (updated.rewardEveryRounds <= 0 || updated.rewardEveryRounds > 200) {
             return OperationResult.fail("rewardEveryRounds debe estar entre 1 y 200.");
         }
@@ -382,37 +391,41 @@ public final class HordeService {
         catch (IllegalArgumentException ex) {
             return OperationResult.fail(ex.getMessage());
         }
-        if (updated.rewardItemQuantity <= 0 || updated.rewardItemQuantity > 9999) {
-            return OperationResult.fail("rewardItemQuantity debe estar entre 1 y 9999.");
+        if (updated.rewardItemQuantity < MIN_REWARD_ITEM_QUANTITY || updated.rewardItemQuantity > MAX_REWARD_ITEM_QUANTITY) {
+            return OperationResult.fail("rewardItemQuantity debe estar entre " + MIN_REWARD_ITEM_QUANTITY + " y " + MAX_REWARD_ITEM_QUANTITY + ".");
         }
-        if (updated.rewardItemId != null && !updated.rewardItemId.isBlank()) {
-            if (!HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity)) {
-                return OperationResult.fail("rewardItemId no es valido: " + updated.rewardItemId);
+        if (updated.rewardItemId == null || updated.rewardItemId.isBlank() || !HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity)) {
+            String fallbackItemId = HordeService.resolveGuaranteedRewardTestItemId(updated.rewardItemQuantity);
+            if (fallbackItemId == null || fallbackItemId.isBlank()) {
+                // No bloqueamos la UI/arranque por recompensa: se resolvera al dropear.
+                updated.rewardItemId = "";
+            } else {
+                updated.rewardItemId = fallbackItemId;
             }
         }
-        if (updated.minSpawnRadius < 1.0 || updated.minSpawnRadius > 128.0) {
-            return OperationResult.fail("minRadius debe estar entre 1.0 y 128.0.");
+        if (updated.minSpawnRadius < MIN_RADIUS || updated.minSpawnRadius > MAX_RADIUS) {
+            return OperationResult.fail("minRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
         }
-        if (updated.maxSpawnRadius < 1.0 || updated.maxSpawnRadius > 128.0) {
-            return OperationResult.fail("maxRadius debe estar entre 1.0 y 128.0.");
+        if (updated.maxSpawnRadius < MIN_RADIUS || updated.maxSpawnRadius > MAX_RADIUS) {
+            return OperationResult.fail("maxRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
         }
         if (updated.maxSpawnRadius < updated.minSpawnRadius) {
             return OperationResult.fail("maxRadius debe ser mayor o igual a minRadius.");
         }
-        if (updated.rounds < 1 || updated.rounds > 200) {
-            return OperationResult.fail("rounds debe estar entre 1 y 200.");
+        if (updated.rounds < MIN_ROUNDS || updated.rounds > MAX_ROUNDS) {
+            return OperationResult.fail("rounds debe estar entre " + MIN_ROUNDS + " y " + MAX_ROUNDS + ".");
         }
-        if (updated.baseEnemiesPerRound < 1 || updated.baseEnemiesPerRound > 250) {
-            return OperationResult.fail("baseEnemies debe estar entre 1 y 250.");
+        if (updated.baseEnemiesPerRound < MIN_ENEMIES_PER_ROUND || updated.baseEnemiesPerRound > MAX_ENEMIES_PER_ROUND) {
+            return OperationResult.fail("baseEnemies debe estar entre " + MIN_ENEMIES_PER_ROUND + " y " + MAX_ENEMIES_PER_ROUND + ".");
         }
-        if (updated.enemiesPerRoundIncrement < 0 || updated.enemiesPerRoundIncrement > 250) {
-            return OperationResult.fail("enemiesPerRound debe estar entre 0 y 250.");
+        if (updated.enemiesPerRoundIncrement < MIN_ENEMY_INCREMENT || updated.enemiesPerRoundIncrement > MAX_ENEMY_INCREMENT) {
+            return OperationResult.fail("enemiesPerRound debe estar entre " + MIN_ENEMY_INCREMENT + " y " + MAX_ENEMY_INCREMENT + ".");
         }
         if (updated.playerMultiplier < MIN_PLAYER_MULTIPLIER || updated.playerMultiplier > MAX_PLAYER_MULTIPLIER) {
-            return OperationResult.fail("playerMultiplier debe estar entre 1 y 20.");
+            return OperationResult.fail("playerMultiplier debe estar entre " + MIN_PLAYER_MULTIPLIER + " y " + MAX_PLAYER_MULTIPLIER + ".");
         }
-        if (updated.waveDelaySeconds < 0 || updated.waveDelaySeconds > 300) {
-            return OperationResult.fail("waveDelay debe estar entre 0 y 300 segundos.");
+        if (updated.waveDelaySeconds < MIN_WAVE_DELAY_SECONDS || updated.waveDelaySeconds > MAX_WAVE_DELAY_SECONDS) {
+            return OperationResult.fail("waveDelay debe estar entre " + MIN_WAVE_DELAY_SECONDS + " y " + MAX_WAVE_DELAY_SECONDS + " segundos.");
         }
         updated.spawnConfigured = true;
         updated.worldName = world.getName();
@@ -626,15 +639,21 @@ public final class HordeService {
             return;
         }
         trackedSession.world.sendMessage(Message.raw((String)("Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
-        if (this.config.rewardItemId == null || this.config.rewardItemId.isBlank()) {
+        int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
+        String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
+        boolean configuredValid = HordeService.isUsableRewardItemId(configuredRewardItemId, rewardQuantity);
+        String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity);
+        if (rewardItemId == null || rewardItemId.isBlank()) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido configurado o disponible.");
+            trackedSession.world.sendMessage(Message.raw((String)"No se pudo dropear recompensa: configura un item valido en RewardItemId."));
             return;
         }
-        String rewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
-        if (!HordeService.isUsableRewardItemId(rewardItemId, this.config.rewardItemQuantity)) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: item invalido '%s'.", (Object)this.config.rewardItemId);
-            return;
+        if (!configuredValid) {
+            this.config.rewardItemId = rewardItemId;
+            this.saveConfig();
+            trackedSession.world.sendMessage(Message.raw((String)("RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + ".")));
         }
-        ItemStack rewardStack = new ItemStack(rewardItemId, this.config.rewardItemQuantity);
+        ItemStack rewardStack = new ItemStack(rewardItemId, rewardQuantity);
         Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
         Holder itemEntityHolder = ItemComponent.generateItemDrop(trackedSession.store, rewardStack, dropPosition, Vector3f.ZERO, 0.0f, 0.35f, 0.0f);
         if (itemEntityHolder == null) {
@@ -646,7 +665,22 @@ public final class HordeService {
             itemComponent.setPickupDelay(0.6f);
         }
         trackedSession.store.addEntity(itemEntityHolder, AddReason.SPAWN);
-        trackedSession.world.sendMessage(Message.raw((String)("Item recompensa dropeado en el centro: " + rewardItemId + " x" + this.config.rewardItemQuantity + ".")));
+        trackedSession.world.sendMessage(Message.raw((String)("Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
+    }
+
+    private String resolveRewardItemIdForDrop(int quantity) {
+        String configured = HordeService.normalizeRewardItemId(this.config.rewardItemId);
+        if (HordeService.isUsableRewardItemId(configured, quantity)) {
+            return configured;
+        }
+        for (String suggestion : this.getRewardItemSuggestions()) {
+            String normalized = HordeService.normalizeRewardItemId(suggestion);
+            if (!HordeService.isUsableRewardItemId(normalized, quantity)) {
+                continue;
+            }
+            return normalized;
+        }
+        return HordeService.resolveGuaranteedRewardTestItemId(quantity);
     }
 
     private void broadcastHordeStartAnnouncement(String enemyType, String role, int playerMultiplier) {
@@ -1041,8 +1075,8 @@ public final class HordeService {
 
     private static Map<String, String[]> buildEnemyTypeHints() {
         LinkedHashMap<String, String[]> hints = new LinkedHashMap<String, String[]>();
-        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler"});
-        hints.put("random", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler"});
+        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler", "trork", "outlander", "scarak"});
+        hints.put("random", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler", "trork", "outlander", "scarak"});
         hints.put("bandit", new String[]{"bandit", "raider", "outlaw", "brigand", "thug"});
         hints.put("goblin", new String[]{"goblin"});
         hints.put("skeleton", new String[]{"skeleton"});
@@ -1051,6 +1085,9 @@ public final class HordeService {
         hints.put("wolf", new String[]{"wolf", "direwolf", "warg"});
         hints.put("slime", new String[]{"slime", "ooze"});
         hints.put("beetle", new String[]{"beetle", "bug", "insect"});
+        hints.put("trork", new String[]{"trork", "hunter", "shaman", "warrior", "brute"});
+        hints.put("outlander", new String[]{"outlander", "cultist", "ranger", "marauder", "raider"});
+        hints.put("scarak", new String[]{"scarak", "locust", "brood", "scarab", "beetle"});
         return hints;
     }
 
@@ -1067,22 +1104,26 @@ public final class HordeService {
     }
 
     private static List<String> buildRewardItemSuggestions() {
-        ArrayList<String> suggestions = new ArrayList<String>();
-        suggestions.add("item/weapon/sword_iron");
+        LinkedHashSet<String> suggestions = new LinkedHashSet<String>();
+        String guaranteedTestItem = HordeService.resolveGuaranteedRewardTestItemId(1);
+        if (guaranteedTestItem != null && !guaranteedTestItem.isBlank()) {
+            suggestions.add(guaranteedTestItem);
+        }
+        suggestions.addAll(PREFERRED_REWARD_TEST_ITEMS);
         suggestions.add("item/weapon/bow_wood");
         suggestions.add("item/armor/chestplate_iron");
-        suggestions.add("item/consumable/apple");
         suggestions.add("item/consumable/potion_health_small");
-        suggestions.add("item/material/iron_ingot");
         suggestions.add("item/material/gold_ingot");
-        suggestions.add("item/resource/wood");
-        suggestions.add("item/resource/stone");
         suggestions.add("item/tool/pickaxe_iron");
-        return suggestions;
+        return new ArrayList<String>(suggestions);
     }
 
     private static List<String> buildResolvedRewardSuggestions() {
         LinkedHashSet<String> resolved = new LinkedHashSet<String>();
+        String guaranteedTestItem = HordeService.resolveGuaranteedRewardTestItemId(1);
+        if (guaranteedTestItem != null && !guaranteedTestItem.isBlank() && HordeService.isUsableRewardItemId(guaranteedTestItem, 1)) {
+            resolved.add(guaranteedTestItem);
+        }
         for (String suggestion : REWARD_ITEM_SUGGESTIONS) {
             String normalized = HordeService.normalizeRewardItemId(suggestion);
             if (!HordeService.isUsableRewardItemId(normalized, 1)) continue;
@@ -1097,6 +1138,33 @@ public final class HordeService {
             }
         }
         return new ArrayList<String>(resolved);
+    }
+
+    private static String resolveDefaultRewardItemId() {
+        List<String> resolved = HordeService.buildResolvedRewardSuggestions();
+        if (resolved.isEmpty()) {
+            return HordeService.resolveGuaranteedRewardTestItemId(1);
+        }
+        return resolved.get(0);
+    }
+
+    private static String resolveGuaranteedRewardTestItemId(int quantity) {
+        int safeQuantity = Math.max(MIN_REWARD_ITEM_QUANTITY, quantity);
+        for (String preferred : PREFERRED_REWARD_TEST_ITEMS) {
+            String normalized = HordeService.normalizeRewardItemId(preferred);
+            if (!HordeService.isUsableRewardItemId(normalized, safeQuantity)) {
+                continue;
+            }
+            return normalized;
+        }
+        for (String fallback : HordeService.buildFallbackRewardSuggestions()) {
+            String normalized = HordeService.normalizeRewardItemId(fallback);
+            if (!HordeService.isUsableRewardItemId(normalized, safeQuantity)) {
+                continue;
+            }
+            return normalized;
+        }
+        return "";
     }
 
     private static String normalizeRewardItemId(String input) {
@@ -1335,25 +1403,25 @@ public final class HordeService {
 
     private static HordeConfig sanitize(HordeConfig source) {
         HordeConfig sanitized = source.copy();
-        if (sanitized.rounds < 1) {
+        if (sanitized.rounds < MIN_ROUNDS) {
             sanitized.rounds = HordeConfig.defaults().rounds;
-        } else if (sanitized.rounds > 200) {
-            sanitized.rounds = 200;
+        } else if (sanitized.rounds > MAX_ROUNDS) {
+            sanitized.rounds = MAX_ROUNDS;
         }
-        if (sanitized.baseEnemiesPerRound < 1) {
+        if (sanitized.baseEnemiesPerRound < MIN_ENEMIES_PER_ROUND) {
             sanitized.baseEnemiesPerRound = HordeConfig.defaults().baseEnemiesPerRound;
-        } else if (sanitized.baseEnemiesPerRound > 250) {
-            sanitized.baseEnemiesPerRound = 250;
+        } else if (sanitized.baseEnemiesPerRound > MAX_ENEMIES_PER_ROUND) {
+            sanitized.baseEnemiesPerRound = MAX_ENEMIES_PER_ROUND;
         }
-        if (sanitized.enemiesPerRoundIncrement < 0) {
+        if (sanitized.enemiesPerRoundIncrement < MIN_ENEMY_INCREMENT) {
             sanitized.enemiesPerRoundIncrement = HordeConfig.defaults().enemiesPerRoundIncrement;
-        } else if (sanitized.enemiesPerRoundIncrement > 250) {
-            sanitized.enemiesPerRoundIncrement = 250;
+        } else if (sanitized.enemiesPerRoundIncrement > MAX_ENEMY_INCREMENT) {
+            sanitized.enemiesPerRoundIncrement = MAX_ENEMY_INCREMENT;
         }
-        if (sanitized.waveDelaySeconds < 0) {
+        if (sanitized.waveDelaySeconds < MIN_WAVE_DELAY_SECONDS) {
             sanitized.waveDelaySeconds = HordeConfig.defaults().waveDelaySeconds;
-        } else if (sanitized.waveDelaySeconds > 300) {
-            sanitized.waveDelaySeconds = 300;
+        } else if (sanitized.waveDelaySeconds > MAX_WAVE_DELAY_SECONDS) {
+            sanitized.waveDelaySeconds = MAX_WAVE_DELAY_SECONDS;
         }
         if (sanitized.playerMultiplier < MIN_PLAYER_MULTIPLIER) {
             sanitized.playerMultiplier = HordeConfig.defaults().playerMultiplier;
@@ -1363,21 +1431,22 @@ public final class HordeService {
         if (sanitized.rewardEveryRounds <= 0) {
             sanitized.rewardEveryRounds = HordeConfig.defaults().rewardEveryRounds;
         }
-        if (sanitized.rewardItemQuantity <= 0) {
+        if (sanitized.rewardItemQuantity < MIN_REWARD_ITEM_QUANTITY) {
             sanitized.rewardItemQuantity = HordeConfig.defaults().rewardItemQuantity;
-        } else if (sanitized.rewardItemQuantity > 9999) {
-            sanitized.rewardItemQuantity = 9999;
+        } else if (sanitized.rewardItemQuantity > MAX_REWARD_ITEM_QUANTITY) {
+            sanitized.rewardItemQuantity = MAX_REWARD_ITEM_QUANTITY;
         }
-        if (sanitized.rewardItemId == null) {
-            sanitized.rewardItemId = "";
+        String safeRewardItemId = HordeService.resolveGuaranteedRewardTestItemId(sanitized.rewardItemQuantity);
+        if (sanitized.rewardItemId == null || sanitized.rewardItemId.isBlank()) {
+            sanitized.rewardItemId = safeRewardItemId;
         } else {
             sanitized.rewardItemId = HordeService.normalizeRewardItemId(sanitized.rewardItemId.trim());
             if (!sanitized.rewardItemId.isBlank() && !HordeService.isUsableRewardItemId(sanitized.rewardItemId, sanitized.rewardItemQuantity)) {
-                sanitized.rewardItemId = "";
+                sanitized.rewardItemId = safeRewardItemId;
             }
         }
-        sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, 1.0, 128.0);
-        sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, 1.0, 128.0);
+        sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, MIN_RADIUS, MAX_RADIUS);
+        sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, MIN_RADIUS, MAX_RADIUS);
         if (sanitized.maxSpawnRadius < sanitized.minSpawnRadius) {
             double temp = sanitized.minSpawnRadius;
             sanitized.minSpawnRadius = sanitized.maxSpawnRadius;
@@ -1436,15 +1505,15 @@ public final class HordeService {
             defaults.minSpawnRadius = 5.0;
             defaults.maxSpawnRadius = 12.0;
             defaults.rounds = 5;
-            defaults.baseEnemiesPerRound = 8;
-            defaults.enemiesPerRoundIncrement = 2;
+            defaults.baseEnemiesPerRound = 10;
+            defaults.enemiesPerRoundIncrement = 3;
             defaults.waveDelaySeconds = 8;
             defaults.playerMultiplier = 1;
             defaults.enemyType = "auto";
             defaults.npcRole = "";
             defaults.language = LANGUAGE_SPANISH;
             defaults.rewardEveryRounds = 2;
-            defaults.rewardItemId = "";
+            defaults.rewardItemId = HordeService.resolveDefaultRewardItemId();
             defaults.rewardItemQuantity = 1;
             return defaults;
         }

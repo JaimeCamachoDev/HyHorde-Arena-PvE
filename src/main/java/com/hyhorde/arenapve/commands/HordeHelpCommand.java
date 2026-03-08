@@ -19,12 +19,11 @@ extends AbstractPlayerCommand {
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
         playerRef.sendMessage(Message.raw((String)"[Horda PVE] Ayuda"));
         playerRef.sendMessage(Message.raw((String)"/hordahelp -> muestra esta ayuda"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve -> abre la configuracion"));
+        playerRef.sendMessage(Message.raw((String)"/hordapve -> abre la configuracion (alias: /hordepve)"));
         playerRef.sendMessage(Message.raw((String)"/hordapve start | stop | status | logs | setspawn"));
         playerRef.sendMessage(Message.raw((String)"/hordapve enemy <tipo> | tipos"));
         playerRef.sendMessage(Message.raw((String)"/hordapve role <rolNpc|auto> | roles"));
         playerRef.sendMessage(Message.raw((String)"/hordapve reward <rondas>"));
-        playerRef.sendMessage(Message.raw((String)"/hordareload config | mod"));
-        playerRef.sendMessage(Message.raw((String)"/horda -> horda simple de prueba (sin subcomandos)"));
+        playerRef.sendMessage(Message.raw((String)"/hordareload config"));
     }
 }

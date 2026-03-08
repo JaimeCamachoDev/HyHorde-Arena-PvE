@@ -201,8 +201,8 @@ Group {
   }
 
   TextButton #RolesButton {
-    Anchor: (Left: 1020, Top: 422, Width: 132, Height: 34);
-    Text: "Ver tipos";
+    Anchor: (Left: 1020, Top: 422, Width: 152, Height: 34);
+    Text: "Tipos validos";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 13, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -211,13 +211,13 @@ Group {
   }
 
   Label #LanguageLabel {
-    Anchor: (Left: 1162, Top: 422, Width: 66, Height: 34);
-    Text: "Idioma";
-    Style: (FontSize: 13, TextColor: #b8cadf, RenderBold: true, VerticalAlignment: Center);
+    Anchor: (Left: 980, Top: 496, Width: 176, Height: 28);
+    Text: "Idioma de interfaz";
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #LanguagePrevButton {
-    Anchor: (Left: 1230, Top: 422, Width: 34, Height: 34);
+    Anchor: (Left: 1160, Top: 494, Width: 38, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -227,15 +227,15 @@ Group {
   }
 
   TextField #Language {
-    Anchor: (Left: 1268, Top: 422, Width: 118, Height: 34);
+    Anchor: (Left: 1204, Top: 494, Width: 188, Height: 34);
     Value: "Espanol (es)";
-    Style: (FontSize: 12, TextColor: #e8f1ff);
+    Style: (FontSize: 13, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
   }
 
   TextButton #LanguageNextButton {
-    Anchor: (Left: 1390, Top: 422, Width: 34, Height: 34);
+    Anchor: (Left: 1396, Top: 494, Width: 34, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -251,8 +251,8 @@ Group {
   }
 
   Label #RewardEveryRoundsLabel {
-    Anchor: (Left: 492, Top: 496, Width: 170, Height: 28);
-    Text: "Recompensa cada";
+    Anchor: (Left: 492, Top: 496, Width: 176, Height: 28);
+    Text: "Recompensa por ronda(s)";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
@@ -300,7 +300,7 @@ Group {
 
   TextButton #RewardTypesButton {
     Anchor: (Left: 1166, Top: 544, Width: 120, Height: 34);
-    Text: "Ver lista";
+    Text: "Ver loot";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 13, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -310,7 +310,7 @@ Group {
 
   Label #RewardCommandsHelpLabel {
     Anchor: (Left: 668, Top: 580, Width: 620, Height: 22);
-    Text: "Si no existe en tu pack, escribe un item id valido manualmente.";
+    Text: "Tip: la primera sugerencia es un item testado para este modpack.";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
