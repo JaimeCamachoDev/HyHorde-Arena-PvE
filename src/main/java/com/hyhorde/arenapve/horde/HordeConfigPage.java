@@ -39,8 +39,8 @@ extends CustomUIPage {
     public void build(Ref<EntityStore> playerEntityRef, UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, Store<EntityStore> store) {
         HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
         boolean active = this.hordeService.isActive();
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#Role.Value", config.npcRole == null ? "" : config.npcRole).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"roles")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
+        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardCommands.Value", HordeConfigPage.formatRewardCommands(config.rewardCommands)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
     }
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
@@ -64,8 +64,9 @@ extends CustomUIPage {
                 result = this.hordeService.setSpawnFromPlayer(this.playerRef, world);
                 break;
             }
+            case "enemy_types":
             case "roles": {
-                this.sendRolesPreview();
+                this.sendEnemyTypesPreview();
                 break;
             }
             case "save": {
@@ -93,19 +94,12 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@Role", "#Role.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@EnemyType", "#EnemyType.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCommands", "#RewardCommands.Value");
     }
 
-    private void sendRolesPreview() {
-        List<String> roles = this.hordeService.getAvailableRoles();
-        if (roles.isEmpty()) {
-            this.playerRef.sendMessage(Message.raw((String)"No hay roles disponibles para spawn de NPC."));
-            return;
-        }
-        int previewCount = Math.min(20, roles.size());
-        String preview = String.join((CharSequence)", ", roles.subList(0, previewCount));
-        String suffix = roles.size() > previewCount ? " ... +" + (roles.size() - previewCount) + " mas" : "";
-        this.playerRef.sendMessage(Message.raw((String)("Roles NPC (" + roles.size() + "): " + preview + suffix)));
+    private void sendEnemyTypesPreview() {
+        List<String> enemyTypes = this.hordeService.getEnemyTypeOptions();
+        this.playerRef.sendMessage(Message.raw((String)("Tipos de enemigo: " + String.join(", ", enemyTypes))));
     }
 
     private static Map<String, String> extractConfigValues(JsonObject payload) {
@@ -119,7 +113,9 @@ extends CustomUIPage {
         values.put("baseEnemies", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "baseEnemies"), HordeConfigPage.read(payload, "@BaseEnemies"), HordeConfigPage.read(payload, "BaseEnemies")));
         values.put("enemiesPerRound", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemiesPerRound"), HordeConfigPage.read(payload, "@EnemiesPerRound"), HordeConfigPage.read(payload, "EnemiesPerRound")));
         values.put("waveDelay", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "waveDelay"), HordeConfigPage.read(payload, "@WaveDelay"), HordeConfigPage.read(payload, "WaveDelay")));
-        values.put("role", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "role"), HordeConfigPage.read(payload, "@Role"), HordeConfigPage.read(payload, "Role")));
+        values.put("enemyType", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyType"), HordeConfigPage.read(payload, "@EnemyType"), HordeConfigPage.read(payload, "EnemyType"), HordeConfigPage.read(payload, "role"), HordeConfigPage.read(payload, "@Role"), HordeConfigPage.read(payload, "Role")));
+        values.put("rewardEveryRounds", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardEveryRounds"), HordeConfigPage.read(payload, "@RewardEveryRounds"), HordeConfigPage.read(payload, "RewardEveryRounds")));
+        values.put("rewardCommands", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardCommands"), HordeConfigPage.read(payload, "@RewardCommands"), HordeConfigPage.read(payload, "RewardCommands")));
         return values;
     }
 
@@ -132,6 +128,13 @@ extends CustomUIPage {
 
     private static String formatDouble(double value) {
         return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private static String formatRewardCommands(List<String> rewardCommands) {
+        if (rewardCommands == null || rewardCommands.isEmpty()) {
+            return "";
+        }
+        return String.join((CharSequence)"; ", rewardCommands);
     }
 
     private static String read(JsonObject object, String key) {

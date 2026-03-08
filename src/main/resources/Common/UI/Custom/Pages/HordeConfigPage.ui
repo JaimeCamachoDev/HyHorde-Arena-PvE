@@ -7,7 +7,7 @@ Group {
   }
 
   Panel #Card {
-    Anchor: (Left: 410, Top: 90, Width: 1100, Height: 900);
+    Anchor: (Left: 410, Top: 90, Width: 1100, Height: 930);
     Background: #141f2e;
   }
 
@@ -24,7 +24,7 @@ Group {
 
   Label #SubTitleLabel {
     Anchor: (Left: 448, Top: 162, Width: 780, Height: 26);
-    Text: "Configura rondas, spawn y rol de NPC desde el juego";
+    Text: "Configura rondas, spawn, tipo de enemigo y recompensas";
     Style: (FontSize: 14, TextColor: #b9c8db);
   }
 
@@ -154,13 +154,13 @@ Group {
 
   Label #RoleLabel {
     Anchor: (Left: 448, Top: 586, Width: 220, Height: 28);
-    Text: "Rol NPC";
+    Text: "Tipo enemigo";
     Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextField #Role {
+  TextField #EnemyType {
     Anchor: (Left: 674, Top: 586, Width: 444, Height: 34);
-    Value: "";
+    Value: "auto";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
@@ -168,30 +168,64 @@ Group {
 
   Label #RoleHelpLabel {
     Anchor: (Left: 1130, Top: 588, Width: 330, Height: 30);
-    Text: "Vacio/auto = seleccion automatica";
+    Text: "auto, bandit, goblin, skeleton, zombie...";
     Style: (FontSize: 13, TextColor: #9fb3cb, VerticalAlignment: Center);
   }
 
+  Label #RewardEveryRoundsLabel {
+    Anchor: (Left: 448, Top: 640, Width: 220, Height: 28);
+    Text: "Recompensa cada";
+    Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextField #RewardEveryRounds {
+    Anchor: (Left: 674, Top: 640, Width: 216, Height: 34);
+    Value: "2";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  Label #RewardCommandsLabel {
+    Anchor: (Left: 448, Top: 694, Width: 220, Height: 28);
+    Text: "Comandos recompensa";
+    Style: (FontSize: 16, TextColor: #dbe8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextField #RewardCommands {
+    Anchor: (Left: 674, Top: 694, Width: 786, Height: 34);
+    Value: "";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  Label #RewardCommandsHelpLabel {
+    Anchor: (Left: 674, Top: 731, Width: 786, Height: 22);
+    Text: "Separar por ; Ejemplo: /give %player% coin 10 ; /xp add %player% 50";
+    Style: (FontSize: 12, TextColor: #9fb3cb, VerticalAlignment: Center);
+  }
+
   Label #StatusTitleLabel {
-    Anchor: (Left: 448, Top: 650, Width: 240, Height: 26);
+    Anchor: (Left: 448, Top: 770, Width: 240, Height: 26);
     Text: "Estado actual";
     Style: (FontSize: 17, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   Panel #StatusPanel {
-    Anchor: (Left: 448, Top: 680, Width: 1012, Height: 108);
+    Anchor: (Left: 448, Top: 800, Width: 1012, Height: 108);
     Background: #0f1825;
   }
 
   Label #StatusLabel {
-    Anchor: (Left: 462, Top: 694, Width: 984, Height: 80);
+    Anchor: (Left: 462, Top: 814, Width: 984, Height: 80);
     Text: "";
     Style: (FontSize: 14, TextColor: #d1e0f3, VerticalAlignment: Center);
   }
 
   TextButton #RolesButton {
-    Anchor: (Left: 448, Top: 810, Width: 180, Height: 44);
-    Text: "Ver roles";
+    Anchor: (Left: 448, Top: 930, Width: 180, Height: 44);
+    Text: "Ver tipos";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 15, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -200,7 +234,7 @@ Group {
   }
 
   TextButton #SaveButton {
-    Anchor: (Left: 644, Top: 810, Width: 220, Height: 44);
+    Anchor: (Left: 644, Top: 930, Width: 220, Height: 44);
     Text: "Guardar config";
     Style: TextButtonStyle(
       Default: (Background: #265f3f, LabelStyle: (FontSize: 15, TextColor: #f4fff9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -210,7 +244,7 @@ Group {
   }
 
   TextButton #StartButton {
-    Anchor: (Left: 880, Top: 810, Width: 180, Height: 44);
+    Anchor: (Left: 880, Top: 930, Width: 180, Height: 44);
     Text: "Iniciar horda";
     Style: TextButtonStyle(
       Default: (Background: #1c7a4a, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -220,7 +254,7 @@ Group {
   }
 
   TextButton #StopButton {
-    Anchor: (Left: 880, Top: 810, Width: 180, Height: 44);
+    Anchor: (Left: 880, Top: 930, Width: 180, Height: 44);
     Text: "Detener horda";
     Visible: false;
     Style: TextButtonStyle(
@@ -231,7 +265,7 @@ Group {
   }
 
   TextButton #CloseButton {
-    Anchor: (Left: 1278, Top: 810, Width: 182, Height: 44);
+    Anchor: (Left: 1278, Top: 930, Width: 182, Height: 44);
     Text: "Cerrar";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 15, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),

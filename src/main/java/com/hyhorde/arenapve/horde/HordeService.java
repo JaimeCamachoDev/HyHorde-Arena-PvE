@@ -32,6 +32,7 @@ import java.nio.file.attribute.FileAttribute;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -44,7 +45,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public final class HordeService {
-    private static final String[] ENEMY_ROLE_HINTS = new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"};
+    private static final Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
+    private static final List<String> ENEMY_TYPE_OPTIONS = new ArrayList<String>(ENEMY_TYPE_HINTS.keySet());
     private static final int MIN_ROUNDS = 1;
     private static final int MAX_ROUNDS = 200;
     private static final int MIN_ENEMIES_PER_ROUND = 1;
@@ -84,11 +86,15 @@ public final class HordeService {
             return "Sin horda activa. Usa /hordapve para abrir la interfaz.";
         }
         int alive = HordeService.countAlive(this.session.activeEnemies);
-        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Rol: " + this.session.role + " | Recompensa cada: " + this.config.rewardEveryRounds + " ronda(s)";
+        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Recompensa cada: " + this.config.rewardEveryRounds + " ronda(s)";
     }
 
     public synchronized List<String> getAvailableRoles() {
         return new ArrayList<String>(NPCPlugin.get().getRoleTemplateNames(true));
+    }
+
+    public synchronized List<String> getEnemyTypeOptions() {
+        return new ArrayList<String>(ENEMY_TYPE_OPTIONS);
     }
 
     public synchronized StatusSnapshot getStatusSnapshot() {
@@ -116,18 +122,17 @@ public final class HordeService {
         return OperationResult.ok("Panel de estado de horda abierto.");
     }
 
-    public synchronized OperationResult setConfiguredRole(String roleInput) {
-        String role;
-        String string = role = roleInput == null ? "" : roleInput.trim();
-        if (role.equalsIgnoreCase("auto")) {
-            role = "";
+    public synchronized OperationResult setEnemyType(String enemyTypeInput) {
+        String enemyType = HordeService.normalizeEnemyType(enemyTypeInput);
+        if (!ENEMY_TYPE_HINTS.containsKey(enemyType)) {
+            return OperationResult.fail("Tipo invalido. Usa uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
-        this.config.npcRole = role;
+        this.config.enemyType = enemyType;
         this.saveConfig();
-        if (role.isEmpty()) {
-            return OperationResult.ok("Rol de NPC en modo automatico.");
+        if ("auto".equals(enemyType)) {
+            return OperationResult.ok("Tipo de enemigo en modo automatico.");
         }
-        return OperationResult.ok("Rol de NPC configurado en: " + role);
+        return OperationResult.ok("Tipo de enemigo configurado en: " + enemyType);
     }
 
     public synchronized OperationResult setRewardEveryRounds(int everyRounds) {
@@ -163,14 +168,24 @@ public final class HordeService {
             updated.baseEnemiesPerRound = HordeService.parseInt(values.get("baseEnemies"), updated.baseEnemiesPerRound, "baseEnemies");
             updated.enemiesPerRoundIncrement = HordeService.parseInt(values.get("enemiesPerRound"), updated.enemiesPerRoundIncrement, "enemiesPerRound");
             updated.waveDelaySeconds = HordeService.parseInt(values.get("waveDelay"), updated.waveDelaySeconds, "waveDelay");
+            updated.rewardEveryRounds = HordeService.parseInt(values.get("rewardEveryRounds"), updated.rewardEveryRounds, "rewardEveryRounds");
         }
         catch (IllegalArgumentException ex) {
             return OperationResult.fail(ex.getMessage());
         }
-        String roleValue = values.get("role");
-        if (roleValue != null) {
-            String trimmedRole = roleValue.trim();
-            String string = updated.npcRole = trimmedRole.equalsIgnoreCase("auto") ? "" : trimmedRole;
+        String enemyTypeValue = values.get("enemyType");
+        if (enemyTypeValue != null) {
+            updated.enemyType = HordeService.normalizeEnemyType(enemyTypeValue);
+        }
+        if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
+            return OperationResult.fail("enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
+        }
+        if (updated.rewardEveryRounds <= 0 || updated.rewardEveryRounds > 200) {
+            return OperationResult.fail("rewardEveryRounds debe estar entre 1 y 200.");
+        }
+        String rewardCommandsRaw = values.get("rewardCommands");
+        if (rewardCommandsRaw != null) {
+            updated.rewardCommands = HordeService.parseRewardCommands(rewardCommandsRaw);
         }
         if (updated.minSpawnRadius < 1.0 || updated.minSpawnRadius > 128.0) {
             return OperationResult.fail("minRadius debe estar entre 1.0 y 128.0.");
@@ -205,7 +220,7 @@ public final class HordeService {
         if (this.session != null) {
             return OperationResult.fail("Ya hay una horda activa.");
         }
-        List roles = NPCPlugin.get().getRoleTemplateNames(true);
+        List<String> roles = NPCPlugin.get().getRoleTemplateNames(true);
         if (roles.isEmpty()) {
             return OperationResult.fail("No hay roles de NPC disponibles.");
         }
@@ -218,10 +233,11 @@ public final class HordeService {
             this.config.spawnZ = transform.getPosition().z;
             this.saveConfig();
         }
-        String selectedRole = HordeService.chooseRole(roles, this.config.npcRole);
-        this.session = newSession = new HordeSession(world, store, selectedRole);
+        String selectedEnemyType = HordeService.normalizeEnemyType(this.config.enemyType);
+        String selectedRole = HordeService.chooseRole(roles, selectedEnemyType, this.config.npcRole);
+        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 1000L, 1000L, TimeUnit.MILLISECONDS);
-        world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE iniciada en %.2f %.2f %.2f | %d rondas | rol: %s", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedRole)));
+        world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE iniciada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, selectedRole)));
         this.spawnNextRound(newSession, new Vector3f(startedBy.getTransform().getRotation()));
         Ref startedByRef = startedBy.getReference();
         if (startedByRef != null && startedByRef.isValid()) {
@@ -375,13 +391,13 @@ public final class HordeService {
     private StatusSnapshot createStatusSnapshot(World requestedWorld) {
         if (this.session == null) {
             String worldName = requestedWorld != null ? requestedWorld.getName() : this.config.worldName;
-            return StatusSnapshot.inactive(this.config.rounds, worldName);
+            return StatusSnapshot.inactive(this.config.rounds, worldName, this.config.enemyType);
         }
         int alive = HordeService.countAlive(this.session.activeEnemies);
         long now = System.currentTimeMillis();
         long elapsedSeconds = Math.max(0L, (now - this.session.startedAtMillis) / 1000L);
         long nextRoundInSeconds = this.session.roundActive ? 0L : Math.max(0L, (this.session.nextRoundAtMillis - now + 999L) / 1000L);
-        return StatusSnapshot.active(this.session.currentRound, this.config.rounds, alive, this.session.totalSpawned, this.session.totalKilled, this.session.role, elapsedSeconds, nextRoundInSeconds, this.session.world.getName());
+        return StatusSnapshot.active(this.session.currentRound, this.config.rounds, alive, this.session.totalSpawned, this.session.totalKilled, this.session.enemyType + " -> " + this.session.role, elapsedSeconds, nextRoundInSeconds, this.session.world.getName());
     }
 
     private void refreshStatusHud(HordeSession trackedSession) {
@@ -424,26 +440,81 @@ public final class HordeService {
         this.statusPages.clear();
     }
 
-    private static String chooseRole(List<String> roles, String configuredRole) {
-        if (configuredRole != null && !configuredRole.isBlank()) {
+    private static String chooseRole(List<String> roles, String selectedEnemyType, String legacyConfiguredRole) {
+        String normalizedType = HordeService.normalizeEnemyType(selectedEnemyType);
+        String[] preferredHints = ENEMY_TYPE_HINTS.get(normalizedType);
+        String roleByType = HordeService.findRoleByHints(roles, preferredHints);
+        if (roleByType != null) {
+            return roleByType;
+        }
+        if (legacyConfiguredRole != null && !legacyConfiguredRole.isBlank()) {
             for (String role : roles) {
-                if (!role.equalsIgnoreCase(configuredRole)) continue;
+                if (!role.equalsIgnoreCase(legacyConfiguredRole)) continue;
                 return role;
             }
         }
-        for (String string : ENEMY_ROLE_HINTS) {
-            for (String role : roles) {
-                if (!role.equalsIgnoreCase(string)) continue;
-                return role;
-            }
-        }
-        for (String string : ENEMY_ROLE_HINTS) {
-            for (String role : roles) {
-                if (!role.toLowerCase(Locale.ROOT).contains(string)) continue;
-                return role;
-            }
+        String fallbackRole = HordeService.findRoleByHints(roles, ENEMY_TYPE_HINTS.get("auto"));
+        if (fallbackRole != null) {
+            return fallbackRole;
         }
         return roles.get(0);
+    }
+
+    private static String findRoleByHints(List<String> roles, String[] hints) {
+        if (hints == null || hints.length == 0) {
+            return null;
+        }
+        for (String hint : hints) {
+            for (String role : roles) {
+                if (!role.equalsIgnoreCase(hint)) continue;
+                return role;
+            }
+        }
+        for (String hint : hints) {
+            for (String role : roles) {
+                if (!role.toLowerCase(Locale.ROOT).contains(hint)) continue;
+                return role;
+            }
+        }
+        return null;
+    }
+
+    private static String normalizeEnemyType(String input) {
+        if (input == null || input.isBlank()) {
+            return "auto";
+        }
+        String normalized = input.trim().toLowerCase(Locale.ROOT);
+        return normalized.equals("role") ? "auto" : normalized;
+    }
+
+    private static List<String> parseRewardCommands(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return new ArrayList<String>();
+        }
+        ArrayList<String> commands = new ArrayList<String>();
+        for (String token : rawValue.split("[;\\r\\n]+")) {
+            if (token == null) continue;
+            String trimmed = token.trim();
+            if (trimmed.isEmpty()) continue;
+            commands.add(trimmed);
+        }
+        return commands;
+    }
+
+    private static Map<String, String[]> buildEnemyTypeHints() {
+        LinkedHashMap<String, String[]> hints = new LinkedHashMap<String, String[]>();
+        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"});
+        hints.put("bandit", new String[]{"bandit", "raider", "outlaw"});
+        hints.put("goblin", new String[]{"goblin"});
+        hints.put("skeleton", new String[]{"skeleton"});
+        hints.put("zombie", new String[]{"zombie", "undead"});
+        hints.put("spider", new String[]{"spider", "arachnid"});
+        hints.put("wolf", new String[]{"wolf", "direwolf"});
+        hints.put("wraith", new String[]{"wraith", "ghost", "specter"});
+        hints.put("void", new String[]{"void", "corrupt"});
+        hints.put("demon", new String[]{"demon", "fiend"});
+        hints.put("beast", new String[]{"beast", "monster"});
+        return hints;
     }
 
     private static int removeInvalidRefs(Set<Ref<EntityStore>> refs) {
@@ -569,6 +640,8 @@ public final class HordeService {
         }
         if (sanitized.rewardCommands == null) {
             sanitized.rewardCommands = new ArrayList<String>(HordeConfig.defaults().rewardCommands);
+        } else {
+            sanitized.rewardCommands = HordeService.parseRewardCommands(String.join((CharSequence)";", sanitized.rewardCommands));
         }
         sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, 1.0, 128.0);
         sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, 1.0, 128.0);
@@ -576,6 +649,10 @@ public final class HordeService {
             double temp = sanitized.minSpawnRadius;
             sanitized.minSpawnRadius = sanitized.maxSpawnRadius;
             sanitized.maxSpawnRadius = temp;
+        }
+        sanitized.enemyType = HordeService.normalizeEnemyType(sanitized.enemyType);
+        if (!ENEMY_TYPE_HINTS.containsKey(sanitized.enemyType)) {
+            sanitized.enemyType = "auto";
         }
         sanitized.npcRole = HordeService.safeRoleValue(sanitized.npcRole).trim();
         sanitized.worldName = sanitized.worldName == null || sanitized.worldName.isBlank() ? "default" : sanitized.worldName;
@@ -604,6 +681,7 @@ public final class HordeService {
         public int baseEnemiesPerRound;
         public int enemiesPerRoundIncrement;
         public int waveDelaySeconds;
+        public String enemyType;
         public String npcRole;
         public int rewardEveryRounds;
         public List<String> rewardCommands;
@@ -621,6 +699,7 @@ public final class HordeService {
             defaults.baseEnemiesPerRound = 8;
             defaults.enemiesPerRoundIncrement = 2;
             defaults.waveDelaySeconds = 8;
+            defaults.enemyType = "auto";
             defaults.npcRole = "";
             defaults.rewardEveryRounds = 2;
             defaults.rewardCommands = new ArrayList<String>();
@@ -640,6 +719,7 @@ public final class HordeService {
             copy.baseEnemiesPerRound = this.baseEnemiesPerRound;
             copy.enemiesPerRoundIncrement = this.enemiesPerRoundIncrement;
             copy.waveDelaySeconds = this.waveDelaySeconds;
+            copy.enemyType = this.enemyType;
             copy.npcRole = this.npcRole;
             copy.rewardEveryRounds = this.rewardEveryRounds;
             copy.rewardCommands = this.rewardCommands == null ? new ArrayList<String>() : new ArrayList<String>(this.rewardCommands);
@@ -651,6 +731,7 @@ public final class HordeService {
         private final World world;
         private final Store<EntityStore> store;
         private final String role;
+        private final String enemyType;
         private final Set<Ref<EntityStore>> activeEnemies;
         private int currentRound;
         private int totalSpawned;
@@ -660,10 +741,11 @@ public final class HordeService {
         private final long startedAtMillis;
         private ScheduledFuture<?> ticker;
 
-        private HordeSession(World world, Store<EntityStore> store, String role) {
+        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType) {
             this.world = world;
             this.store = store;
             this.role = role;
+            this.enemyType = enemyType;
             this.activeEnemies = new HashSet<Ref<EntityStore>>();
             this.currentRound = 0;
             this.totalSpawned = 0;
@@ -699,8 +781,8 @@ public final class HordeService {
             this.worldName = worldName == null ? "default" : worldName;
         }
 
-        public static StatusSnapshot inactive(int totalRounds, String worldName) {
-            return new StatusSnapshot(false, 0, totalRounds, 0, 0, 0, "", 0L, 0L, worldName);
+        public static StatusSnapshot inactive(int totalRounds, String worldName, String enemyType) {
+            return new StatusSnapshot(false, 0, totalRounds, 0, 0, 0, enemyType, 0L, 0L, worldName);
         }
 
         public static StatusSnapshot active(int currentRound, int totalRounds, int aliveEnemies, int totalSpawned, int totalKilled, String role, long elapsedSeconds, long nextRoundInSeconds, String worldName) {

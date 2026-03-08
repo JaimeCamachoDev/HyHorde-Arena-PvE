@@ -6,7 +6,7 @@ Mod de Hytale centrado en un sistema de hordas PVE configurable, con interfaz de
 
 - Sistema de rondas con escalado de enemigos.
 - Spawn radial alrededor de un centro configurable.
-- Seleccion manual o automatica del rol NPC.
+- Seleccion de enemigos simplificada a una lista de 10 tipos comunes (o modo `auto`).
 - Configuracion desde UI (`HordeConfigPage`) y estado en vivo (`HordeStatusPage`).
 - Recompensas por rondas mediante comandos configurables.
 - Recarga de configuracion en caliente (`/hordareload config`).
@@ -27,14 +27,14 @@ Mod de Hytale centrado en un sistema de hordas PVE configurable, con interfaz de
 - `/hordapve start|stop|status`
 - `/hordapve hud` abre panel de estado.
 - `/hordapve setspawn` guarda tu posicion como centro.
-- `/hordapve role <rol|auto>`
-- `/hordapve roles` lista roles disponibles.
+- `/hordapve enemy <tipo>` fija tipo de enemigo (`auto`, `bandit`, `goblin`, `skeleton`, `zombie`, `spider`, `wolf`, `wraith`, `void`, `demon`, `beast`).
+- `/hordapve tipos` muestra la lista disponible.
 - `/hordapve reward <rondas>` define frecuencia de recompensas.
 - `/hordareload config` recarga `horde-config.json`.
 - `/hordareload mod` intenta recargar el plugin completo.
 - `/horda` genera una horda rapida alrededor del jugador.
-- `/holi` comando de prueba simple.
-- `/cerrar` apaga el servidor.
+
+La configuracion de recompensas (frecuencia y comandos) se puede editar directamente en la ventana de `/hordapve`.
 
 ## Configuracion
 
@@ -45,7 +45,7 @@ Mod de Hytale centrado en un sistema de hordas PVE configurable, con interfaz de
 - `enemiesPerRoundIncrement`
 - `waveDelaySeconds`
 - `minSpawnRadius` / `maxSpawnRadius`
-- `npcRole`
+- `enemyType`
 - `rewardEveryRounds`
 - `rewardCommands`
 

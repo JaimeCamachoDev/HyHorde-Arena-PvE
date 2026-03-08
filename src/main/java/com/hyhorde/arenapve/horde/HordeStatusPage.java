@@ -25,7 +25,7 @@ extends CustomUIPage {
     private HordeService.StatusSnapshot snapshot;
 
     private HordeStatusPage(PlayerRef playerRef, HordeService.StatusSnapshot initialSnapshot, Consumer<UUID> onDismissCallback) {
-        super(playerRef, CustomPageLifetime.CanDismiss);
+        super(playerRef, CustomPageLifetime.CanDismissOrCloseThroughInteraction);
         this.snapshot = initialSnapshot;
         this.onDismissCallback = onDismissCallback;
     }

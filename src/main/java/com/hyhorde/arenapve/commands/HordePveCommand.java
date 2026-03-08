@@ -61,12 +61,20 @@ extends AbstractPlayerCommand {
                 playerRef.sendMessage(Message.raw((String)this.hordeService.setSpawnFromPlayer(playerRef, world).getMessage()));
                 return;
             }
+            case "enemy":
+            case "enemigo":
+            case "tipo":
+            case "enemytype":
             case "role": {
-                this.handleRole(commandContext, playerRef);
+                this.handleEnemyType(commandContext, playerRef);
                 return;
             }
+            case "enemies":
+            case "enemigos":
+            case "tipos":
+            case "enemytypes":
             case "roles": {
-                this.handleRoles(playerRef);
+                this.handleEnemyTypes(playerRef);
                 return;
             }
             case "reward": {
@@ -86,25 +94,18 @@ extends AbstractPlayerCommand {
         HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
     }
 
-    private void handleRole(CommandContext commandContext, PlayerRef playerRef) {
+    private void handleEnemyType(CommandContext commandContext, PlayerRef playerRef) {
         if (!commandContext.provided(this.valueArg)) {
-            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve role <nombre-rol|auto>"));
+            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve enemy <auto|bandit|goblin|skeleton|zombie|spider|wolf|wraith|void|demon|beast>"));
             return;
         }
-        String role = (String)commandContext.get(this.valueArg);
-        playerRef.sendMessage(Message.raw((String)this.hordeService.setConfiguredRole(role).getMessage()));
+        String enemyType = (String)commandContext.get(this.valueArg);
+        playerRef.sendMessage(Message.raw((String)this.hordeService.setEnemyType(enemyType).getMessage()));
     }
 
-    private void handleRoles(PlayerRef playerRef) {
-        List<String> roles = this.hordeService.getAvailableRoles();
-        if (roles.isEmpty()) {
-            playerRef.sendMessage(Message.raw((String)"No hay roles NPC disponibles en este servidor."));
-            return;
-        }
-        int previewCount = Math.min(25, roles.size());
-        String preview = String.join((CharSequence)", ", roles.subList(0, previewCount));
-        String suffix = roles.size() > previewCount ? " ... +" + (roles.size() - previewCount) + " mas" : "";
-        playerRef.sendMessage(Message.raw((String)("Roles NPC (" + roles.size() + "): " + preview + suffix)));
+    private void handleEnemyTypes(PlayerRef playerRef) {
+        List<String> enemyTypes = this.hordeService.getEnemyTypeOptions();
+        playerRef.sendMessage(Message.raw((String)("Tipos de enemigo disponibles: " + String.join(", ", enemyTypes))));
     }
 
     private void sendHelp(PlayerRef playerRef) {
@@ -112,10 +113,10 @@ extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw((String)"/hordapve -> abre interfaz"));
         playerRef.sendMessage(Message.raw((String)"/hordapve start|stop|status"));
         playerRef.sendMessage(Message.raw((String)"/hordapve hud -> abre panel de estado en vivo"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve reward <x> -> recompensa cada x rondas"));
+        playerRef.sendMessage(Message.raw((String)"/hordapve reward <x> -> alternativa rapida para configurar recompensas"));
         playerRef.sendMessage(Message.raw((String)"/hordapve setspawn -> guarda tu posicion como centro"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve role <rol|auto>"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve roles -> lista roles disponibles"));
+        playerRef.sendMessage(Message.raw((String)"/hordapve enemy <tipo>"));
+        playerRef.sendMessage(Message.raw((String)"/hordapve tipos -> lista de tipos de enemigo"));
     }
 
     private void handleReward(CommandContext commandContext, PlayerRef playerRef) {
