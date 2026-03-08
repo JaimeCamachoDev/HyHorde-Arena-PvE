@@ -26,7 +26,7 @@ extends AbstractPlayerCommand {
     private static final int HORDE_SIZE = 12;
     private static final double MIN_RADIUS = 3.0;
     private static final double MAX_RADIUS = 8.0;
-    private static final String[] ENEMY_ROLE_HINTS = new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"};
+    private static final String[] ENEMY_ROLE_HINTS = new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler"};
     private final HordeService hordeService;
     private final OptionalArg<String> actionArg;
 

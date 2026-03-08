@@ -38,8 +38,11 @@ extends CustomUIPage {
 
     public void build(Ref<EntityStore> playerEntityRef, UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, Store<EntityStore> store) {
         HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
+        boolean english = HordeService.isEnglishLanguage(config.language);
         boolean active = this.hordeService.isActive();
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
+        List<String> enemyTypeOptions = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
+        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
+        this.setLocalizedTexts(commandBuilder, english);
         eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
     }
 
@@ -204,11 +207,29 @@ extends CustomUIPage {
         return values;
     }
 
-    private static String buildSpawnLabel(HordeService.HordeConfig config) {
+    private static String buildSpawnLabel(HordeService.HordeConfig config, boolean english) {
         if (!config.spawnConfigured) {
+            if (english) {
+                return "Horde center not configured. You can use your current position.";
+            }
             return "Centro de horda no configurado. Puedes usar tu posicion actual.";
         }
+        if (english) {
+            return String.format(Locale.ROOT, "Current center: %.2f %.2f %.2f | World: %s", config.spawnX, config.spawnY, config.spawnZ, config.worldName);
+        }
         return String.format(Locale.ROOT, "Centro actual: %.2f %.2f %.2f | Mundo: %s", config.spawnX, config.spawnY, config.spawnZ, config.worldName);
+    }
+
+    private static String buildEnemyTypesHint(List<String> enemyTypeOptions, boolean english) {
+        if (enemyTypeOptions == null || enemyTypeOptions.isEmpty()) {
+            return english ? "No enemy types available in this modpack." : "No hay tipos de enemigo disponibles en este modpack.";
+        }
+        String prefix = english ? "Available now: " : "Disponibles ahora: ";
+        return prefix + String.join(", ", enemyTypeOptions);
+    }
+
+    private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english) {
+        commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config").set("#SubTitleLabel.Text", english ? "Minimal setup: center, difficulty, enemy type, language and rewards" : "Config minima: centro, dificultad, enemigo, idioma y recompensa").set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)").set("#SetSpawnButton.Text", english ? "Use my current position" : "Usar mi posicion actual").set("#RadiusLabel.Text", english ? "Min / max radius" : "Radio min / max").set("#RoundLabel.Text", english ? "Rounds" : "Rondas").set("#BaseEnemiesLabel.Text", english ? "Base / round" : "Base ronda").set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda").set("#PlayerMultiplierLabel.Text", english ? "Players (x)" : "Jugadores (x)").set("#RoleLabel.Text", english ? "Enemy type" : "Tipo enemigo").set("#RolesButton.Text", english ? "View types" : "Ver tipos").set("#LanguageLabel.Text", english ? "Language" : "Idioma").set("#RewardEveryRoundsLabel.Text", english ? "Reward every" : "Recompensa cada").set("#RewardCommandsLabel.Text", english ? "Reward item" : "Item recompensa").set("#RewardTypesButton.Text", english ? "View list" : "Ver lista").set("#RewardCommandsHelpLabel.Text", english ? "If it does not exist in your pack, type a valid item id manually." : "Si no existe en tu pack, escribe un item id valido manualmente.").set("#RewardItemQuantityLabel.Text", english ? "Qty." : "Cant.").set("#StatusTitleLabel.Text", english ? "Current status" : "Estado actual").set("#SaveButton.Text", english ? "Save config" : "Guardar config").set("#StartButton.Text", english ? "Start horde" : "Iniciar horda").set("#StopButton.Text", english ? "Stop horde" : "Detener horda").set("#CloseButton.Text", english ? "Close" : "Cerrar");
     }
 
     private static String formatDouble(double value) {
@@ -255,11 +276,12 @@ extends CustomUIPage {
         if (normalized.contains("english") || normalized.contains("(en)")) {
             return "en";
         }
-        if (normalized.contains("espanol") || normalized.contains("español") || normalized.contains("(es)")) {
+        if (normalized.contains("espanol") || normalized.contains("espa\u00f1ol") || normalized.contains("(es)")) {
             return "es";
         }
         return normalized;
     }
 }
+
 
 

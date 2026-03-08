@@ -53,6 +53,13 @@ extends AbstractPlayerCommand {
 
     public static void sendChatHelp(PlayerRef playerRef, HordeService hordeService) {
         String language = hordeService == null ? "es" : hordeService.getLanguage();
+        String availableTypes = "auto, random, bandit, goblin, skeleton, zombie, spider, wolf, slime, beetle";
+        if (hordeService != null) {
+            String resolved = String.join(", ", hordeService.getEnemyTypeOptionsForCurrentRoles());
+            if (!resolved.isBlank()) {
+                availableTypes = resolved;
+            }
+        }
         if (HordeService.isEnglishLanguage(language)) {
             playerRef.sendMessage(Message.raw((String)"[Horde PVE] Quick guide"));
             playerRef.sendMessage(Message.raw((String)"1) /hordapve -> opens config menu"));
@@ -62,7 +69,7 @@ extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw((String)"5) /hordapve stop -> stops the horde"));
             playerRef.sendMessage(Message.raw((String)"Commands: /horda help, /hordapve status, /hordapve logs, /hordapve hud, /hordapve enemy <type>, /hordapve tipos, /hordapve role <npcRole|auto>, /hordapve roles, /hordapve reward <rounds>, /hordareload config"));
             playerRef.sendMessage(Message.raw((String)"Compatible alias: /hordepve (same subcommands as /hordapve)."));
-            playerRef.sendMessage(Message.raw((String)"Types: auto, random, bandit, goblin, skeleton, zombie, spider, wolf, wraith, void, demon, beast"));
+            playerRef.sendMessage(Message.raw((String)("Types: " + availableTypes)));
             return;
         }
         playerRef.sendMessage(Message.raw((String)"[Horda PVE] Guia rapida"));
@@ -73,6 +80,6 @@ extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw((String)"5) /hordapve stop -> detiene la horda"));
         playerRef.sendMessage(Message.raw((String)"Comandos: /horda help, /hordapve status, /hordapve logs, /hordapve hud, /hordapve enemy <tipo>, /hordapve tipos, /hordapve role <rolNpc|auto>, /hordapve roles, /hordapve reward <rondas>, /hordareload config"));
         playerRef.sendMessage(Message.raw((String)"Alias compatible: /hordepve (mismos subcomandos que /hordapve)."));
-        playerRef.sendMessage(Message.raw((String)"Tipos: auto, random, bandit, goblin, skeleton, zombie, spider, wolf, wraith, void, demon, beast"));
+        playerRef.sendMessage(Message.raw((String)("Tipos: " + availableTypes)));
     }
 }

@@ -126,7 +126,9 @@ extends AbstractPlayerCommand {
 
     private void handleEnemyType(CommandContext commandContext, PlayerRef playerRef) {
         if (!commandContext.provided(this.valueArg)) {
-            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve enemy <auto|random|bandit|goblin|skeleton|zombie|spider|wolf|wraith|void|demon|beast>"));
+            List<String> options = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
+            String usage = options.isEmpty() ? "auto|random" : String.join("|", options);
+            playerRef.sendMessage(Message.raw((String)("Uso: /hordapve enemy <" + usage + ">")));
             return;
         }
         String enemyType = (String)commandContext.get(this.valueArg);

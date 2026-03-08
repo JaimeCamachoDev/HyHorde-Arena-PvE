@@ -246,7 +246,7 @@ Group {
 
   Label #RoleHelpLabel {
     Anchor: (Left: 668, Top: 458, Width: 760, Height: 22);
-    Text: "auto, random, bandit, goblin, skeleton, zombie, spider, wolf, wraith, void, demon, beast";
+    Text: "Disponibles ahora: auto, random";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 

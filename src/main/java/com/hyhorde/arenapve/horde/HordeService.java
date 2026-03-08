@@ -58,6 +58,7 @@ public final class HordeService {
     private static final List<String> REWARD_ITEM_SUGGESTIONS = HordeService.buildRewardItemSuggestions();
     private static final String[] BLOCKED_ENEMY_ROLE_HINTS = new String[]{"kitten", "feline"};
     private static final int START_COUNTDOWN_SECONDS = 3;
+    private static final long SESSION_TICK_INTERVAL_MILLIS = 250L;
     private static final int MIN_ROUNDS = 1;
     private static final int MAX_ROUNDS = 200;
     private static final int MIN_ENEMIES_PER_ROUND = 1;
@@ -467,9 +468,10 @@ public final class HordeService {
             return OperationResult.fail("No se pudo resolver un rol NPC compatible para iniciar la horda.");
         }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
-        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, supportedEnemyTypes, startRotation, START_COUNTDOWN_SECONDS);
+        long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_SECONDS * 1000L;
+        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, supportedEnemyTypes, startRotation, firstRoundAtMillis);
         this.syncSessionPlayers(newSession);
-        newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, 1000L, TimeUnit.MILLISECONDS);
+        newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, SESSION_TICK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         String roleSuffix = forcedRole == null ? selectedRole : selectedRole + " (forzado)";
         world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | inicio en %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, START_COUNTDOWN_SECONDS)));
         this.broadcastHordeStartAnnouncement(selectedEnemyType, selectedRole, this.config.playerMultiplier);
@@ -512,35 +514,52 @@ public final class HordeService {
                 if (removed > 0) {
                     trackedSession.totalKilled += removed;
                 }
+                HordeService.removeInvalidRefs(trackedSession.spawnedEnemies, null);
                 this.syncSessionPlayers(trackedSession);
-                if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.startCountdownSeconds >= 0) {
-                    if (trackedSession.startCountdownSeconds > 0) {
-                        this.broadcastHordeCountdownAnnouncement(trackedSession.startCountdownSeconds, trackedSession.enemyType, trackedSession.role);
-                        trackedSession.world.sendMessage(Message.raw((String)("La horda comienza en " + trackedSession.startCountdownSeconds + "...")));
-                        trackedSession.startCountdownSeconds = trackedSession.startCountdownSeconds - 1;
-                        trackedSession.nextRoundAtMillis = System.currentTimeMillis() + 1000L;
-                    } else {
-                        this.broadcastHordeCountdownGoAnnouncement(1, this.config.rounds);
-                        trackedSession.startCountdownSeconds = -1;
-                        this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
+                long now = System.currentTimeMillis();
+                if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
+                    int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
+                    if (now < trackedSession.nextRoundAtMillis) {
+                        if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastStartCountdownAnnouncement) {
+                            this.broadcastHordeCountdownAnnouncement(secondsRemaining, trackedSession.enemyType, trackedSession.role);
+                            trackedSession.world.sendMessage(Message.raw((String)("La horda comienza en " + secondsRemaining + "...")));
+                            trackedSession.lastStartCountdownAnnouncement = secondsRemaining;
+                        }
+                        this.refreshStatusHud(trackedSession);
+                        return;
                     }
+                    this.broadcastHordeCountdownGoAnnouncement(1, this.config.rounds);
+                    trackedSession.lastStartCountdownAnnouncement = 0;
+                    trackedSession.nextRoundAtMillis = 0L;
+                    this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
                     this.refreshStatusHud(trackedSession);
                     return;
                 }
                 if (trackedSession.roundActive && trackedSession.activeEnemies.isEmpty()) {
                     trackedSession.roundActive = false;
                     this.grantRoundRewards(trackedSession, trackedSession.currentRound);
-                    if (trackedSession.currentRound >= this.config.rounds) {
+                    boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
+                    boolean finalRound = trackedSession.currentRound >= this.config.rounds;
+                    int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
+                    this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
+                    if (finalRound) {
                         this.endSession(trackedSession, "Horda completada. Todas las rondas terminadas.", false);
                         return;
                     }
-                    trackedSession.nextRoundAtMillis = System.currentTimeMillis() + (long)this.config.waveDelaySeconds * 1000L;
-                    boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
+                    trackedSession.nextRoundAtMillis = now + (long)this.config.waveDelaySeconds * 1000L;
+                    trackedSession.lastIntermissionCountdownAnnouncement = -1;
                     world.sendMessage(Message.raw((String)("Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
-                    this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, this.config.waveDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked);
                 }
-                if (!trackedSession.roundActive && trackedSession.currentRound < this.config.rounds && System.currentTimeMillis() >= trackedSession.nextRoundAtMillis) {
-                    this.spawnNextRound(trackedSession, Vector3f.ZERO);
+                if (!trackedSession.roundActive && trackedSession.currentRound > 0 && trackedSession.currentRound < this.config.rounds) {
+                    if (trackedSession.nextRoundAtMillis > now) {
+                        int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
+                        if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastIntermissionCountdownAnnouncement) {
+                            this.broadcastRoundCountdownAnnouncement(trackedSession.currentRound + 1, this.config.rounds, secondsRemaining);
+                            trackedSession.lastIntermissionCountdownAnnouncement = secondsRemaining;
+                        }
+                    } else {
+                        this.spawnNextRound(trackedSession, Vector3f.ZERO);
+                    }
                 }
                 this.refreshStatusHud(trackedSession);
             }
@@ -577,7 +596,9 @@ public final class HordeService {
                 }
                 Pair created = NPCPlugin.get().spawnNPC(sessionToAdvance.store, roleForSpawn, null, spawnPosition, new Vector3f(baseRotation));
                 if (created == null || created.left() == null) continue;
-                sessionToAdvance.activeEnemies.add((Ref<EntityStore>)((Ref)created.left()));
+                Ref<EntityStore> enemyRef = (Ref<EntityStore>)((Ref)created.left());
+                sessionToAdvance.activeEnemies.add(enemyRef);
+                sessionToAdvance.spawnedEnemies.add(enemyRef);
                 ++sessionToAdvance.totalSpawned;
                 ++spawned;
                 continue;
@@ -594,6 +615,7 @@ public final class HordeService {
         sessionToAdvance.roundActive = true;
         sessionToAdvance.nextRoundAtMillis = 0L;
         sessionToAdvance.world.sendMessage(Message.raw((String)("Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores).")));
+        this.broadcastRoundStartAnnouncement(nextRound, this.config.rounds, spawned, playerMultiplier);
     }
 
     private void grantRoundRewards(HordeSession trackedSession, int completedRound) {
@@ -631,7 +653,7 @@ public final class HordeService {
         try {
             String titleText = "HORDA PVE PREPARADA";
             String subtitleText = String.format(Locale.ROOT, "Tipo: %s | Rol: %s | Rondas: %d | Jugadores x%d | Inicio en %ds", enemyType, role, this.config.rounds, playerMultiplier, START_COUNTDOWN_SECONDS);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 4.0f, 1.0f, 1.0f);
+            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.2f, 0.1f, 0.15f);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio global de inicio de horda: %s", (Object)ex.getMessage());
@@ -653,22 +675,44 @@ public final class HordeService {
         try {
             String titleText = "A LUCHAR";
             String subtitleText = String.format(Locale.ROOT, "Ronda %d/%d iniciada", round, totalRounds);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 2.2f, 0.25f, 0.35f);
+            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.6f, 0.15f, 0.2f);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio GO de horda: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastRoundCompleteAnnouncement(int completedRound, int totalRounds, int nextDelaySeconds, int totalKilled, int totalSpawned, boolean rewardUnlocked) {
+    private void broadcastRoundCompleteAnnouncement(int completedRound, int totalRounds, int nextDelaySeconds, int totalKilled, int totalSpawned, boolean rewardUnlocked, boolean finalRound) {
         try {
             String titleText = String.format(Locale.ROOT, "RONDA %d/%d COMPLETADA", completedRound, totalRounds);
             String rewardText = rewardUnlocked ? " | Recompensa desbloqueada" : "";
-            String subtitleText = String.format(Locale.ROOT, "Siguiente en %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 2.8f, 0.4f, 0.5f);
+            String subtitleText = finalRound ? String.format(Locale.ROOT, "Horda completada | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Siguiente en %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText);
+            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", finalRound ? 3.2f : 2.8f, 0.4f, 0.5f);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio de ronda completada: %s", (Object)ex.getMessage());
+        }
+    }
+
+    private void broadcastRoundCountdownAnnouncement(int round, int totalRounds, int secondsRemaining) {
+        try {
+            String titleText = String.format(Locale.ROOT, "RONDA %d EN %d...", round, secondsRemaining);
+            String subtitleText = String.format(Locale.ROOT, "Preparados para %d/%d", round, totalRounds);
+            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 0.9f, 0.12f, 0.12f);
+        }
+        catch (Exception ex) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar countdown entre rondas: %s", (Object)ex.getMessage());
+        }
+    }
+
+    private void broadcastRoundStartAnnouncement(int round, int totalRounds, int spawned, int playerMultiplier) {
+        try {
+            String titleText = String.format(Locale.ROOT, "RONDA %d/%d", round, totalRounds);
+            String subtitleText = String.format(Locale.ROOT, "Enemigos: %d | Jugadores x%d", spawned, playerMultiplier);
+            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.7f, 0.15f, 0.2f);
+        }
+        catch (Exception ex) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar inicio de ronda: %s", (Object)ex.getMessage());
         }
     }
 
@@ -692,21 +736,35 @@ public final class HordeService {
         if (trackedSession.ticker != null) {
             trackedSession.ticker.cancel(false);
         }
-        if (cleanupAliveEnemies) {
-            for (Ref<EntityStore> enemyRef : trackedSession.activeEnemies) {
-                if (enemyRef == null || !enemyRef.isValid()) continue;
-                try {
-                    trackedSession.store.removeEntity(enemyRef, RemoveReason.REMOVE);
-                }
-                catch (Exception exception) {}
-            }
-        }
+        int cleanedEnemies = cleanupAliveEnemies ? this.cleanupTrackedEnemies(trackedSession) : 0;
         int aliveAtEnd = HordeService.countAlive(trackedSession.activeEnemies);
         trackedSession.activeEnemies.clear();
+        trackedSession.spawnedEnemies.clear();
         this.session = null;
-        trackedSession.world.sendMessage(Message.raw((String)(reason + " (vivos restantes: " + aliveAtEnd + ").")));
+        String cleanInfo = cleanupAliveEnemies ? " | limpiados: " + cleanedEnemies : "";
+        trackedSession.world.sendMessage(Message.raw((String)(reason + " (vivos restantes: " + aliveAtEnd + cleanInfo + ").")));
         this.broadcastHordeEndAnnouncement(reason, aliveAtEnd);
         this.refreshStatusHud(null);
+    }
+
+    private int cleanupTrackedEnemies(HordeSession trackedSession) {
+        LinkedHashSet<Ref<EntityStore>> refsToCleanup = new LinkedHashSet<Ref<EntityStore>>();
+        refsToCleanup.addAll(trackedSession.activeEnemies);
+        refsToCleanup.addAll(trackedSession.spawnedEnemies);
+        int cleaned = 0;
+        for (Ref<EntityStore> enemyRef : refsToCleanup) {
+            if (enemyRef == null || !enemyRef.isValid()) {
+                continue;
+            }
+            try {
+                trackedSession.store.removeEntity(enemyRef, RemoveReason.REMOVE);
+                ++cleaned;
+            }
+            catch (Exception exception) {
+                // ignore individual remove failures and continue cleanup
+            }
+        }
+        return cleaned;
     }
 
     private StatusSnapshot createStatusSnapshot(World requestedWorld) {
@@ -950,7 +1008,7 @@ public final class HordeService {
         if ("english".equals(normalized) || "ing".equals(normalized) || "en_us".equals(normalized) || "en-gb".equals(normalized) || normalized.contains("english") || normalized.endsWith("(en)")) {
             return LANGUAGE_ENGLISH;
         }
-        if ("espanol".equals(normalized) || "español".equals(normalized) || "spa".equals(normalized) || normalized.contains("espanol") || normalized.contains("español") || normalized.endsWith("(es)")) {
+        if ("espanol".equals(normalized) || "espa\u00f1ol".equals(normalized) || "spa".equals(normalized) || normalized.contains("espanol") || normalized.contains("espa\u00f1ol") || normalized.endsWith("(es)")) {
             return LANGUAGE_SPANISH;
         }
         if (!LANGUAGE_OPTIONS.contains(normalized)) {
@@ -983,18 +1041,16 @@ public final class HordeService {
 
     private static Map<String, String[]> buildEnemyTypeHints() {
         LinkedHashMap<String, String[]> hints = new LinkedHashMap<String, String[]>();
-        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"});
-        hints.put("random", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "wraith", "void", "demon", "beast"});
+        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler"});
+        hints.put("random", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler"});
         hints.put("bandit", new String[]{"bandit", "raider", "outlaw", "brigand", "thug"});
         hints.put("goblin", new String[]{"goblin"});
         hints.put("skeleton", new String[]{"skeleton"});
         hints.put("zombie", new String[]{"zombie", "undead", "ghoul", "walker"});
         hints.put("spider", new String[]{"spider", "arachnid"});
         hints.put("wolf", new String[]{"wolf", "direwolf", "warg"});
-        hints.put("wraith", new String[]{"wraith", "ghost", "specter"});
-        hints.put("void", new String[]{"void", "corrupt", "corruption", "abyss"});
-        hints.put("demon", new String[]{"demon", "fiend"});
-        hints.put("beast", new String[]{"beast", "monster", "creature"});
+        hints.put("slime", new String[]{"slime", "ooze"});
+        hints.put("beetle", new String[]{"beetle", "bug", "insect"});
         return hints;
     }
 
@@ -1115,6 +1171,11 @@ public final class HordeService {
 
     private static boolean isRandomEnemyType(String enemyType) {
         return "random".equals(HordeService.normalizeEnemyType(enemyType));
+    }
+
+    private static int computeRemainingSeconds(long nowMillis, long targetMillis) {
+        long remaining = Math.max(0L, targetMillis - nowMillis);
+        return (int)((remaining + 999L) / 1000L);
     }
 
     private static String pickRandomEnemyType(List<String> preferredTypes) {
@@ -1435,6 +1496,7 @@ public final class HordeService {
         private final int playerMultiplier;
         private final Vector3f startRotation;
         private final Set<Ref<EntityStore>> activeEnemies;
+        private final Set<Ref<EntityStore>> spawnedEnemies;
         private final Set<Ref<EntityStore>> accountedEnemyDeaths;
         private final Map<UUID, PlayerCombatStats> playerStats;
         private final Map<UUID, Long> lastPlayerDeathAt;
@@ -1442,12 +1504,13 @@ public final class HordeService {
         private int totalSpawned;
         private int totalKilled;
         private boolean roundActive;
-        private int startCountdownSeconds;
+        private int lastStartCountdownAnnouncement;
+        private int lastIntermissionCountdownAnnouncement;
         private long nextRoundAtMillis;
         private final long startedAtMillis;
         private ScheduledFuture<?> ticker;
 
-        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, int startCountdownSeconds) {
+        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, long firstRoundAtMillis) {
             this.world = world;
             this.store = store;
             this.role = role;
@@ -1458,6 +1521,7 @@ public final class HordeService {
             this.playerMultiplier = Math.max(MIN_PLAYER_MULTIPLIER, playerMultiplier);
             this.startRotation = startRotation == null ? Vector3f.ZERO : new Vector3f(startRotation);
             this.activeEnemies = new HashSet<Ref<EntityStore>>();
+            this.spawnedEnemies = new HashSet<Ref<EntityStore>>();
             this.accountedEnemyDeaths = new HashSet<Ref<EntityStore>>();
             this.playerStats = new HashMap<UUID, PlayerCombatStats>();
             this.lastPlayerDeathAt = new HashMap<UUID, Long>();
@@ -1465,8 +1529,9 @@ public final class HordeService {
             this.totalSpawned = 0;
             this.totalKilled = 0;
             this.roundActive = false;
-            this.startCountdownSeconds = Math.max(0, startCountdownSeconds);
-            this.nextRoundAtMillis = 0L;
+            this.lastStartCountdownAnnouncement = -1;
+            this.lastIntermissionCountdownAnnouncement = -1;
+            this.nextRoundAtMillis = Math.max(0L, firstRoundAtMillis);
             this.startedAtMillis = System.currentTimeMillis();
         }
     }
@@ -1562,5 +1627,6 @@ public final class HordeService {
         }
     }
 }
+
 
 
