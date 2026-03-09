@@ -168,7 +168,7 @@ Group {
 
   Label #RoleLabel {
     Anchor: (Left: 492, Top: 422, Width: 200, Height: 28);
-    Text: "Tipo enemigo";
+    Text: "Categoria de horda";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
@@ -184,7 +184,7 @@ Group {
 
   TextField #EnemyType {
     Anchor: (Left: 720, Top: 422, Width: 242, Height: 34);
-    Value: "auto";
+    Value: "undead";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
@@ -202,7 +202,7 @@ Group {
 
   TextButton #RolesButton {
     Anchor: (Left: 1020, Top: 422, Width: 152, Height: 34);
-    Text: "Tipos validos";
+    Text: "Ver categorias";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 13, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -246,7 +246,7 @@ Group {
 
   Label #RoleHelpLabel {
     Anchor: (Left: 668, Top: 458, Width: 760, Height: 22);
-    Text: "Disponibles ahora: auto, random";
+    Text: "Usa < > para cambiar categoria";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 

@@ -41,7 +41,7 @@ extends CustomUIPage {
         boolean english = HordeService.isEnglishLanguage(config.language);
         boolean active = this.hordeService.isActive();
         List<String> enemyTypeOptions = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "auto" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
+        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active);
         this.setLocalizedTexts(commandBuilder, english);
         eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"));
     }
@@ -170,7 +170,7 @@ extends CustomUIPage {
 
     private void sendEnemyTypesPreview() {
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        this.playerRef.sendMessage(Message.raw((String)("Tipos detectados (" + diagnostics.size() + "):")));
+        this.playerRef.sendMessage(Message.raw((String)("Categorias detectadas (" + diagnostics.size() + "):")));
         for (String line : diagnostics) {
             this.playerRef.sendMessage(Message.raw((String)(" - " + line)));
         }
@@ -204,7 +204,7 @@ extends CustomUIPage {
     private HordeService.OperationResult cycleEnemyType(Map<String, String> values, World world, int offset) {
         List<String> enemyTypes = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
         if (enemyTypes.isEmpty()) {
-            return HordeService.OperationResult.fail("No hay tipos de enemigo disponibles.");
+            return HordeService.OperationResult.fail("No hay categorias de horda disponibles.");
         }
         String currentType = HordeConfigPage.normalizeEnemyTypeInput(HordeConfigPage.firstNonEmpty(values.get("enemyType"), this.hordeService.getConfigSnapshot().enemyType));
         int currentIndex = enemyTypes.indexOf(currentType);
@@ -277,16 +277,70 @@ extends CustomUIPage {
         return String.format(Locale.ROOT, "Centro actual: %.2f %.2f %.2f | Mundo: %s", config.spawnX, config.spawnY, config.spawnZ, config.worldName);
     }
 
-    private static String buildEnemyTypesHint(List<String> enemyTypeOptions, boolean english) {
+    private static String buildEnemyTypesHint(List<String> enemyTypeOptions, String selectedEnemyType, boolean english) {
         if (enemyTypeOptions == null || enemyTypeOptions.isEmpty()) {
-            return english ? "No enemy types available in this modpack." : "No hay tipos de enemigo disponibles en este modpack.";
+            return english ? "No horde categories available in this modpack." : "No hay categorias de horda disponibles en este modpack.";
         }
-        String prefix = english ? "Available now: " : "Disponibles ahora: ";
-        int maxPreview = 8;
+        String current = HordeConfigPage.normalizeEnemyTypeInput(HordeConfigPage.firstNonEmpty(selectedEnemyType, enemyTypeOptions.get(0)));
+        String currentLabel = HordeConfigPage.enemyTypeLabel(current, english);
+        String currentIds = HordeConfigPage.enemyTypePreviewIds(current);
+        int maxPreview = 6;
         int total = enemyTypeOptions.size();
         List<String> preview = total > maxPreview ? enemyTypeOptions.subList(0, maxPreview) : enemyTypeOptions;
-        String suffix = total > maxPreview ? (english ? " ... (+" + (total - maxPreview) + " more)" : " ... (+" + (total - maxPreview) + " mas)") : "";
-        return prefix + String.join(", ", preview) + suffix;
+        String available = String.join(", ", preview);
+        String availableSuffix = total > maxPreview ? (english ? " ... (+" + (total - maxPreview) + " more)" : " ... (+" + (total - maxPreview) + " mas)") : "";
+        if (english) {
+            return "Use < > to change category | Current: " + currentLabel + " | IDs: " + currentIds + " | Available: " + available + availableSuffix;
+        }
+        return "Usa < > para cambiar categoria | Actual: " + currentLabel + " | IDs: " + currentIds + " | Disponibles: " + available + availableSuffix;
+    }
+
+    private static String enemyTypeLabel(String enemyType, boolean english) {
+        switch (HordeConfigPage.normalizeEnemyTypeInput(enemyType)) {
+            case "undead": {
+                return english ? "Undead horde" : "Horda no-muertos";
+            }
+            case "goblins": {
+                return english ? "Goblin horde" : "Horda goblins";
+            }
+            case "scarak": {
+                return english ? "Scarak horde" : "Horda scarak";
+            }
+            case "void": {
+                return english ? "Void horde" : "Horda del vacio";
+            }
+            case "wild": {
+                return english ? "Wild creatures" : "Criaturas agresivas";
+            }
+            case "elementals": {
+                return english ? "Elemental horde" : "Elementales";
+            }
+        }
+        return enemyType;
+    }
+
+    private static String enemyTypePreviewIds(String enemyType) {
+        switch (HordeConfigPage.normalizeEnemyTypeInput(enemyType)) {
+            case "undead": {
+                return "Chicken_Undead, Aberrant_Zombie, Burnt_Skeleton_Archer...";
+            }
+            case "goblins": {
+                return "Goblin_Scavenger, Goblin_Lobber, Goblin_Duke...";
+            }
+            case "scarak": {
+                return "Dungeon_Scarak_Fighter, Dungeon_Scarak_Seeker, Dungeon_Scarak_Broodmother_Young";
+            }
+            case "void": {
+                return "Crawler_Void, VoidSpawn, VoidTaken";
+            }
+            case "wild": {
+                return "Crocodile, Cave_Raptor, Feran_Longtooth...";
+            }
+            case "elementals": {
+                return "Earthen_Golem, Ember_Golem, Frost_Elemental, Fire_Elemental";
+            }
+        }
+        return "-";
     }
 
     private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english) {
@@ -300,8 +354,8 @@ extends CustomUIPage {
                 .set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda")
                 .set("#WaveDelayLabel.Text", english ? "Delay (s)" : "Espera (s)")
                 .set("#PlayerMultiplierLabel.Text", english ? "Players (x)" : "Jugadores (x)")
-                .set("#RoleLabel.Text", english ? "Enemy type" : "Tipo enemigo")
-                .set("#RolesButton.Text", english ? "Valid types" : "Tipos validos")
+                .set("#RoleLabel.Text", english ? "Horde category" : "Categoria de horda")
+                .set("#RolesButton.Text", english ? "View categories" : "Ver categorias")
                 .set("#LanguageLabel.Text", english ? "Interface language" : "Idioma interfaz")
                 .set("#RewardEveryRoundsLabel.Text", english ? "Reward every round(s)" : "Recompensa por ronda(s)")
                 .set("#RewardCommandsLabel.Text", english ? "Reward item" : "Item recompensa")
@@ -321,14 +375,69 @@ extends CustomUIPage {
 
     private static String normalizeEnemyTypeInput(String value) {
         if (value == null || value.isBlank()) {
-            return "auto";
+            return "undead";
         }
         String normalized = value.trim().toLowerCase(Locale.ROOT);
-        if ("role".equals(normalized)) {
-            return "auto";
-        }
-        if ("aleatorio".equals(normalized) || "rand".equals(normalized) || "rnd".equals(normalized)) {
-            return "random";
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace('_', '-').replace(' ', '-');
+        switch (normalized) {
+            case "no-muerto":
+            case "no-muertos":
+            case "nomuerto":
+            case "nomuertos":
+            case "undead":
+            case "zombie":
+            case "zombies":
+            case "skeleton":
+            case "skeletons":
+            case "auto":
+            case "random":
+            case "role":
+            case "aleatorio":
+            case "aleatoria":
+            case "rand":
+            case "rnd": {
+                return "undead";
+            }
+            case "goblin":
+            case "goblins": {
+                return "goblins";
+            }
+            case "scarak":
+            case "insecto":
+            case "insectos":
+            case "colmena":
+            case "hive": {
+                return "scarak";
+            }
+            case "void":
+            case "vacio":
+            case "corrupcion":
+            case "corruption": {
+                return "void";
+            }
+            case "wild":
+            case "agresiva":
+            case "agresivas":
+            case "agresivo":
+            case "agresivos":
+            case "criaturas-agresivas":
+            case "bestia":
+            case "bestias":
+            case "bandit":
+            case "outlander":
+            case "trork":
+            case "spider":
+            case "wolf":
+            case "slime":
+            case "beetle": {
+                return "wild";
+            }
+            case "elemental":
+            case "elementales":
+            case "elementals": {
+                return "elementals";
+            }
         }
         return normalized;
     }

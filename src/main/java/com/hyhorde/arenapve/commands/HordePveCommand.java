@@ -115,7 +115,7 @@ extends AbstractPlayerCommand {
         String enemyType = value == null ? "" : value.trim();
         if (enemyType.isBlank()) {
             List<String> options = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
-            String usage = options.isEmpty() ? "auto|random" : String.join("|", options);
+            String usage = options.isEmpty() ? "undead|goblins|scarak|void|wild|elementals" : String.join("|", options);
             playerRef.sendMessage(Message.raw((String)("Uso: /hordapve enemy <" + usage + ">")));
             return;
         }
@@ -124,7 +124,7 @@ extends AbstractPlayerCommand {
 
     private void handleEnemyTypes(PlayerRef playerRef) {
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        playerRef.sendMessage(Message.raw((String)"Tipos de enemigo y rol detectado:"));
+        playerRef.sendMessage(Message.raw((String)"Categorias de horda y roles detectados:"));
         for (String entry : diagnostics) {
             playerRef.sendMessage(Message.raw((String)(" - " + entry)));
         }
@@ -134,7 +134,7 @@ extends AbstractPlayerCommand {
         String requestedRole = value == null ? "" : value.trim();
         if (requestedRole.isBlank()) {
             String currentRole = this.hordeService.getConfiguredNpcRole();
-            String roleState = currentRole == null || currentRole.isBlank() ? "sin override (auto por enemyType)" : currentRole;
+            String roleState = currentRole == null || currentRole.isBlank() ? "sin override (por categoria enemyType)" : currentRole;
             playerRef.sendMessage(Message.raw((String)("Rol NPC actual: " + roleState)));
             playerRef.sendMessage(Message.raw((String)"Uso: /hordapve role <rolNpc|auto>"));
             return;

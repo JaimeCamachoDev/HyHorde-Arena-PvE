@@ -21,7 +21,7 @@ extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw((String)"/hordahelp -> muestra esta ayuda"));
         playerRef.sendMessage(Message.raw((String)"/hordapve -> abre la configuracion (alias: /hordepve)"));
         playerRef.sendMessage(Message.raw((String)"/hordapve start | stop | status | logs | setspawn"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve enemy <tipo> | tipos"));
+        playerRef.sendMessage(Message.raw((String)"/hordapve enemy <categoria> | tipos"));
         playerRef.sendMessage(Message.raw((String)"/hordapve role <rolNpc|auto> | roles"));
         playerRef.sendMessage(Message.raw((String)"/hordapve reward <rondas>"));
         playerRef.sendMessage(Message.raw((String)"/hordareload config"));

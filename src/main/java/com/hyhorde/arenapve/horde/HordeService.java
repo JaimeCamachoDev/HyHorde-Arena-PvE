@@ -53,8 +53,9 @@ import java.util.logging.Level;
 
 public final class HordeService {
     private static final List<String> PREFERRED_REWARD_TEST_ITEMS = List.of("Armor_Bronze_Chest", "Armor_Copper_Chest", "Armor_Iron_Chest", "Tool_Watering_Can_State_Filled_Water", "*Container_Bucket_State_Filled_Water", "item/resource/wood", "item/resource/stone", "item/consumable/apple", "item/material/iron_ingot", "item/weapon/sword_iron");
+    private static final String DEFAULT_ENEMY_TYPE = "undead";
     private static final Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
-    private static final List<String> ENEMY_TYPE_OPTIONS = new ArrayList<String>(ENEMY_TYPE_HINTS.keySet());
+    private static final List<String> ENEMY_TYPE_OPTIONS = HordeService.buildEnemyTypeOptions();
     private static final List<String> RANDOM_ENEMY_TYPE_OPTIONS = HordeService.buildRandomEnemyTypePool();
     private static final List<String> REWARD_ITEM_SUGGESTIONS = HordeService.buildRewardItemSuggestions();
     private static final String REWARD_MODE_RANDOM = "random";
@@ -135,29 +136,26 @@ public final class HordeService {
         if (roles.isEmpty()) {
             return this.getEnemyTypeOptions();
         }
-        ArrayList<String> options = new ArrayList<String>();
-        options.add("auto");
-        options.add("random");
-        options.addAll(HordeService.findSupportedEnemyTypes(roles));
-        return options;
+        List<String> supported = HordeService.findSupportedEnemyTypes(roles);
+        if (!supported.isEmpty()) {
+            return supported;
+        }
+        return this.getEnemyTypeOptions();
     }
 
     public synchronized List<String> getEnemyTypeDiagnostics() {
         List<String> roles = this.getAvailableRoles();
         ArrayList<String> diagnostics = new ArrayList<String>();
         for (String enemyType : ENEMY_TYPE_OPTIONS) {
-            if ("auto".equals(enemyType)) {
-                String autoRole = HordeService.resolveAutoRole(roles);
-                diagnostics.add(autoRole == null ? "auto -> sin rol compatible" : "auto -> " + autoRole);
+            List<String> matches = HordeService.findRolesForEnemyType(roles, enemyType);
+            if (matches.isEmpty()) {
+                diagnostics.add(enemyType + " -> NO DISPONIBLE");
                 continue;
             }
-            if ("random".equals(enemyType)) {
-                List<String> supportedRandomTypes = HordeService.findSupportedEnemyTypes(roles);
-                diagnostics.add(supportedRandomTypes.isEmpty() ? "random -> sin tipos compatibles" : "random -> " + String.join((CharSequence)", ", supportedRandomTypes));
-                continue;
-            }
-            String mappedRole = HordeService.resolveRoleForEnemyType(roles, enemyType);
-            diagnostics.add(mappedRole == null ? enemyType + " -> NO DISPONIBLE" : enemyType + " -> " + mappedRole);
+            int previewCount = Math.min(5, matches.size());
+            List<String> preview = matches.subList(0, previewCount);
+            String suffix = matches.size() > previewCount ? " ... (+" + (matches.size() - previewCount) + " mas)" : "";
+            diagnostics.add(enemyType + " -> " + String.join((CharSequence)", ", preview) + suffix);
         }
         return diagnostics;
     }
@@ -269,21 +267,13 @@ public final class HordeService {
         if (!ENEMY_TYPE_HINTS.containsKey(enemyType)) {
             return OperationResult.fail("Tipo invalido. Usa uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
-        if (!"auto".equals(enemyType) && !"random".equals(enemyType)) {
-            List<String> roles = this.getAvailableRoles();
-            if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
-                return OperationResult.fail("El tipo '" + enemyType + "' no tiene rol compatible en este modpack. Usa /hordapve tipos para revisar.");
-            }
+        List<String> roles = this.getAvailableRoles();
+        if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
+            return OperationResult.fail("La categoria '" + enemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos para revisar.");
         }
         this.config.enemyType = enemyType;
         this.saveConfig();
-        if ("auto".equals(enemyType)) {
-            return OperationResult.ok("Tipo de enemigo en modo automatico.");
-        }
-        if ("random".equals(enemyType)) {
-            return OperationResult.ok("Tipo de enemigo en modo aleatorio por spawn.");
-        }
-        return OperationResult.ok("Tipo de enemigo configurado en: " + enemyType);
+        return OperationResult.ok("Categoria de enemigos configurada en: " + enemyType);
     }
 
     public synchronized OperationResult setNpcRole(String npcRoleInput) {
@@ -380,11 +370,9 @@ public final class HordeService {
         if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
             return OperationResult.fail("enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
-        if (!"auto".equals(updated.enemyType) && !"random".equals(updated.enemyType)) {
-            List<String> roles = this.getAvailableRoles();
-            if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
-                return OperationResult.fail("enemyType '" + updated.enemyType + "' no tiene rol NPC compatible en este modpack.");
-            }
+        List<String> roles = this.getAvailableRoles();
+        if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
+            return OperationResult.fail("enemyType '" + updated.enemyType + "' no tiene NPCs compatibles en este modpack.");
         }
         if (updated.rewardEveryRounds <= 0 || updated.rewardEveryRounds > 200) {
             return OperationResult.fail("rewardEveryRounds debe estar entre 1 y 200.");
@@ -474,16 +462,14 @@ public final class HordeService {
             selectedRole = forcedRole;
         } else if (HordeService.isRandomEnemyType(selectedEnemyType)) {
             String initialRandomType = HordeService.pickRandomEnemyType(supportedEnemyTypes);
-            selectedRole = HordeService.resolveRoleForEnemyType(roles, initialRandomType);
+            selectedRole = HordeService.pickRandomRoleForEnemyType(roles, initialRandomType);
             if (selectedRole == null) {
                 selectedRole = HordeService.resolveAutoRole(roles);
             }
-        } else if ("auto".equals(selectedEnemyType)) {
-            selectedRole = HordeService.resolveAutoRole(roles);
         } else {
             selectedRole = HordeService.resolveRoleForEnemyType(roles, selectedEnemyType);
             if (selectedRole == null) {
-                return OperationResult.fail("El tipo '" + selectedEnemyType + "' no tiene rol NPC compatible en este modpack. Usa /hordapve tipos.");
+                return OperationResult.fail("La categoria '" + selectedEnemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos.");
             }
         }
         if (selectedRole == null) {
@@ -619,9 +605,14 @@ public final class HordeService {
                     roleForSpawn = sessionToAdvance.forcedRole;
                 } else if (HordeService.isRandomEnemyType(sessionToAdvance.enemyType)) {
                     String randomEnemyType = HordeService.pickRandomEnemyType(sessionToAdvance.randomEnemyTypes);
-                    String resolvedRandomRole = HordeService.resolveRoleForEnemyType(sessionToAdvance.availableRoles, randomEnemyType);
+                    String resolvedRandomRole = HordeService.pickRandomRoleForEnemyType(sessionToAdvance.availableRoles, randomEnemyType);
                     if (resolvedRandomRole != null) {
                         roleForSpawn = resolvedRandomRole;
+                    }
+                } else {
+                    String resolvedCategoryRole = HordeService.pickRandomRoleForEnemyType(sessionToAdvance.availableRoles, sessionToAdvance.enemyType);
+                    if (resolvedCategoryRole != null) {
+                        roleForSpawn = resolvedCategoryRole;
                     }
                 }
                 if (roleForSpawn == null || roleForSpawn.isBlank()) {
@@ -955,26 +946,77 @@ public final class HordeService {
         if (roles == null || roles.isEmpty()) {
             return null;
         }
-        String normalizedType = HordeService.normalizeEnemyType(selectedEnemyType);
-        if ("auto".equals(normalizedType) || "random".equals(normalizedType)) {
-            return HordeService.resolveAutoRole(roles);
-        }
-        String[] preferredHints = ENEMY_TYPE_HINTS.get(normalizedType);
-        if (preferredHints == null || preferredHints.length == 0) {
+        List<String> matches = HordeService.findRolesForEnemyType(roles, selectedEnemyType);
+        if (matches.isEmpty()) {
             return null;
         }
-        return HordeService.findRoleByHints(roles, preferredHints);
+        return matches.get(0);
     }
 
     private static String resolveAutoRole(List<String> roles) {
         if (roles == null || roles.isEmpty()) {
             return null;
         }
-        String fallbackRole = HordeService.findRoleByHints(roles, ENEMY_TYPE_HINTS.get("auto"));
+        String fallbackRole = HordeService.resolveRoleForEnemyType(roles, DEFAULT_ENEMY_TYPE);
         if (fallbackRole != null) {
             return fallbackRole;
         }
         return HordeService.findFirstAllowedRole(roles);
+    }
+
+    private static List<String> findRolesForEnemyType(List<String> roles, String selectedEnemyType) {
+        ArrayList<String> matches = new ArrayList<String>();
+        if (roles == null || roles.isEmpty()) {
+            return matches;
+        }
+        String normalizedType = HordeService.normalizeEnemyType(selectedEnemyType);
+        String[] preferredHints = ENEMY_TYPE_HINTS.get(normalizedType);
+        if (preferredHints == null || preferredHints.length == 0) {
+            return matches;
+        }
+        LinkedHashSet<String> orderedMatches = new LinkedHashSet<String>();
+        for (String hint : preferredHints) {
+            if (hint == null || hint.isBlank()) {
+                continue;
+            }
+            for (String role : roles) {
+                if (HordeService.isBlockedEnemyRole(role)) {
+                    continue;
+                }
+                if (role.equalsIgnoreCase(hint)) {
+                    orderedMatches.add(role);
+                }
+            }
+        }
+        for (String hint : preferredHints) {
+            if (hint == null || hint.isBlank()) {
+                continue;
+            }
+            String normalizedHint = hint.toLowerCase(Locale.ROOT);
+            for (String role : roles) {
+                if (HordeService.isBlockedEnemyRole(role)) {
+                    continue;
+                }
+                if (role.equalsIgnoreCase(hint)) {
+                    continue;
+                }
+                if (!role.toLowerCase(Locale.ROOT).contains(normalizedHint)) {
+                    continue;
+                }
+                orderedMatches.add(role);
+            }
+        }
+        matches.addAll(orderedMatches);
+        return matches;
+    }
+
+    private static String pickRandomRoleForEnemyType(List<String> roles, String selectedEnemyType) {
+        List<String> matches = HordeService.findRolesForEnemyType(roles, selectedEnemyType);
+        if (matches.isEmpty()) {
+            return null;
+        }
+        int randomIndex = ThreadLocalRandom.current().nextInt(matches.size());
+        return matches.get(randomIndex);
     }
 
     private static List<String> findSupportedEnemyTypes(List<String> roles) {
@@ -983,9 +1025,6 @@ public final class HordeService {
             return supported;
         }
         for (String enemyType : ENEMY_TYPE_OPTIONS) {
-            if ("auto".equals(enemyType) || "random".equals(enemyType)) {
-                continue;
-            }
             if (HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
                 continue;
             }
@@ -1102,44 +1141,99 @@ public final class HordeService {
 
     private static String normalizeEnemyType(String input) {
         if (input == null || input.isBlank()) {
-            return "auto";
+            return DEFAULT_ENEMY_TYPE;
         }
         String normalized = input.trim().toLowerCase(Locale.ROOT);
-        if (normalized.equals("role")) {
-            return "auto";
-        }
-        if (normalized.equals("aleatorio") || normalized.equals("rand") || normalized.equals("rnd")) {
-            return "random";
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace('_', '-').replace(' ', '-');
+        switch (normalized) {
+            case "undead":
+            case "no-muerto":
+            case "no-muertos":
+            case "nomuerto":
+            case "nomuertos":
+            case "zombie":
+            case "zombies":
+            case "skeleton":
+            case "skeletons": {
+                return "undead";
+            }
+            case "goblin":
+            case "goblins": {
+                return "goblins";
+            }
+            case "scarak":
+            case "insecto":
+            case "insectos":
+            case "colmena":
+            case "hive": {
+                return "scarak";
+            }
+            case "void":
+            case "vacio":
+            case "corrupcion":
+            case "corruption": {
+                return "void";
+            }
+            case "wild":
+            case "agresiva":
+            case "agresivas":
+            case "agresivo":
+            case "agresivos":
+            case "criatura":
+            case "criaturas":
+            case "criaturas-agresivas":
+            case "bestia":
+            case "bestias":
+            case "bandit":
+            case "outlander":
+            case "trork":
+            case "spider":
+            case "wolf":
+            case "slime":
+            case "beetle": {
+                return "wild";
+            }
+            case "elemental":
+            case "elementales":
+            case "elementals": {
+                return "elementals";
+            }
+            case "auto":
+            case "role":
+            case "random":
+            case "aleatorio":
+            case "aleatoria":
+            case "rand":
+            case "rnd": {
+                return DEFAULT_ENEMY_TYPE;
+            }
         }
         return normalized;
     }
 
     private static Map<String, String[]> buildEnemyTypeHints() {
         LinkedHashMap<String, String[]> hints = new LinkedHashMap<String, String[]>();
-        hints.put("auto", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler", "trork", "outlander", "scarak"});
-        hints.put("random", new String[]{"enemy", "hostile", "bandit", "goblin", "skeleton", "zombie", "spider", "wolf", "slime", "beetle", "crawler", "trork", "outlander", "scarak"});
-        hints.put("bandit", new String[]{"bandit", "raider", "outlaw", "brigand", "thug"});
-        hints.put("goblin", new String[]{"goblin"});
-        hints.put("skeleton", new String[]{"skeleton"});
-        hints.put("zombie", new String[]{"zombie", "undead", "ghoul", "walker"});
-        hints.put("spider", new String[]{"spider", "arachnid"});
-        hints.put("wolf", new String[]{"wolf", "direwolf", "warg"});
-        hints.put("slime", new String[]{"slime", "ooze"});
-        hints.put("beetle", new String[]{"beetle", "bug", "insect"});
-        hints.put("trork", new String[]{"trork", "hunter", "shaman", "warrior", "brute"});
-        hints.put("outlander", new String[]{"outlander", "cultist", "ranger", "marauder", "raider"});
-        hints.put("scarak", new String[]{"scarak", "locust", "brood", "scarab", "beetle"});
+        hints.put("undead", new String[]{"Chicken_Undead", "Cow_Undead", "Aberrant_Zombie", "Burnt_Zombie", "Burnt_Skeleton_Soldier", "Burnt_Skeleton_Archer", "Burnt_Skeleton_Gunner", "Burnt_Skeleton_Lancer", "Burnt_Skeleton_Knight", "Burnt_Skeleton_Praetorian", "Burnt_Skeleton_Wizard", "Dungeon_Skeleton_Sand_Archer", "Dungeon_Skeleton_Sand_Assassin", "Dungeon_Skeleton_Sand_Mage", "Armored_Skeleton_Horse"});
+        hints.put("goblins", new String[]{"Goblin_Scavenger", "Goblin_Thief", "Goblin_Scrapper", "Goblin_Miner", "Goblin_Lobber", "Goblin_Ogre", "Goblin_Hermit", "Goblin_Duke"});
+        hints.put("scarak", new String[]{"Dungeon_Scarak_Fighter", "Dungeon_Scarak_Defender", "Dungeon_Scarak_Seeker", "Dungeon_Scarak_Louse", "Dungeon_Scarak_Broodmother_Young"});
+        hints.put("void", new String[]{"Crawler_Void", "VoidSpawn", "VoidTaken"});
+        hints.put("wild", new String[]{"Crocodile", "Black_Wolf", "Cave_Raptor", "Cave_Rex", "Cave_Spider", "Spider", "Feran_Burrower", "Feran_Longtooth", "Feran_Sharptooth"});
+        hints.put("elementals", new String[]{"Earthen_Golem", "Ember_Golem", "Frost_Elemental", "Fire_Elemental"});
         return hints;
+    }
+
+    private static List<String> buildEnemyTypeOptions() {
+        return new ArrayList<String>(ENEMY_TYPE_HINTS.keySet());
     }
 
     private static List<String> buildRandomEnemyTypePool() {
         ArrayList<String> pool = new ArrayList<String>();
-        for (String enemyType : ENEMY_TYPE_HINTS.keySet()) {
-            if ("auto".equals(enemyType) || "random".equals(enemyType)) continue;
+        for (String enemyType : ENEMY_TYPE_OPTIONS) {
             pool.add(enemyType);
         }
         if (pool.isEmpty()) {
-            pool.add("auto");
+            pool.add(DEFAULT_ENEMY_TYPE);
         }
         return pool;
     }
@@ -1469,7 +1563,7 @@ public final class HordeService {
 
     private static String pickRandomEnemyType() {
         if (RANDOM_ENEMY_TYPE_OPTIONS.isEmpty()) {
-            return "auto";
+            return DEFAULT_ENEMY_TYPE;
         }
         int randomIndex = ThreadLocalRandom.current().nextInt(RANDOM_ENEMY_TYPE_OPTIONS.size());
         return RANDOM_ENEMY_TYPE_OPTIONS.get(randomIndex);
@@ -1678,7 +1772,7 @@ public final class HordeService {
         }
         sanitized.enemyType = HordeService.normalizeEnemyType(sanitized.enemyType);
         if (!ENEMY_TYPE_HINTS.containsKey(sanitized.enemyType)) {
-            sanitized.enemyType = "auto";
+            sanitized.enemyType = DEFAULT_ENEMY_TYPE;
         }
         sanitized.npcRole = HordeService.safeRoleValue(sanitized.npcRole).trim();
         if ("auto".equalsIgnoreCase(sanitized.npcRole) || "none".equalsIgnoreCase(sanitized.npcRole) || "clear".equalsIgnoreCase(sanitized.npcRole) || "default".equalsIgnoreCase(sanitized.npcRole)) {
@@ -1733,7 +1827,7 @@ public final class HordeService {
             defaults.enemiesPerRoundIncrement = 3;
             defaults.waveDelaySeconds = 8;
             defaults.playerMultiplier = 1;
-            defaults.enemyType = "auto";
+            defaults.enemyType = DEFAULT_ENEMY_TYPE;
             defaults.npcRole = "";
             defaults.language = LANGUAGE_SPANISH;
             defaults.rewardEveryRounds = 2;
