@@ -248,14 +248,20 @@ public final class HordeService {
         if (player == null) {
             return OperationResult.fail("No se pudo abrir el panel de estado ahora mismo.");
         }
-        HordeStatusPage previous = this.statusPages.remove(playerRef.getUuid());
-        if (previous != null) {
-            previous.closeFromService();
+        try {
+            HordeStatusPage previous = this.statusPages.remove(playerRef.getUuid());
+            if (previous != null) {
+                previous.closeFromService();
+            }
+            StatusSnapshot snapshot = this.createStatusSnapshot(world);
+            HordeStatusPage page = HordeStatusPage.open(playerEntityRef, store, player, playerRef, snapshot, this::unregisterStatusPage);
+            this.statusPages.put(playerRef.getUuid(), page);
+            return OperationResult.ok("Panel de estado de horda abierto.");
         }
-        StatusSnapshot snapshot = this.createStatusSnapshot(world);
-        HordeStatusPage page = HordeStatusPage.open(playerEntityRef, store, player, playerRef, snapshot, this::unregisterStatusPage);
-        this.statusPages.put(playerRef.getUuid(), page);
-        return OperationResult.ok("Panel de estado de horda abierto.");
+        catch (Exception ex) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo abrir el panel de estado de horda: %s", (Object)ex.getMessage());
+            return OperationResult.fail("No se pudo abrir el panel de estado. Revisa logs del servidor.");
+        }
     }
 
     public synchronized OperationResult setEnemyType(String enemyTypeInput) {
@@ -520,66 +526,77 @@ public final class HordeService {
             this.endSession(trackedSession, "Horda finalizada: el mundo dejo de estar activo.", false);
             return;
         }
-        world.execute(() -> {
-            HordeService hordeService = this;
-            synchronized (hordeService) {
-                if (this.session != trackedSession) {
-                    return;
-                }
-                int removed = HordeService.removeInvalidRefs(trackedSession.activeEnemies, trackedSession.accountedEnemyDeaths);
-                if (removed > 0) {
-                    trackedSession.totalKilled += removed;
-                }
-                HordeService.removeInvalidRefs(trackedSession.spawnedEnemies, null);
-                this.syncSessionPlayers(trackedSession);
-                long now = System.currentTimeMillis();
-                if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
-                    int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
-                    if (now < trackedSession.nextRoundAtMillis) {
-                        if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastStartCountdownAnnouncement) {
-                            this.broadcastHordeCountdownAnnouncement(secondsRemaining, trackedSession.enemyType, trackedSession.role);
-                            trackedSession.world.sendMessage(Message.raw((String)("La horda comienza en " + secondsRemaining + "...")));
-                            trackedSession.lastStartCountdownAnnouncement = secondsRemaining;
+        try {
+            world.execute(() -> {
+                HordeService hordeService = this;
+                synchronized (hordeService) {
+                    try {
+                        if (this.session != trackedSession) {
+                            return;
+                        }
+                        int removed = HordeService.removeInvalidRefs(trackedSession.activeEnemies, trackedSession.accountedEnemyDeaths);
+                        if (removed > 0) {
+                            trackedSession.totalKilled += removed;
+                        }
+                        HordeService.removeInvalidRefs(trackedSession.spawnedEnemies, null);
+                        this.syncSessionPlayers(trackedSession);
+                        long now = System.currentTimeMillis();
+                        if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
+                            int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
+                            if (now < trackedSession.nextRoundAtMillis) {
+                                if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastStartCountdownAnnouncement) {
+                                    this.broadcastHordeCountdownAnnouncement(secondsRemaining, trackedSession.enemyType, trackedSession.role);
+                                    trackedSession.world.sendMessage(Message.raw((String)("La horda comienza en " + secondsRemaining + "...")));
+                                    trackedSession.lastStartCountdownAnnouncement = secondsRemaining;
+                                }
+                                this.refreshStatusHud(trackedSession);
+                                return;
+                            }
+                            this.broadcastHordeCountdownGoAnnouncement(1, this.config.rounds);
+                            trackedSession.lastStartCountdownAnnouncement = 0;
+                            trackedSession.nextRoundAtMillis = 0L;
+                            this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
+                            this.refreshStatusHud(trackedSession);
+                            return;
+                        }
+                        if (trackedSession.roundActive && trackedSession.activeEnemies.isEmpty()) {
+                            trackedSession.roundActive = false;
+                            this.grantRoundRewards(trackedSession, trackedSession.currentRound);
+                            boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
+                            boolean finalRound = trackedSession.currentRound >= this.config.rounds;
+                            int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
+                            this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
+                            if (finalRound) {
+                                this.endSession(trackedSession, "Horda completada. Todas las rondas terminadas.", false);
+                                return;
+                            }
+                            trackedSession.nextRoundAtMillis = now + (long)this.config.waveDelaySeconds * 1000L;
+                            trackedSession.lastIntermissionCountdownAnnouncement = -1;
+                            world.sendMessage(Message.raw((String)("Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
+                        }
+                        if (!trackedSession.roundActive && trackedSession.currentRound > 0 && trackedSession.currentRound < this.config.rounds) {
+                            if (trackedSession.nextRoundAtMillis > now) {
+                                int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
+                                if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastIntermissionCountdownAnnouncement) {
+                                    this.broadcastRoundCountdownAnnouncement(trackedSession.currentRound + 1, this.config.rounds, secondsRemaining);
+                                    trackedSession.lastIntermissionCountdownAnnouncement = secondsRemaining;
+                                }
+                            } else {
+                                this.spawnNextRound(trackedSession, Vector3f.ZERO);
+                            }
                         }
                         this.refreshStatusHud(trackedSession);
-                        return;
                     }
-                    this.broadcastHordeCountdownGoAnnouncement(1, this.config.rounds);
-                    trackedSession.lastStartCountdownAnnouncement = 0;
-                    trackedSession.nextRoundAtMillis = 0L;
-                    this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
-                    this.refreshStatusHud(trackedSession);
-                    return;
-                }
-                if (trackedSession.roundActive && trackedSession.activeEnemies.isEmpty()) {
-                    trackedSession.roundActive = false;
-                    this.grantRoundRewards(trackedSession, trackedSession.currentRound);
-                    boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
-                    boolean finalRound = trackedSession.currentRound >= this.config.rounds;
-                    int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
-                    this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
-                    if (finalRound) {
-                        this.endSession(trackedSession, "Horda completada. Todas las rondas terminadas.", false);
-                        return;
-                    }
-                    trackedSession.nextRoundAtMillis = now + (long)this.config.waveDelaySeconds * 1000L;
-                    trackedSession.lastIntermissionCountdownAnnouncement = -1;
-                    world.sendMessage(Message.raw((String)("Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
-                }
-                if (!trackedSession.roundActive && trackedSession.currentRound > 0 && trackedSession.currentRound < this.config.rounds) {
-                    if (trackedSession.nextRoundAtMillis > now) {
-                        int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
-                        if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastIntermissionCountdownAnnouncement) {
-                            this.broadcastRoundCountdownAnnouncement(trackedSession.currentRound + 1, this.config.rounds, secondsRemaining);
-                            trackedSession.lastIntermissionCountdownAnnouncement = secondsRemaining;
-                        }
-                    } else {
-                        this.spawnNextRound(trackedSession, Vector3f.ZERO);
+                    catch (Exception ex) {
+                        this.plugin.getLogger().at(Level.WARNING).log("Error interno en tick de horda: %s", (Object)ex.getMessage());
                     }
                 }
-                this.refreshStatusHud(trackedSession);
-            }
-        });
+            });
+        }
+        catch (Exception ex) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo ejecutar tick de horda en el mundo activo: %s", (Object)ex.getMessage());
+            this.endSession(trackedSession, "Horda finalizada por error interno en tick.", false);
+        }
     }
 
     private void spawnNextRound(HordeSession sessionToAdvance, Vector3f baseRotation) {

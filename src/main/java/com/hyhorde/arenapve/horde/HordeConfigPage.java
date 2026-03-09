@@ -55,73 +55,113 @@ extends CustomUIPage {
             this.playerRef.sendMessage(Message.raw((String)"No se pudo interpretar el evento de la UI."));
             return;
         }
-        String action = HordeConfigPage.read(payload, "action");
-        World world = ((EntityStore)store.getExternalData()).getWorld();
-        HordeService.OperationResult result = null;
-        switch (action) {
-            case "close": {
-                this.close();
+        try {
+            String action = HordeConfigPage.read(payload, "action");
+            EntityStore entityStore = (EntityStore)store.getExternalData();
+            World world = entityStore == null ? null : entityStore.getWorld();
+            if (world == null && HordeConfigPage.requiresWorld(action)) {
+                this.playerRef.sendMessage(Message.raw((String)"No se pudo acceder al mundo actual para procesar la accion de UI."));
+                this.safeRebuild();
                 return;
             }
-            case "set_spawn_here": {
-                result = this.hordeService.setSpawnFromPlayer(this.playerRef, world);
-                break;
+            HordeService.OperationResult result = null;
+            switch (action) {
+                case "close": {
+                    this.close();
+                    return;
+                }
+                case "set_spawn_here": {
+                    result = this.hordeService.setSpawnFromPlayer(this.playerRef, world);
+                    break;
+                }
+                case "enemy_types":
+                case "roles": {
+                    this.sendEnemyTypesPreview();
+                    break;
+                }
+                case "enemy_prev": {
+                    result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "enemy_next": {
+                    result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "reward_prev": {
+                    result = this.cycleRewardItem(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "reward_next": {
+                    result = this.cycleRewardItem(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "language_prev": {
+                    result = this.cycleLanguage(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "language_next": {
+                    result = this.cycleLanguage(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "reward_types": {
+                    this.sendRewardTypesPreview();
+                    break;
+                }
+                case "save": {
+                    result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
+                    break;
+                }
+                case "start": {
+                    result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
+                    if (!result.isSuccess()) break;
+                    result = this.hordeService.start(store, this.playerRef, world);
+                    break;
+                }
+                case "stop": {
+                    result = this.hordeService.stop(true);
+                    break;
+                }
+                default: {
+                    result = HordeService.OperationResult.fail("Accion de UI desconocida: " + action);
+                }
             }
-            case "enemy_types":
-            case "roles": {
-                this.sendEnemyTypesPreview();
-                break;
+            if (result != null) {
+                this.playerRef.sendMessage(Message.raw((String)result.getMessage()));
             }
-            case "enemy_prev": {
-                result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, -1);
-                break;
-            }
-            case "enemy_next": {
-                result = this.cycleEnemyType(HordeConfigPage.extractConfigValues(payload), world, 1);
-                break;
-            }
-            case "reward_prev": {
-                result = this.cycleRewardItem(HordeConfigPage.extractConfigValues(payload), world, -1);
-                break;
-            }
-            case "reward_next": {
-                result = this.cycleRewardItem(HordeConfigPage.extractConfigValues(payload), world, 1);
-                break;
-            }
-            case "language_prev": {
-                result = this.cycleLanguage(HordeConfigPage.extractConfigValues(payload), world, -1);
-                break;
-            }
-            case "language_next": {
-                result = this.cycleLanguage(HordeConfigPage.extractConfigValues(payload), world, 1);
-                break;
-            }
-            case "reward_types": {
-                this.sendRewardTypesPreview();
-                break;
-            }
-            case "save": {
-                result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
-                break;
-            }
+        }
+        catch (Exception ex) {
+            this.playerRef.sendMessage(Message.raw((String)"Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo."));
+        }
+        this.safeRebuild();
+    }
+
+    private static boolean requiresWorld(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        switch (action) {
+            case "set_spawn_here":
+            case "enemy_prev":
+            case "enemy_next":
+            case "reward_prev":
+            case "reward_next":
+            case "language_prev":
+            case "language_next":
+            case "save":
             case "start": {
-                result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
-                if (!result.isSuccess()) break;
-                result = this.hordeService.start(store, this.playerRef, world);
-                break;
-            }
-            case "stop": {
-                result = this.hordeService.stop(true);
-                break;
-            }
-            default: {
-                result = HordeService.OperationResult.fail("Accion de UI desconocida: " + action);
+                return true;
             }
         }
-        if (result != null) {
-            this.playerRef.sendMessage(Message.raw((String)result.getMessage()));
+        return false;
+    }
+
+    private void safeRebuild() {
+        try {
+            this.rebuild();
         }
-        this.rebuild();
+        catch (Exception ignored) {
+            // avoid bubbling UI rebuild failures to the caller thread
+        }
     }
 
     private EventData buildConfigSnapshotEvent(String action) {

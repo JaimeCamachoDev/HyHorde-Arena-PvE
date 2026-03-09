@@ -1,7 +1,7 @@
 # HyHorde Arena PVE
 
 Mod de hordas PVE por rondas para Hytale.
-Version actual: `1.0.2`.
+Version actual: `1.0.3`.
 
 ## Comando de ayuda
 
@@ -50,8 +50,7 @@ Nota: los roles reales dependen de tu modpack. Verificalo con `/hordapve tipos`.
 
 ## HUD de horda
 
-- Durante una horda activa, aparece un HUD emergente con estado, ronda, enemigos, bajas y recompensa.
-- El HUD se cierra automaticamente cuando la horda termina.
+- En `1.0.3` el HUD emergente automatico de horda queda desactivado temporalmente por estabilidad.
 
 ## Flujo rapido
 

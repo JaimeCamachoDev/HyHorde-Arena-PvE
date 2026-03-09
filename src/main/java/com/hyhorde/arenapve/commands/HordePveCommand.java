@@ -103,7 +103,12 @@ extends AbstractPlayerCommand {
             playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Usa /hordahelp."));
             return;
         }
-        HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
+        try {
+            HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
+        }
+        catch (Exception ex) {
+            playerRef.sendMessage(Message.raw((String)"La interfaz fallo al abrirse. Revisa logs del servidor."));
+        }
     }
 
     private void handleEnemyType(String value, PlayerRef playerRef) {

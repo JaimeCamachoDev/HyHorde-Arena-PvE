@@ -102,14 +102,6 @@ extends EntityTickingSystem<EntityStore> {
         if (removedHud == null && removedCounter == null) {
             return;
         }
-        if (removedHud != null) {
-            try {
-                removedHud.hide();
-            }
-            catch (Exception ex) {
-                LOGGER.log(Level.FINE, "Failed to hide Horde HUD for player: " + playerRef.getUsername(), ex);
-            }
-        }
         try {
             player.getHudManager().setCustomHud(playerRef, (CustomUIHud)null);
         }
