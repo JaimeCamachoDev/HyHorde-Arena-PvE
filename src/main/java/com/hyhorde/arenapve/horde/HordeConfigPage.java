@@ -41,9 +41,12 @@ extends CustomUIPage {
         boolean english = HordeService.isEnglishLanguage(config.language);
         boolean active = this.hordeService.isActive();
         List<String> enemyTypeOptions = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#FinalBossEnabled.Value", HordeConfigPage.finalBossDisplay(config.finalBossEnabled, english)).set("#EnemyLevelMin.Value", Integer.toString(config.enemyLevelMin)).set("#EnemyLevelMax.Value", Integer.toString(config.enemyLevelMax)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active).set("#SkipRoundButton.Visible", active);
+        List<String> rewardCategoryOptions = this.hordeService.getRewardCategoryOptions();
+        String rewardCategory = HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory());
+        List<String> rewardItemSuggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
+        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardCategory.Value", rewardCategory).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#FinalBossEnabled.Value", HordeConfigPage.finalBossDisplay(config.finalBossEnabled, english)).set("#EnemyLevelMin.Value", Integer.toString(config.enemyLevelMin)).set("#EnemyLevelMax.Value", Integer.toString(config.enemyLevelMax)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english)).set("#RewardCommandsHelpLabel.Text", HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active).set("#SkipRoundButton.Visible", active);
         this.setLocalizedTexts(commandBuilder, english);
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossPrevButton", this.buildConfigSnapshotEvent("final_boss_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossNextButton", this.buildConfigSnapshotEvent("final_boss_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", EventData.of((String)"action", (String)"reload_mod")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop")).addEventBinding(CustomUIEventBindingType.Activating, "#SkipRoundButton", EventData.of((String)"action", (String)"skip_round"));
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryPrevButton", this.buildConfigSnapshotEvent("reward_category_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryNextButton", this.buildConfigSnapshotEvent("reward_category_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossPrevButton", this.buildConfigSnapshotEvent("final_boss_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossNextButton", this.buildConfigSnapshotEvent("final_boss_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", EventData.of((String)"action", (String)"reload_mod")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop")).addEventBinding(CustomUIEventBindingType.Activating, "#SkipRoundButton", EventData.of((String)"action", (String)"skip_round"));
     }
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
@@ -94,6 +97,14 @@ extends CustomUIPage {
                 }
                 case "reward_next": {
                     result = this.cycleRewardItem(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "reward_category_prev": {
+                    result = this.cycleRewardCategory(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "reward_category_next": {
+                    result = this.cycleRewardCategory(HordeConfigPage.extractConfigValues(payload), world, 1);
                     break;
                 }
                 case "final_boss_prev": {
@@ -170,6 +181,8 @@ extends CustomUIPage {
             case "enemy_next":
             case "reward_prev":
             case "reward_next":
+            case "reward_category_prev":
+            case "reward_category_next":
             case "final_boss_prev":
             case "final_boss_next":
             case "language_prev":
@@ -193,7 +206,7 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@EnemyLevelMin", "#EnemyLevelMin.Value").append("@EnemyLevelMax", "#EnemyLevelMax.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@EnemyLevelMin", "#EnemyLevelMin.Value").append("@EnemyLevelMax", "#EnemyLevelMax.Value");
     }
 
     private void sendEnemyTypesPreview() {
@@ -206,7 +219,9 @@ extends CustomUIPage {
     }
 
     private void sendRewardTypesPreview() {
-        List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
+        String rewardCategory = HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory());
+        List<String> suggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
         boolean english = this.isEnglish();
         if (suggestions.isEmpty()) {
             this.playerRef.sendMessage(Message.raw((String)(english ? "No valid reward items detected in this modpack." : "No hay items recompensa validos detectados en este modpack.")));
@@ -217,17 +232,17 @@ extends CustomUIPage {
         List<String> preview = suggestions.subList(0, previewCount);
         String safeTestItem = suggestions.get(0);
         for (String candidate : suggestions) {
-            if ("random".equalsIgnoreCase(candidate)) continue;
+            if ("random".equalsIgnoreCase(candidate) || "random_all".equalsIgnoreCase(candidate)) continue;
             safeTestItem = candidate;
             break;
         }
-        this.playerRef.sendMessage(Message.raw((String)((english ? "Detected reward items: " : "Items recompensa detectados: ") + total + ".")));
+        this.playerRef.sendMessage(Message.raw((String)((english ? "Detected reward items for category '" : "Items recompensa detectados para categoria '") + rewardCategory + "': " + total + ".")));
         this.playerRef.sendMessage(Message.raw((String)((english ? "Recommended safe test item: " : "Item de test recomendado (seguro): ") + safeTestItem)));
         this.playerRef.sendMessage(Message.raw((String)("Preview (" + previewCount + "): " + String.join(", ", preview))));
         if (total > previewCount) {
             this.playerRef.sendMessage(Message.raw((String)(english ? "There are +" + (total - previewCount) + " IDs. Use < > buttons to browse more options." : "Hay +" + (total - previewCount) + " IDs. Usa los botones < > para recorrer mas opciones.")));
         }
-        this.playerRef.sendMessage(Message.raw((String)(english ? "Tip: use 'random' in RewardItemId for randomized loot each reward cycle." : "Tip extra: usa 'random' en RewardItemId para loot aleatorio por cada recompensa.")));
+        this.playerRef.sendMessage(Message.raw((String)(english ? "Tip: use 'random' (current category) or 'random_all' (all categories)." : "Tip extra: usa 'random' (categoria actual) o 'random_all' (todas las categorias).")));
         this.playerRef.sendMessage(Message.raw((String)(english ? "You can also paste a full ItemDumper line and the ID will be auto-extracted." : "Tambien puedes pegar una linea completa de ItemDumper y se intentara extraer el ID automaticamente.")));
     }
 
@@ -247,7 +262,8 @@ extends CustomUIPage {
     }
 
     private HordeService.OperationResult cycleRewardItem(Map<String, String> values, World world, int offset) {
-        List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        String rewardCategory = HordeConfigPage.normalizeRewardCategoryInput(HordeConfigPage.firstNonEmpty(values.get("rewardCategory"), this.hordeService.getConfigSnapshot().rewardCategory, this.hordeService.getRewardCategory()));
+        List<String> suggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
         boolean english = this.isEnglish();
         if (suggestions.isEmpty()) {
             return HordeService.OperationResult.fail(english ? "No suggested reward items available." : "No hay items recompensa sugeridos.");
@@ -259,6 +275,34 @@ extends CustomUIPage {
         }
         int nextIndex = Math.floorMod(currentIndex + offset, suggestions.size());
         values.put("rewardItemId", suggestions.get(nextIndex));
+        values.put("rewardCategory", rewardCategory);
+        return this.hordeService.applyUiConfig(values, world);
+    }
+
+    private HordeService.OperationResult cycleRewardCategory(Map<String, String> values, World world, int offset) {
+        List<String> categories = this.hordeService.getRewardCategoryOptions();
+        boolean english = this.isEnglish();
+        if (categories.isEmpty()) {
+            return HordeService.OperationResult.fail(english ? "No reward categories available." : "No hay categorias de recompensa disponibles.");
+        }
+        String currentCategory = HordeConfigPage.normalizeRewardCategoryInput(HordeConfigPage.firstNonEmpty(values.get("rewardCategory"), this.hordeService.getConfigSnapshot().rewardCategory, this.hordeService.getRewardCategory()));
+        int currentIndex = categories.indexOf(currentCategory);
+        if (currentIndex < 0) {
+            currentIndex = offset > 0 ? -1 : 0;
+        }
+        int nextIndex = Math.floorMod(currentIndex + offset, categories.size());
+        String nextCategory = categories.get(nextIndex);
+        List<String> nextItems = this.hordeService.getRewardItemSuggestions(nextCategory);
+        if (!nextItems.isEmpty()) {
+            String nextItem = nextItems.get(0);
+            for (String candidate : nextItems) {
+                if ("random".equalsIgnoreCase(candidate) || "random_all".equalsIgnoreCase(candidate)) continue;
+                nextItem = candidate;
+                break;
+            }
+            values.put("rewardItemId", nextItem);
+        }
+        values.put("rewardCategory", nextCategory);
         return this.hordeService.applyUiConfig(values, world);
     }
 
@@ -303,6 +347,7 @@ extends CustomUIPage {
         values.put("enemyType", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyType"), HordeConfigPage.read(payload, "@EnemyType"), HordeConfigPage.read(payload, "EnemyType"), HordeConfigPage.read(payload, "role"), HordeConfigPage.read(payload, "@Role"), HordeConfigPage.read(payload, "Role")));
         values.put("language", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "language"), HordeConfigPage.read(payload, "@Language"), HordeConfigPage.read(payload, "Language")));
         values.put("rewardEveryRounds", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardEveryRounds"), HordeConfigPage.read(payload, "@RewardEveryRounds"), HordeConfigPage.read(payload, "RewardEveryRounds")));
+        values.put("rewardCategory", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardCategory"), HordeConfigPage.read(payload, "@RewardCategory"), HordeConfigPage.read(payload, "RewardCategory")));
         values.put("rewardItemId", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemId"), HordeConfigPage.read(payload, "@RewardItemId"), HordeConfigPage.read(payload, "RewardItemId")));
         values.put("rewardItemQuantity", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemQuantity"), HordeConfigPage.read(payload, "@RewardItemQuantity"), HordeConfigPage.read(payload, "RewardItemQuantity")));
         values.put("finalBossEnabled", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "finalBossEnabled"), HordeConfigPage.read(payload, "@FinalBossEnabled"), HordeConfigPage.read(payload, "FinalBossEnabled")));
@@ -342,8 +387,62 @@ extends CustomUIPage {
         return "Usa < > para cambiar categoria | Actual: " + currentLabel + " | IDs: " + currentIds + " | Disponibles: " + available + availableSuffix;
     }
 
+    private static String buildRewardItemsHint(List<String> rewardCategoryOptions, String selectedCategory, List<String> rewardItems, String selectedItemId, boolean english) {
+        if (rewardCategoryOptions == null || rewardCategoryOptions.isEmpty()) {
+            return english ? "No reward categories available." : "No hay categorias de recompensa disponibles.";
+        }
+        String currentCategory = HordeConfigPage.normalizeRewardCategoryInput(HordeConfigPage.firstNonEmpty(selectedCategory, rewardCategoryOptions.get(0)));
+        String currentCategoryLabel = HordeConfigPage.rewardCategoryLabel(currentCategory);
+        int categoryPreviewCount = Math.min(4, rewardCategoryOptions.size());
+        List<String> categoryPreview = rewardCategoryOptions.subList(0, categoryPreviewCount);
+        String categorySuffix = rewardCategoryOptions.size() > categoryPreviewCount ? (english ? " ... (+" + (rewardCategoryOptions.size() - categoryPreviewCount) + " more)" : " ... (+" + (rewardCategoryOptions.size() - categoryPreviewCount) + " mas)") : "";
+
+        if (rewardItems == null || rewardItems.isEmpty()) {
+            if (english) {
+                return "Use < > on category | Current: " + currentCategoryLabel + " | Categories: " + String.join(", ", categoryPreview) + categorySuffix + " | No reward items available.";
+            }
+            return "Usa < > en categoria | Actual: " + currentCategoryLabel + " | Categorias: " + String.join(", ", categoryPreview) + categorySuffix + " | No hay items recompensa disponibles.";
+        }
+
+        int itemPreviewCount = Math.min(4, rewardItems.size());
+        List<String> itemPreview = rewardItems.subList(0, itemPreviewCount);
+        String itemSuffix = rewardItems.size() > itemPreviewCount ? (english ? " ... (+" + (rewardItems.size() - itemPreviewCount) + " more)" : " ... (+" + (rewardItems.size() - itemPreviewCount) + " mas)") : "";
+        String currentItem = HordeConfigPage.firstNonEmpty(selectedItemId, rewardItems.get(0));
+        if (english) {
+            return "Use < > on category/item | Category: " + currentCategoryLabel + " | Item: " + currentItem + " | Categories: " + String.join(", ", categoryPreview) + categorySuffix + " | Items: " + String.join(", ", itemPreview) + itemSuffix + " | Modes: random, random_all";
+        }
+        return "Usa < > en categoria/item | Categoria: " + currentCategoryLabel + " | Item: " + currentItem + " | Categorias: " + String.join(", ", categoryPreview) + categorySuffix + " | Items: " + String.join(", ", itemPreview) + itemSuffix + " | Modos: random, random_all";
+    }
+
+    private static String rewardCategoryLabel(String rewardCategory) {
+        String normalized = HordeConfigPage.normalizeRewardCategoryInput(rewardCategory);
+        switch (normalized) {
+            case "mithril":
+                return "MITHRIL";
+            case "onyxium":
+                return "ONYXIUM";
+            case "gemas":
+                return "GEMAS";
+            case "metales":
+                return "METALES";
+            case "materiales_raros":
+                return "MATERIALES_RAROS";
+            case "armas_especiales":
+                return "ARMAS_ESPECIALES";
+            case "items_especiales":
+                return "ITEMS_ESPECIALES";
+        }
+        return normalized;
+    }
+
     private static String enemyTypeLabel(String enemyType, boolean english) {
         switch (HordeConfigPage.normalizeEnemyTypeInput(enemyType)) {
+            case "random": {
+                return english ? "Random category" : "Categoria random";
+            }
+            case "random-all": {
+                return english ? "Random all roles" : "Random total de roles";
+            }
             case "undead": {
                 return english ? "Undead horde" : "Horda no-muertos";
             }
@@ -368,6 +467,12 @@ extends CustomUIPage {
 
     private static String enemyTypePreviewIds(String enemyType) {
         switch (HordeConfigPage.normalizeEnemyTypeInput(enemyType)) {
+            case "random": {
+                return "Random by category each spawn";
+            }
+            case "random-all": {
+                return "Random from all hostile roles";
+            }
             case "undead": {
                 return "Aberrant_Zombie, Burnt_Zombie, Burnt_Skeleton_Archer...";
             }
@@ -409,9 +514,9 @@ extends CustomUIPage {
                 .set("#RolesButton.Text", english ? "View categories" : "Ver categorias")
                 .set("#LanguageLabel.Text", english ? "Interface language" : "Idioma interfaz")
                 .set("#RewardEveryRoundsLabel.Text", english ? "Reward every round(s)" : "Recompensa por ronda(s)")
+                .set("#RewardCategoryLabel.Text", english ? "Reward category" : "Categoria recompensa")
                 .set("#RewardCommandsLabel.Text", english ? "Reward item" : "Item recompensa")
                 .set("#RewardTypesButton.Text", english ? "View loot" : "Ver loot")
-                .set("#RewardCommandsHelpLabel.Text", english ? "Tip: use 'random' or paste ItemDumper lines (auto-extract)." : "Tip: usa 'random' o pega lineas de ItemDumper (auto-extrae).")
                 .set("#RewardItemQuantityLabel.Text", english ? "Qty." : "Cant.")
                 .set("#FinalBossLabel.Text", english ? "Final boss" : "Boss final")
                 .set("#EnemyLevelRangeLabel.Text", english ? "Enemy level range" : "Rango nivel enemigos")
@@ -484,13 +589,22 @@ extends CustomUIPage {
             case "skeleton":
             case "skeletons":
             case "auto":
-            case "random":
             case "role":
+                return "undead";
+            case "random":
             case "aleatorio":
             case "aleatoria":
             case "rand":
-            case "rnd": {
-                return "undead";
+            case "rnd":
+            case "azar": {
+                return "random";
+            }
+            case "random-all":
+            case "randomall":
+            case "random-total":
+            case "aleatorio-total":
+            case "aleatorio-totales": {
+                return "random-all";
             }
             case "goblin":
             case "goblins": {
@@ -533,6 +647,39 @@ extends CustomUIPage {
             }
         }
         return normalized;
+    }
+
+    private static String normalizeRewardCategoryInput(String value) {
+        if (value == null || value.isBlank()) {
+            return "mithril";
+        }
+        String normalized = value.trim().toLowerCase(Locale.ROOT);
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace(' ', '_').replace('-', '_');
+        switch (normalized) {
+            case "mithril":
+                return "mithril";
+            case "onyxium":
+                return "onyxium";
+            case "gemas":
+            case "gems":
+                return "gemas";
+            case "metales":
+            case "metals":
+                return "metales";
+            case "materiales_raros":
+            case "material_raro":
+            case "rare_materials":
+                return "materiales_raros";
+            case "armas_especiales":
+            case "special_weapons":
+                return "armas_especiales";
+            case "items_especiales":
+            case "trofeos":
+            case "special_items":
+                return "items_especiales";
+        }
+        return "mithril";
     }
 
     private static String read(JsonObject object, String key) {

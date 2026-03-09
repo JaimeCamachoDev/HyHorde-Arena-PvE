@@ -1,7 +1,7 @@
 {
     "Group": "HyHorde",
     "Name": "ArenaPVE",
-    "Version": "1.0.3",
+    "Version": "1.0.4",
     "Description": "Sistema de hordas PVE para Hytale.",
     "Authors": [
         {

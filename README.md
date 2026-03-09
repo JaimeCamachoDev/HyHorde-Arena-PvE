@@ -1,7 +1,7 @@
 # HyHorde Arena PVE
 
 Mod de hordas PVE por rondas para Hytale.
-Version actual: `1.0.3`.
+Version actual: `1.0.4`.
 
 ## Comando de ayuda
 
@@ -25,32 +25,27 @@ Version actual: `1.0.3`.
 
 ## Tipos de enemigo soportados
 
-- `auto`
 - `random`
-- `bandit`
-- `goblin`
-- `skeleton`
-- `zombie`
-- `spider`
-- `wolf`
-- `slime`
-- `beetle`
-- `trork`
-- `outlander`
+- `random-all`
+- `undead`
+- `goblins`
 - `scarak`
+- `void`
+- `wild`
+- `elementals`
 
 Nota: los roles reales dependen de tu modpack. Verificalo con `/hordapve tipos`.
 
 ## Recompensas
 
-- La UI permite configurar `RewardItemId` y `RewardItemQuantity`.
-- `RewardItemId` acepta `random` para soltar un item aleatorio valido en cada recompensa.
-- Si `RewardItemId` esta vacio o invalido, el sistema elige automaticamente un item de test validado para tu modpack.
-- Si no encuentra ningun item valido, avisa en chat y en logs.
+- La UI permite configurar `RewardCategory`, `RewardItemId` y `RewardItemQuantity`.
+- Usa `< >` en categoria e item para recorrer rapidamente el pool de recompensas.
+- `random`: item aleatorio dentro de la categoria elegida.
+- `random_all`: item aleatorio del pool completo.
 
 ## HUD de horda
 
-- En `1.0.3` el HUD emergente automatico de horda queda desactivado temporalmente por estabilidad.
+- En `1.0.4` el HUD emergente automatico de horda queda desactivado temporalmente por estabilidad.
 
 ## Flujo rapido
 

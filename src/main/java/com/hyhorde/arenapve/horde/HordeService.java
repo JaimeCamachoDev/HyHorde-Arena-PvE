@@ -58,14 +58,19 @@ import java.util.logging.Level;
 
 public final class HordeService {
     private static final List<String> PREFERRED_REWARD_TEST_ITEMS = List.of("Armor_Bronze_Chest", "Armor_Copper_Chest", "Armor_Iron_Chest", "Tool_Watering_Can_State_Filled_Water", "*Container_Bucket_State_Filled_Water", "item/resource/wood", "item/resource/stone", "item/consumable/apple", "item/material/iron_ingot", "item/weapon/sword_iron");
+    private static final String ENEMY_MODE_RANDOM = "random";
+    private static final String ENEMY_MODE_RANDOM_ALL = "random-all";
     private static final String DEFAULT_ENEMY_TYPE = "undead";
+    private static final String DEFAULT_REWARD_CATEGORY = "mithril";
+    private static final String REWARD_MODE_RANDOM_CATEGORY = "random";
+    private static final String REWARD_MODE_RANDOM_ALL = "random_all";
     private static final Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
+    private static final Map<String, List<String>> REWARD_CATEGORY_ITEMS = HordeService.buildRewardCategoryItems();
     private static final String[] FINAL_BOSS_ROLE_HINTS = new String[]{"Goblin_Ogre", "Cave_Rex", "Earthen_Golem", "Ember_Golem", "Frost_Elemental", "Fire_Elemental", "Burnt_Skeleton_Praetorian", "Burnt_Skeleton_Knight", "Dungeon_Scarak_Broodmother_Young", "Feran_Longtooth", "Feran_Sharptooth", "Armored_Skeleton_Horse"};
     private static final String[] FINAL_BOSS_ROLE_KEYWORDS = new String[]{"ogre", "rex", "golem", "elemental", "praetorian", "broodmother", "duke", "knight", "longtooth", "sharptooth", "behemoth", "giant", "brute", "warlord", "titan"};
     private static final List<String> ENEMY_TYPE_OPTIONS = HordeService.buildEnemyTypeOptions();
+    private static final List<String> REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
     private static final List<String> RANDOM_ENEMY_TYPE_OPTIONS = HordeService.buildRandomEnemyTypePool();
-    private static final List<String> REWARD_ITEM_SUGGESTIONS = HordeService.buildRewardItemSuggestions();
-    private static final String REWARD_MODE_RANDOM = "random";
     private static final int MAX_REWARD_SUGGESTIONS = 72;
     private static final String[] BLOCKED_ENEMY_ROLE_HINTS = new String[]{"kitten", "feline"};
     private static final int START_COUNTDOWN_SECONDS = 3;
@@ -165,6 +170,14 @@ public final class HordeService {
         ArrayList<String> diagnostics = new ArrayList<String>();
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         for (String enemyType : ENEMY_TYPE_OPTIONS) {
+            if (HordeService.isRandomEnemyType(enemyType)) {
+                diagnostics.add(enemyType + (english ? " -> RANDOM CATEGORY MODE" : " -> MODO RANDOM POR CATEGORIA"));
+                continue;
+            }
+            if (HordeService.isRandomAllEnemyType(enemyType)) {
+                diagnostics.add(enemyType + (english ? " -> FULL RANDOM MODE" : " -> MODO RANDOM TOTAL"));
+                continue;
+            }
             List<String> matches = HordeService.findRolesForEnemyType(roles, enemyType);
             if (matches.isEmpty()) {
                 diagnostics.add(enemyType + (english ? " -> NOT AVAILABLE" : " -> NO DISPONIBLE"));
@@ -179,7 +192,27 @@ public final class HordeService {
     }
 
     public synchronized List<String> getRewardItemSuggestions() {
-        return HordeService.buildResolvedRewardSuggestions();
+        String rewardCategory = this.config.rewardCategory;
+        if (rewardCategory == null || rewardCategory.isBlank()) {
+            rewardCategory = this.getRewardCategory();
+        }
+        return this.getRewardItemSuggestions(rewardCategory);
+    }
+
+    public synchronized List<String> getRewardItemSuggestions(String rewardCategoryInput) {
+        if (rewardCategoryInput == null || rewardCategoryInput.isBlank()) {
+            return HordeService.buildResolvedRewardSuggestions(null);
+        }
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        return HordeService.buildResolvedRewardSuggestions(rewardCategory);
+    }
+
+    public synchronized List<String> getRewardCategoryOptions() {
+        return new ArrayList<String>(REWARD_CATEGORY_OPTIONS);
+    }
+
+    public synchronized String getRewardCategory() {
+        return HordeService.normalizeRewardCategory(this.config.rewardCategory);
     }
 
     public synchronized List<String> getLanguageOptions() {
@@ -369,11 +402,11 @@ public final class HordeService {
     public synchronized OperationResult setEnemyType(String enemyTypeInput) {
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         String enemyType = HordeService.normalizeEnemyType(enemyTypeInput);
-        if (!ENEMY_TYPE_HINTS.containsKey(enemyType)) {
+        if (!ENEMY_TYPE_OPTIONS.contains(enemyType)) {
             return OperationResult.fail(english ? "Invalid type. Use one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "Tipo invalido. Usa uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
         List<String> roles = this.getAvailableRoles();
-        if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
+        if (!roles.isEmpty() && !HordeService.isRandomEnemyType(enemyType) && !HordeService.isRandomAllEnemyType(enemyType) && HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
             return OperationResult.fail(english ? "Category '" + enemyType + "' has no compatible NPCs in this modpack. Use /hordapve enemytypes." : "La categoria '" + enemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos para revisar.");
         }
         this.config.enemyType = enemyType;
@@ -484,17 +517,23 @@ public final class HordeService {
         if (enemyTypeValue != null) {
             updated.enemyType = HordeService.normalizeEnemyType(enemyTypeValue);
         }
+        String rewardCategoryValue = values.get("rewardCategory");
+        if (rewardCategoryValue != null) {
+            updated.rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryValue);
+        } else {
+            updated.rewardCategory = HordeService.normalizeRewardCategory(updated.rewardCategory);
+        }
         String languageValue = values.get("language");
         if (languageValue != null && !languageValue.isBlank()) {
             updated.language = HordeService.normalizeLanguage(languageValue);
         } else {
             updated.language = HordeService.normalizeLanguage(updated.language);
         }
-        if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
+        if (!ENEMY_TYPE_OPTIONS.contains(updated.enemyType)) {
             return OperationResult.fail(english ? "enemyType must be one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
         List<String> roles = this.getAvailableRoles();
-        if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
+        if (!roles.isEmpty() && !HordeService.isRandomEnemyType(updated.enemyType) && !HordeService.isRandomAllEnemyType(updated.enemyType) && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
             return OperationResult.fail(english ? "enemyType '" + updated.enemyType + "' has no compatible NPCs in this modpack." : "enemyType '" + updated.enemyType + "' no tiene NPCs compatibles en este modpack.");
         }
         if (updated.rewardEveryRounds <= 0 || updated.rewardEveryRounds > 200) {
@@ -503,6 +542,8 @@ public final class HordeService {
         String rewardItemIdRaw = values.get("rewardItemId");
         if (rewardItemIdRaw != null) {
             updated.rewardItemId = HordeService.normalizeRewardItemId(rewardItemIdRaw);
+        } else {
+            updated.rewardItemId = HordeService.normalizeRewardItemId(updated.rewardItemId);
         }
         try {
             updated.rewardItemQuantity = HordeService.parseInt(values.get("rewardItemQuantity"), updated.rewardItemQuantity, "rewardItemQuantity", english);
@@ -513,9 +554,13 @@ public final class HordeService {
         if (updated.rewardItemQuantity < MIN_REWARD_ITEM_QUANTITY || updated.rewardItemQuantity > MAX_REWARD_ITEM_QUANTITY) {
             return OperationResult.fail(english ? "rewardItemQuantity must be between " + MIN_REWARD_ITEM_QUANTITY + " and " + MAX_REWARD_ITEM_QUANTITY + "." : "rewardItemQuantity debe estar entre " + MIN_REWARD_ITEM_QUANTITY + " y " + MAX_REWARD_ITEM_QUANTITY + ".");
         }
+        if (updated.rewardCategory == null || updated.rewardCategory.isBlank()) {
+            updated.rewardCategory = DEFAULT_REWARD_CATEGORY;
+        }
         boolean randomRewardMode = HordeService.isRandomRewardMode(updated.rewardItemId);
-        if (updated.rewardItemId == null || updated.rewardItemId.isBlank() || (!randomRewardMode && !HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity))) {
-            String fallbackItemId = HordeService.resolveGuaranteedRewardTestItemId(updated.rewardItemQuantity);
+        boolean rewardAllowedForCategory = HordeService.isRewardItemAllowedForCategory(updated.rewardItemId, updated.rewardCategory);
+        if (updated.rewardItemId == null || updated.rewardItemId.isBlank() || (!randomRewardMode && (!rewardAllowedForCategory || !HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity)))) {
+            String fallbackItemId = HordeService.resolveDefaultRewardItemIdForCategory(updated.rewardCategory, updated.rewardItemQuantity);
             if (fallbackItemId == null || fallbackItemId.isBlank()) {
                 // No bloqueamos la UI/arranque por recompensa: se resolvera al dropear.
                 updated.rewardItemId = "";
@@ -592,13 +637,18 @@ public final class HordeService {
             this.config.npcRole = "";
             this.saveConfig();
         }
-        List<String> supportedEnemyTypes = HordeService.findSupportedEnemyTypes(roles);
+        List<String> randomizableEnemyTypes = HordeService.findSupportedEnemyCategories(roles);
         String selectedRole = null;
         if (forcedRole != null) {
             selectedRole = forcedRole;
         } else if (HordeService.isRandomEnemyType(selectedEnemyType)) {
-            String initialRandomType = HordeService.pickRandomEnemyType(supportedEnemyTypes);
+            String initialRandomType = HordeService.pickRandomEnemyType(randomizableEnemyTypes);
             selectedRole = HordeService.pickRandomRoleForEnemyType(roles, initialRandomType);
+            if (selectedRole == null) {
+                selectedRole = HordeService.resolveAutoRole(roles);
+            }
+        } else if (HordeService.isRandomAllEnemyType(selectedEnemyType)) {
+            selectedRole = HordeService.pickRandomAllowedRole(roles);
             if (selectedRole == null) {
                 selectedRole = HordeService.resolveAutoRole(roles);
             }
@@ -613,7 +663,7 @@ public final class HordeService {
         }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
         long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_TOTAL_SECONDS * 1000L;
-        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, supportedEnemyTypes, startRotation, firstRoundAtMillis);
+        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis);
         this.syncSessionPlayers(newSession);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, SESSION_TICK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         String roleSuffix = forcedRole == null ? selectedRole : selectedRole + (english ? " (forced)" : " (forzado)");
@@ -812,6 +862,11 @@ public final class HordeService {
                     if (resolvedRandomRole != null) {
                         roleForSpawn = resolvedRandomRole;
                     }
+                } else if (HordeService.isRandomAllEnemyType(sessionToAdvance.enemyType)) {
+                    String resolvedRandomRole = HordeService.pickRandomAllowedRole(sessionToAdvance.availableRoles);
+                    if (resolvedRandomRole != null) {
+                        roleForSpawn = resolvedRandomRole;
+                    }
                 } else {
                     String resolvedCategoryRole = HordeService.pickRandomRoleForEnemyType(sessionToAdvance.availableRoles, sessionToAdvance.enemyType);
                     if (resolvedCategoryRole != null) {
@@ -873,10 +928,11 @@ public final class HordeService {
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
         int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
+        String rewardCategory = HordeService.normalizeRewardCategory(this.config.rewardCategory);
         String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
         boolean configuredRandom = HordeService.isRandomRewardMode(configuredRewardItemId);
-        boolean configuredValid = configuredRandom || HordeService.isUsableRewardItemId(configuredRewardItemId, rewardQuantity);
-        String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity);
+        boolean configuredValid = configuredRandom || HordeService.isRewardItemAllowedForCategory(configuredRewardItemId, rewardCategory) && HordeService.isUsableRewardItemId(configuredRewardItemId, rewardQuantity);
+        String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity, rewardCategory, configuredRewardItemId);
         if (rewardItemId == null || rewardItemId.isBlank()) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido configurado o disponible.");
             trackedSession.world.sendMessage(Message.raw((String)(english ? "Could not drop reward: configure a valid item in RewardItemId." : "No se pudo dropear recompensa: configura un item valido en RewardItemId.")));
@@ -884,8 +940,9 @@ public final class HordeService {
         }
         if (!configuredValid && !configuredRandom) {
             this.config.rewardItemId = rewardItemId;
+            this.config.rewardCategory = rewardCategory;
             this.saveConfig();
-            trackedSession.world.sendMessage(Message.raw((String)(english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + "." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + ".")));
+            trackedSession.world.sendMessage(Message.raw((String)(english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + " (category: " + rewardCategory + ")." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + " (categoria: " + rewardCategory + ").")));
         }
         ItemStack rewardStack = new ItemStack(rewardItemId, rewardQuantity);
         Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
@@ -902,15 +959,29 @@ public final class HordeService {
         trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward item dropped at center: " + rewardItemId + " x" + rewardQuantity + "." : "Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
     }
 
-    private String resolveRewardItemIdForDrop(int quantity) {
-        String configured = HordeService.normalizeRewardItemId(this.config.rewardItemId);
-        if (HordeService.isRandomRewardMode(configured)) {
-            return this.pickRandomRewardItemId(quantity);
+    private String resolveRewardItemIdForDrop(int quantity, String rewardCategoryInput, String configuredRewardItemId) {
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        String configured = HordeService.normalizeRewardItemId(configuredRewardItemId);
+        if (HordeService.isRandomAllRewardMode(configured)) {
+            return this.pickRandomRewardItemId(quantity, null);
         }
-        if (HordeService.isUsableRewardItemId(configured, quantity)) {
+        if (HordeService.isRandomCategoryRewardMode(configured)) {
+            return this.pickRandomRewardItemId(quantity, rewardCategory);
+        }
+        if (HordeService.isRewardItemAllowedForCategory(configured, rewardCategory) && HordeService.isUsableRewardItemId(configured, quantity)) {
             return configured;
         }
-        for (String suggestion : this.getRewardItemSuggestions()) {
+        for (String suggestion : this.getRewardItemSuggestions(rewardCategory)) {
+            String normalized = HordeService.normalizeRewardItemId(suggestion);
+            if (HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            if (!HordeService.isUsableRewardItemId(normalized, quantity)) {
+                continue;
+            }
+            return normalized;
+        }
+        for (String suggestion : this.getRewardItemSuggestions(null)) {
             String normalized = HordeService.normalizeRewardItemId(suggestion);
             if (HordeService.isRandomRewardMode(normalized)) {
                 continue;
@@ -923,9 +994,12 @@ public final class HordeService {
         return HordeService.resolveGuaranteedRewardTestItemId(quantity);
     }
 
-    private String pickRandomRewardItemId(int quantity) {
+    private String pickRandomRewardItemId(int quantity, String rewardCategoryInput) {
         ArrayList<String> pool = new ArrayList<String>();
-        for (String suggestion : this.getRewardItemSuggestions()) {
+        boolean globalPool = rewardCategoryInput == null || rewardCategoryInput.isBlank();
+        String rewardCategory = globalPool ? "" : HordeService.normalizeRewardCategory(rewardCategoryInput);
+        List<String> suggestions = globalPool ? this.getRewardItemSuggestions(null) : this.getRewardItemSuggestions(rewardCategory);
+        for (String suggestion : suggestions) {
             String normalized = HordeService.normalizeRewardItemId(suggestion);
             if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized) || !HordeService.isUsableRewardItemId(normalized, quantity)) continue;
             pool.add(normalized);
@@ -1303,14 +1377,34 @@ public final class HordeService {
 
     private static List<String> findSupportedEnemyTypes(List<String> roles) {
         ArrayList<String> supported = new ArrayList<String>();
+        supported.add(ENEMY_MODE_RANDOM);
+        supported.add(ENEMY_MODE_RANDOM_ALL);
         if (roles == null || roles.isEmpty()) {
             return supported;
         }
-        for (String enemyType : ENEMY_TYPE_OPTIONS) {
+        for (String enemyType : ENEMY_TYPE_HINTS.keySet()) {
             if (HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
                 continue;
             }
             supported.add(enemyType);
+        }
+        return supported;
+    }
+
+    private static List<String> findSupportedEnemyCategories(List<String> roles) {
+        ArrayList<String> supported = new ArrayList<String>();
+        if (roles == null || roles.isEmpty()) {
+            supported.addAll(ENEMY_TYPE_HINTS.keySet());
+            return supported;
+        }
+        for (String enemyType : ENEMY_TYPE_HINTS.keySet()) {
+            if (HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
+                continue;
+            }
+            supported.add(enemyType);
+        }
+        if (supported.isEmpty()) {
+            supported.add(DEFAULT_ENEMY_TYPE);
         }
         return supported;
     }
@@ -1375,6 +1469,24 @@ public final class HordeService {
             return role;
         }
         return null;
+    }
+
+    private static String pickRandomAllowedRole(List<String> roles) {
+        if (roles == null || roles.isEmpty()) {
+            return null;
+        }
+        ArrayList<String> allowed = new ArrayList<String>();
+        for (String role : roles) {
+            if (HordeService.isBlockedEnemyRole(role)) {
+                continue;
+            }
+            allowed.add(role);
+        }
+        if (allowed.isEmpty()) {
+            return null;
+        }
+        int randomIndex = ThreadLocalRandom.current().nextInt(allowed.size());
+        return allowed.get(randomIndex);
     }
 
     private static boolean isBlockedEnemyRole(String role) {
@@ -1482,13 +1594,27 @@ public final class HordeService {
                 return "elementals";
             }
             case "auto":
-            case "role":
+            case "role": {
+                return DEFAULT_ENEMY_TYPE;
+            }
             case "random":
             case "aleatorio":
             case "aleatoria":
             case "rand":
-            case "rnd": {
-                return DEFAULT_ENEMY_TYPE;
+            case "rnd":
+            case "azar": {
+                return ENEMY_MODE_RANDOM;
+            }
+            case "random-all":
+            case "randomall":
+            case "totalrandom":
+            case "fullrandom":
+            case "random-total":
+            case "aleatorio-total":
+            case "aleatorio-totales":
+            case "aleatorioall":
+            case "aleatorioalles": {
+                return ENEMY_MODE_RANDOM_ALL;
             }
         }
         return normalized;
@@ -1506,12 +1632,16 @@ public final class HordeService {
     }
 
     private static List<String> buildEnemyTypeOptions() {
-        return new ArrayList<String>(ENEMY_TYPE_HINTS.keySet());
+        ArrayList<String> options = new ArrayList<String>();
+        options.add(ENEMY_MODE_RANDOM);
+        options.add(ENEMY_MODE_RANDOM_ALL);
+        options.addAll(ENEMY_TYPE_HINTS.keySet());
+        return options;
     }
 
     private static List<String> buildRandomEnemyTypePool() {
         ArrayList<String> pool = new ArrayList<String>();
-        for (String enemyType : ENEMY_TYPE_OPTIONS) {
+        for (String enemyType : ENEMY_TYPE_HINTS.keySet()) {
             pool.add(enemyType);
         }
         if (pool.isEmpty()) {
@@ -1520,41 +1650,191 @@ public final class HordeService {
         return pool;
     }
 
-    private static List<String> buildRewardItemSuggestions() {
-        LinkedHashSet<String> suggestions = new LinkedHashSet<String>();
-        suggestions.add(REWARD_MODE_RANDOM);
-        String guaranteedTestItem = HordeService.resolveGuaranteedRewardTestItemId(1);
-        if (guaranteedTestItem != null && !guaranteedTestItem.isBlank()) {
-            suggestions.add(guaranteedTestItem);
+    private static Map<String, List<String>> buildRewardCategoryItems() {
+        LinkedHashMap<String, List<String>> categories = new LinkedHashMap<String, List<String>>();
+        categories.put("mithril", List.of(
+                "weapon_longsword_mithril",
+                "weapon_battleaxe_mithril",
+                "weapon_mace_mithril",
+                "weapon_daggers_mithril",
+                "weapon_shortbow_mithril",
+                "armor_mithril_head",
+                "armor_mithril_chest",
+                "armor_mithril_hands",
+                "armor_mithril_legs",
+                "tool_pickaxe_mithril",
+                "tool_hatchet_mithril"
+        ));
+        categories.put("onyxium", List.of(
+                "weapon_longsword_onyxium",
+                "weapon_battleaxe_onyxium",
+                "weapon_mace_onyxium",
+                "weapon_daggers_onyxium",
+                "weapon_shortbow_onyxium",
+                "armor_onyxium_head",
+                "armor_onyxium_chest",
+                "armor_onyxium_hands",
+                "armor_onyxium_legs",
+                "tool_pickaxe_onyxium",
+                "tool_hatchet_onyxium"
+        ));
+        categories.put("gemas", List.of(
+                "rock_gem_sapphire",
+                "rock_gem_emerald",
+                "rock_gem_ruby",
+                "rock_gem_topaz",
+                "rock_gem_diamond"
+        ));
+        categories.put("metales", List.of(
+                "ore_iron",
+                "ore_thorium",
+                "ore_gold",
+                "ore_copper"
+        ));
+        categories.put("materiales_raros", List.of(
+                "ingredient_voidheart",
+                "ingredient_leather_heavy",
+                "ingredient_salt",
+                "ingredient_bone",
+                "ingredient_scale"
+        ));
+        categories.put("armas_especiales", List.of(
+                "weapon_kunai",
+                "weapon_handgun",
+                "weapon_longsword_flame"
+        ));
+        categories.put("items_especiales", List.of(
+                "deco_trophy_harvest",
+                "egg_spawner_lantern"
+        ));
+        return categories;
+    }
+
+    private static List<String> buildRewardCategoryOptions() {
+        ArrayList<String> options = new ArrayList<String>();
+        options.addAll(REWARD_CATEGORY_ITEMS.keySet());
+        if (!options.contains(DEFAULT_REWARD_CATEGORY)) {
+            options.add(0, DEFAULT_REWARD_CATEGORY);
         }
-        HordeService.addUsableRewardSuggestions(suggestions, PREFERRED_REWARD_TEST_ITEMS);
-        HordeService.addUsableRewardSuggestions(suggestions, HordeService.buildFallbackRewardSuggestions());
-        ArrayList<String> result = new ArrayList<String>(suggestions);
+        return options;
+    }
+
+    private static String normalizeRewardCategory(String input) {
+        if (input == null || input.isBlank()) {
+            return DEFAULT_REWARD_CATEGORY;
+        }
+        String normalized = input.trim().toLowerCase(Locale.ROOT);
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace(' ', '_').replace('-', '_');
+        switch (normalized) {
+            case "mithril":
+                return "mithril";
+            case "onyxium":
+                return "onyxium";
+            case "gemas":
+            case "gem":
+            case "gems":
+                return "gemas";
+            case "metales":
+            case "metal":
+            case "metals":
+                return "metales";
+            case "materiales_raros":
+            case "material_raro":
+            case "rare_materials":
+            case "rares":
+                return "materiales_raros";
+            case "armas_especiales":
+            case "armas":
+            case "special_weapons":
+            case "weapons_special":
+                return "armas_especiales";
+            case "items_especiales":
+            case "trofeos":
+            case "trophies":
+            case "special_items":
+                return "items_especiales";
+        }
+        if (REWARD_CATEGORY_ITEMS.containsKey(normalized)) {
+            return normalized;
+        }
+        return DEFAULT_REWARD_CATEGORY;
+    }
+
+    private static List<String> getRewardCategoryItems(String rewardCategoryInput) {
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        List<String> configured = REWARD_CATEGORY_ITEMS.get(rewardCategory);
+        if (configured == null || configured.isEmpty()) {
+            return List.of();
+        }
+        return configured;
+    }
+
+    private static List<String> getAllConfiguredRewardItems() {
+        LinkedHashSet<String> all = new LinkedHashSet<String>();
+        for (String category : REWARD_CATEGORY_OPTIONS) {
+            List<String> items = HordeService.getRewardCategoryItems(category);
+            HordeService.addConfiguredRewardSuggestions(all, items);
+        }
+        return new ArrayList<String>(all);
+    }
+
+    private static List<String> buildResolvedRewardSuggestions(String rewardCategoryInput) {
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        LinkedHashSet<String> resolved = new LinkedHashSet<String>();
+        resolved.add(REWARD_MODE_RANDOM_CATEGORY);
+        resolved.add(REWARD_MODE_RANDOM_ALL);
+
+        if (rewardCategoryInput == null || rewardCategoryInput.isBlank()) {
+            HordeService.addConfiguredRewardSuggestions(resolved, HordeService.getAllConfiguredRewardItems());
+        } else {
+            HordeService.addConfiguredRewardSuggestions(resolved, HordeService.getRewardCategoryItems(rewardCategory));
+        }
+
+        if (resolved.size() <= 2) {
+            String guaranteedTestItem = HordeService.resolveGuaranteedRewardTestItemId(1);
+            if (guaranteedTestItem != null && !guaranteedTestItem.isBlank()) {
+                resolved.add(guaranteedTestItem);
+            }
+            HordeService.addUsableRewardSuggestions(resolved, PREFERRED_REWARD_TEST_ITEMS);
+            HordeService.addUsableRewardSuggestions(resolved, HordeService.buildFallbackRewardSuggestions());
+        }
+
+        ArrayList<String> result = new ArrayList<String>(resolved);
         if (result.size() > MAX_REWARD_SUGGESTIONS) {
             return new ArrayList<String>(result.subList(0, MAX_REWARD_SUGGESTIONS));
         }
         return result;
     }
 
-    private static List<String> buildResolvedRewardSuggestions() {
-        if (!REWARD_ITEM_SUGGESTIONS.isEmpty()) {
-            return new ArrayList<String>(REWARD_ITEM_SUGGESTIONS);
-        }
-        LinkedHashSet<String> resolved = new LinkedHashSet<String>();
-        String guaranteedTestItem = HordeService.resolveGuaranteedRewardTestItemId(1);
-        if (guaranteedTestItem != null && !guaranteedTestItem.isBlank()) {
-            resolved.add(guaranteedTestItem);
-        }
-        HordeService.addUsableRewardSuggestions(resolved, HordeService.buildFallbackRewardSuggestions());
-        return new ArrayList<String>(resolved);
+    private static String resolveDefaultRewardItemId() {
+        return HordeService.resolveDefaultRewardItemIdForCategory(DEFAULT_REWARD_CATEGORY, 1);
     }
 
-    private static String resolveDefaultRewardItemId() {
-        List<String> resolved = HordeService.buildResolvedRewardSuggestions();
-        if (resolved.isEmpty()) {
-            return HordeService.resolveGuaranteedRewardTestItemId(1);
+    private static String resolveDefaultRewardItemIdForCategory(String rewardCategoryInput, int quantity) {
+        int safeQuantity = Math.max(MIN_REWARD_ITEM_QUANTITY, quantity);
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        for (String preferred : HordeService.getRewardCategoryItems(rewardCategory)) {
+            String normalized = HordeService.normalizeRewardItemId(preferred);
+            if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            if (!HordeService.isUsableRewardItemId(normalized, safeQuantity)) {
+                continue;
+            }
+            return normalized;
         }
-        return resolved.get(0);
+        for (String configured : HordeService.getAllConfiguredRewardItems()) {
+            String normalized = HordeService.normalizeRewardItemId(configured);
+            if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            if (!HordeService.isUsableRewardItemId(normalized, safeQuantity)) {
+                continue;
+            }
+            return normalized;
+        }
+        return HordeService.resolveGuaranteedRewardTestItemId(safeQuantity);
     }
 
     private static String resolveGuaranteedRewardTestItemId(int quantity) {
@@ -1584,8 +1864,9 @@ public final class HordeService {
         if (raw.isBlank()) {
             return "";
         }
-        if (HordeService.isRandomRewardAlias(raw)) {
-            return REWARD_MODE_RANDOM;
+        String randomMode = HordeService.resolveRandomRewardAlias(raw);
+        if (!randomMode.isBlank()) {
+            return randomMode;
         }
         LinkedHashSet<String> candidates = HordeService.buildRewardItemIdCandidates(raw);
         String firstCandidate = "";
@@ -1604,16 +1885,63 @@ public final class HordeService {
         return firstCandidate.isBlank() ? raw : firstCandidate;
     }
 
-    private static boolean isRandomRewardAlias(String rawValue) {
+    private static String resolveRandomRewardAlias(String rawValue) {
         if (rawValue == null || rawValue.isBlank()) {
-            return false;
+            return "";
         }
         String normalized = rawValue.trim().toLowerCase(Locale.ROOT);
-        return "random".equals(normalized) || "rand".equals(normalized) || "rnd".equals(normalized) || "aleatorio".equals(normalized) || "aleatoria".equals(normalized);
+        normalized = normalized.replace('-', '_').replace(' ', '_');
+        switch (normalized) {
+            case "random":
+            case "rand":
+            case "rnd":
+            case "aleatorio":
+            case "aleatoria":
+            case "azar":
+            case "random_category":
+            case "random_cat":
+            case "categoria_random":
+            case "aleatorio_categoria":
+                return REWARD_MODE_RANDOM_CATEGORY;
+            case "random_all":
+            case "all_random":
+            case "random_total":
+            case "total_random":
+            case "aleatorio_total":
+            case "aleatorio_todo":
+                return REWARD_MODE_RANDOM_ALL;
+        }
+        return "";
     }
 
     private static boolean isRandomRewardMode(String itemId) {
-        return REWARD_MODE_RANDOM.equalsIgnoreCase(itemId == null ? "" : itemId.trim());
+        return HordeService.isRandomCategoryRewardMode(itemId) || HordeService.isRandomAllRewardMode(itemId);
+    }
+
+    private static boolean isRandomCategoryRewardMode(String itemId) {
+        return REWARD_MODE_RANDOM_CATEGORY.equalsIgnoreCase(itemId == null ? "" : itemId.trim());
+    }
+
+    private static boolean isRandomAllRewardMode(String itemId) {
+        return REWARD_MODE_RANDOM_ALL.equalsIgnoreCase(itemId == null ? "" : itemId.trim());
+    }
+
+    private static boolean isRewardItemAllowedForCategory(String itemId, String rewardCategoryInput) {
+        String normalized = HordeService.normalizeRewardItemId(itemId);
+        if (normalized.isBlank()) {
+            return false;
+        }
+        if (HordeService.isRandomRewardMode(normalized)) {
+            return true;
+        }
+        String rewardCategory = HordeService.normalizeRewardCategory(rewardCategoryInput);
+        for (String configured : HordeService.getRewardCategoryItems(rewardCategory)) {
+            String normalizedConfigured = HordeService.normalizeRewardItemId(configured);
+            if (normalized.equalsIgnoreCase(normalizedConfigured)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static LinkedHashSet<String> buildRewardItemIdCandidates(String rawInput) {
@@ -1778,6 +2106,19 @@ public final class HordeService {
         }
     }
 
+    private static void addConfiguredRewardSuggestions(Set<String> target, List<String> candidates) {
+        if (target == null || candidates == null || candidates.isEmpty()) {
+            return;
+        }
+        for (String candidate : candidates) {
+            String normalized = HordeService.normalizeRewardItemId(candidate);
+            if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            target.add(normalized);
+        }
+    }
+
     private static void addUsableRewardSuggestions(Set<String> target, List<String> candidates) {
         if (target == null || candidates == null || candidates.isEmpty()) {
             return;
@@ -1827,7 +2168,11 @@ public final class HordeService {
     }
 
     private static boolean isRandomEnemyType(String enemyType) {
-        return "random".equals(HordeService.normalizeEnemyType(enemyType));
+        return ENEMY_MODE_RANDOM.equals(HordeService.normalizeEnemyType(enemyType));
+    }
+
+    private static boolean isRandomAllEnemyType(String enemyType) {
+        return ENEMY_MODE_RANDOM_ALL.equals(HordeService.normalizeEnemyType(enemyType));
     }
 
     private static int computeRemainingSeconds(long nowMillis, long targetMillis) {
@@ -2305,8 +2650,11 @@ public final class HordeService {
         if (itemId.isBlank()) {
             return english ? "no item" : "sin item";
         }
-        if (HordeService.isRandomRewardMode(itemId)) {
-            return (english ? "random" : "aleatorio") + " x" + Math.max(1, rewardQuantity);
+        if (HordeService.isRandomAllRewardMode(itemId)) {
+            return (english ? "random_all" : "aleatorio_total") + " x" + Math.max(1, rewardQuantity);
+        }
+        if (HordeService.isRandomCategoryRewardMode(itemId)) {
+            return (english ? "random_category" : "aleatorio_categoria") + " x" + Math.max(1, rewardQuantity);
         }
         return itemId + " x" + Math.max(1, rewardQuantity);
     }
@@ -2431,12 +2779,13 @@ public final class HordeService {
             sanitized.enemyLevelMin = sanitized.enemyLevelMax;
             sanitized.enemyLevelMax = swap;
         }
-        String safeRewardItemId = HordeService.resolveGuaranteedRewardTestItemId(sanitized.rewardItemQuantity);
+        sanitized.rewardCategory = HordeService.normalizeRewardCategory(sanitized.rewardCategory);
+        String safeRewardItemId = HordeService.resolveDefaultRewardItemIdForCategory(sanitized.rewardCategory, sanitized.rewardItemQuantity);
         if (sanitized.rewardItemId == null || sanitized.rewardItemId.isBlank()) {
             sanitized.rewardItemId = safeRewardItemId;
         } else {
             sanitized.rewardItemId = HordeService.normalizeRewardItemId(sanitized.rewardItemId.trim());
-            if (!sanitized.rewardItemId.isBlank() && !HordeService.isRandomRewardMode(sanitized.rewardItemId) && !HordeService.isUsableRewardItemId(sanitized.rewardItemId, sanitized.rewardItemQuantity)) {
+            if (!sanitized.rewardItemId.isBlank() && !HordeService.isRandomRewardMode(sanitized.rewardItemId) && (!HordeService.isRewardItemAllowedForCategory(sanitized.rewardItemId, sanitized.rewardCategory) || !HordeService.isUsableRewardItemId(sanitized.rewardItemId, sanitized.rewardItemQuantity))) {
                 sanitized.rewardItemId = safeRewardItemId;
             }
         }
@@ -2448,7 +2797,7 @@ public final class HordeService {
             sanitized.maxSpawnRadius = temp;
         }
         sanitized.enemyType = HordeService.normalizeEnemyType(sanitized.enemyType);
-        if (!ENEMY_TYPE_HINTS.containsKey(sanitized.enemyType)) {
+        if (!ENEMY_TYPE_OPTIONS.contains(sanitized.enemyType)) {
             sanitized.enemyType = DEFAULT_ENEMY_TYPE;
         }
         sanitized.npcRole = HordeService.safeRoleValue(sanitized.npcRole).trim();
@@ -2487,6 +2836,7 @@ public final class HordeService {
         public String npcRole;
         public String language;
         public int rewardEveryRounds;
+        public String rewardCategory;
         public String rewardItemId;
         public int rewardItemQuantity;
         public boolean finalBossEnabled;
@@ -2511,7 +2861,8 @@ public final class HordeService {
             defaults.npcRole = "";
             defaults.language = LANGUAGE_SPANISH;
             defaults.rewardEveryRounds = 2;
-            defaults.rewardItemId = HordeService.resolveDefaultRewardItemId();
+            defaults.rewardCategory = DEFAULT_REWARD_CATEGORY;
+            defaults.rewardItemId = HordeService.resolveDefaultRewardItemIdForCategory(defaults.rewardCategory, 1);
             defaults.rewardItemQuantity = 1;
             defaults.finalBossEnabled = false;
             defaults.enemyLevelMin = 1;
@@ -2537,6 +2888,7 @@ public final class HordeService {
             copy.npcRole = this.npcRole;
             copy.language = this.language;
             copy.rewardEveryRounds = this.rewardEveryRounds;
+            copy.rewardCategory = this.rewardCategory;
             copy.rewardItemId = this.rewardItemId;
             copy.rewardItemQuantity = this.rewardItemQuantity;
             copy.finalBossEnabled = this.finalBossEnabled;

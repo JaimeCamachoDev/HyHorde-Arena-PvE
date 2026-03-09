@@ -264,13 +264,13 @@ Group {
     Background: #0f1825;
   }
 
-  Label #RewardCommandsLabel {
+  Label #RewardCategoryLabel {
     Anchor: (Left: 492, Top: 544, Width: 170, Height: 28);
-    Text: "Item recompensa";
+    Text: "Categoria recompensa";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextButton #RewardItemPrevButton {
+  TextButton #RewardCategoryPrevButton {
     Anchor: (Left: 668, Top: 544, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
@@ -280,16 +280,16 @@ Group {
     );
   }
 
-  TextField #RewardItemId {
-    Anchor: (Left: 720, Top: 544, Width: 388, Height: 34);
-    Value: "";
+  TextField #RewardCategory {
+    Anchor: (Left: 720, Top: 544, Width: 242, Height: 34);
+    Value: "mithril";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
   }
 
-  TextButton #RewardItemNextButton {
-    Anchor: (Left: 1114, Top: 544, Width: 46, Height: 34);
+  TextButton #RewardCategoryNextButton {
+    Anchor: (Left: 968, Top: 544, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -299,7 +299,7 @@ Group {
   }
 
   TextButton #RewardTypesButton {
-    Anchor: (Left: 1166, Top: 544, Width: 120, Height: 34);
+    Anchor: (Left: 1020, Top: 544, Width: 152, Height: 34);
     Text: "Ver loot";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 13, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -308,34 +308,68 @@ Group {
     );
   }
 
-  Label #RewardCommandsHelpLabel {
-    Anchor: (Left: 668, Top: 580, Width: 620, Height: 22);
-    Text: "Tip: la primera sugerencia es un item testado para este modpack.";
-    Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
+  Label #RewardCommandsLabel {
+    Anchor: (Left: 492, Top: 588, Width: 170, Height: 28);
+    Text: "Item recompensa";
+    Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextButton #RewardItemPrevButton {
+    Anchor: (Left: 668, Top: 588, Width: 46, Height: 34);
+    Text: "<";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextField #RewardItemId {
+    Anchor: (Left: 720, Top: 588, Width: 388, Height: 34);
+    Value: "";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  TextButton #RewardItemNextButton {
+    Anchor: (Left: 1114, Top: 588, Width: 46, Height: 34);
+    Text: ">";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
   }
 
   Label #RewardItemQuantityLabel {
-    Anchor: (Left: 1294, Top: 548, Width: 80, Height: 22);
+    Anchor: (Left: 1294, Top: 592, Width: 80, Height: 22);
     Text: "Cant.";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   TextField #RewardItemQuantity {
-    Anchor: (Left: 1376, Top: 544, Width: 52, Height: 34);
+    Anchor: (Left: 1376, Top: 588, Width: 52, Height: 34);
     Value: "1";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
     Background: #0f1825;
   }
 
+  Label #RewardCommandsHelpLabel {
+    Anchor: (Left: 668, Top: 624, Width: 760, Height: 22);
+    Text: "Tip: usa random y random_all para modos de loot aleatorio.";
+    Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
+  }
+
   Label #FinalBossLabel {
-    Anchor: (Left: 492, Top: 620, Width: 170, Height: 28);
+    Anchor: (Left: 492, Top: 664, Width: 170, Height: 28);
     Text: "Boss final";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #FinalBossPrevButton {
-    Anchor: (Left: 668, Top: 620, Width: 46, Height: 34);
+    Anchor: (Left: 668, Top: 664, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -345,7 +379,7 @@ Group {
   }
 
   TextField #FinalBossEnabled {
-    Anchor: (Left: 720, Top: 620, Width: 242, Height: 34);
+    Anchor: (Left: 720, Top: 664, Width: 242, Height: 34);
     Value: "No";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -353,7 +387,7 @@ Group {
   }
 
   TextButton #FinalBossNextButton {
-    Anchor: (Left: 968, Top: 620, Width: 46, Height: 34);
+    Anchor: (Left: 968, Top: 664, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -363,13 +397,13 @@ Group {
   }
 
   Label #EnemyLevelRangeLabel {
-    Anchor: (Left: 1024, Top: 622, Width: 166, Height: 24);
+    Anchor: (Left: 1024, Top: 666, Width: 166, Height: 24);
     Text: "Nivel enemigos";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextField #EnemyLevelMin {
-    Anchor: (Left: 1194, Top: 620, Width: 96, Height: 34);
+    Anchor: (Left: 1194, Top: 664, Width: 96, Height: 34);
     Value: "1";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -377,13 +411,13 @@ Group {
   }
 
   Label #EnemyLevelRangeSeparator {
-    Anchor: (Left: 1294, Top: 622, Width: 24, Height: 24);
+    Anchor: (Left: 1294, Top: 666, Width: 24, Height: 24);
     Text: "-";
     Style: (FontSize: 16, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
   }
 
   TextField #EnemyLevelMax {
-    Anchor: (Left: 1322, Top: 620, Width: 106, Height: 34);
+    Anchor: (Left: 1322, Top: 664, Width: 106, Height: 34);
     Value: "1";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -391,13 +425,13 @@ Group {
   }
 
   Label #StatusTitleLabel {
-    Anchor: (Left: 492, Top: 664, Width: 220, Height: 26);
+    Anchor: (Left: 492, Top: 708, Width: 220, Height: 26);
     Text: "Estado actual";
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #ReloadModButton {
-    Anchor: (Left: 1246, Top: 658, Width: 182, Height: 30);
+    Anchor: (Left: 1246, Top: 702, Width: 182, Height: 30);
     Text: "Recargar mod";
     Style: TextButtonStyle(
       Default: (Background: #6a4f1f, LabelStyle: (FontSize: 13, TextColor: #fff6e7, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -407,18 +441,18 @@ Group {
   }
 
   Panel #StatusPanel {
-    Anchor: (Left: 492, Top: 692, Width: 936, Height: 94);
+    Anchor: (Left: 492, Top: 736, Width: 936, Height: 94);
     Background: #0f1825;
   }
 
   Label #StatusLabel {
-    Anchor: (Left: 506, Top: 706, Width: 908, Height: 66);
+    Anchor: (Left: 506, Top: 750, Width: 908, Height: 66);
     Text: "";
     Style: (FontSize: 13, TextColor: #d1e0f3, VerticalAlignment: Center);
   }
 
   TextButton #SaveButton {
-    Anchor: (Left: 492, Top: 810, Width: 220, Height: 44);
+    Anchor: (Left: 492, Top: 848, Width: 220, Height: 44);
     Text: "Guardar config";
     Style: TextButtonStyle(
       Default: (Background: #265f3f, LabelStyle: (FontSize: 15, TextColor: #f4fff9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -428,7 +462,7 @@ Group {
   }
 
   TextButton #StartButton {
-    Anchor: (Left: 728, Top: 810, Width: 200, Height: 44);
+    Anchor: (Left: 728, Top: 848, Width: 200, Height: 44);
     Text: "Iniciar horda";
     Style: TextButtonStyle(
       Default: (Background: #1c7a4a, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -438,7 +472,7 @@ Group {
   }
 
   TextButton #StopButton {
-    Anchor: (Left: 728, Top: 810, Width: 200, Height: 44);
+    Anchor: (Left: 728, Top: 848, Width: 200, Height: 44);
     Text: "Detener horda";
     Visible: false;
     Style: TextButtonStyle(
@@ -449,7 +483,7 @@ Group {
   }
 
   TextButton #SkipRoundButton {
-    Anchor: (Left: 944, Top: 810, Width: 286, Height: 44);
+    Anchor: (Left: 944, Top: 848, Width: 286, Height: 44);
     Text: "Pasar ronda";
     Visible: false;
     Style: TextButtonStyle(
@@ -460,7 +494,7 @@ Group {
   }
 
   TextButton #CloseButton {
-    Anchor: (Left: 1246, Top: 810, Width: 182, Height: 44);
+    Anchor: (Left: 1246, Top: 848, Width: 182, Height: 44);
     Text: "Cerrar";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 15, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
