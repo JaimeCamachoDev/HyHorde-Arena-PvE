@@ -31,6 +31,7 @@ extends AbstractPlayerCommand {
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+        boolean english = HordeService.isEnglishLanguage(this.hordeService.getLanguage());
         String mode;
         switch (mode = commandContext.provided(this.modeArg) ? ((String)commandContext.get(this.modeArg)).toLowerCase(Locale.ROOT) : "config") {
             case "config": {
@@ -45,16 +46,16 @@ extends AbstractPlayerCommand {
                     this.hordeService.stop(true);
                 }
                 if (ok = PluginManager.get().reload(this.plugin.getIdentifier())) {
-                    playerRef.sendMessage(Message.raw((String)"Plugin recargado. Cambios del .jar aplicados."));
+                    playerRef.sendMessage(Message.raw((String)(english ? "Plugin reloaded. .jar changes applied." : "Plugin recargado. Cambios del .jar aplicados.")));
                 } else {
-                    playerRef.sendMessage(Message.raw((String)"No se pudo recargar el plugin. Revisa logs del servidor."));
+                    playerRef.sendMessage(Message.raw((String)(english ? "Could not reload plugin. Check server logs." : "No se pudo recargar el plugin. Revisa logs del servidor.")));
                 }
                 return;
             }
         }
-        playerRef.sendMessage(Message.raw((String)"Uso: /hordareload [config|mod]"));
-        playerRef.sendMessage(Message.raw((String)"config: recarga horde-config.json"));
-        playerRef.sendMessage(Message.raw((String)"mod: intenta recargar el plugin y assets del .jar"));
+        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordareload [config|mod]" : "Uso: /hordareload [config|mod]")));
+        playerRef.sendMessage(Message.raw((String)(english ? "config: reload horde-config.json" : "config: recarga horde-config.json")));
+        playerRef.sendMessage(Message.raw((String)(english ? "mod: tries to reload plugin and .jar assets" : "mod: intenta recargar el plugin y assets del .jar")));
     }
 }
 

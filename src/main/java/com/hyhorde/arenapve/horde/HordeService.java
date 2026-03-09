@@ -62,6 +62,8 @@ public final class HordeService {
     private static final int MAX_REWARD_SUGGESTIONS = 72;
     private static final String[] BLOCKED_ENEMY_ROLE_HINTS = new String[]{"kitten", "feline"};
     private static final int START_COUNTDOWN_SECONDS = 3;
+    private static final int START_COUNTDOWN_EXTRA_DELAY_SECONDS = 2;
+    private static final int START_COUNTDOWN_TOTAL_SECONDS = START_COUNTDOWN_SECONDS + START_COUNTDOWN_EXTRA_DELAY_SECONDS;
     private static final long SESSION_TICK_INTERVAL_MILLIS = 250L;
     private static final int MIN_ROUNDS = 1;
     private static final int MAX_ROUNDS = 200;
@@ -120,7 +122,7 @@ public final class HordeService {
             rewardInfo = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, true);
             return "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + this.session.playerMultiplier + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo;
         }
-        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
+        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Muertes de jugadores: " + totalDeaths + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
     }
 
     public synchronized List<String> getAvailableRoles() {
@@ -146,15 +148,16 @@ public final class HordeService {
     public synchronized List<String> getEnemyTypeDiagnostics() {
         List<String> roles = this.getAvailableRoles();
         ArrayList<String> diagnostics = new ArrayList<String>();
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         for (String enemyType : ENEMY_TYPE_OPTIONS) {
             List<String> matches = HordeService.findRolesForEnemyType(roles, enemyType);
             if (matches.isEmpty()) {
-                diagnostics.add(enemyType + " -> NO DISPONIBLE");
+                diagnostics.add(enemyType + (english ? " -> NOT AVAILABLE" : " -> NO DISPONIBLE"));
                 continue;
             }
             int previewCount = Math.min(5, matches.size());
             List<String> preview = matches.subList(0, previewCount);
-            String suffix = matches.size() > previewCount ? " ... (+" + (matches.size() - previewCount) + " mas)" : "";
+            String suffix = matches.size() > previewCount ? (english ? " ... (+" + (matches.size() - previewCount) + " more)" : " ... (+" + (matches.size() - previewCount) + " mas)") : "";
             diagnostics.add(enemyType + " -> " + String.join((CharSequence)", ", preview) + suffix);
         }
         return diagnostics;
@@ -238,13 +241,15 @@ public final class HordeService {
     public synchronized OperationResult reloadConfigFromDisk() {
         this.loadConfig();
         this.refreshStatusHud(this.session);
-        return OperationResult.ok("Configuracion de hordas recargada desde disco.");
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        return OperationResult.ok(english ? "Horde configuration reloaded from disk." : "Configuracion de hordas recargada desde disco.");
     }
 
     public synchronized OperationResult openStatusHud(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, PlayerRef playerRef, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            return OperationResult.fail("No se pudo abrir el panel de estado ahora mismo.");
+            return OperationResult.fail(english ? "Could not open the status panel right now." : "No se pudo abrir el panel de estado ahora mismo.");
         }
         try {
             HordeStatusPage previous = this.statusPages.remove(playerRef.getUuid());
@@ -254,38 +259,40 @@ public final class HordeService {
             StatusSnapshot snapshot = this.createStatusSnapshot(world);
             HordeStatusPage page = HordeStatusPage.open(playerEntityRef, store, player, playerRef, snapshot, this::unregisterStatusPage);
             this.statusPages.put(playerRef.getUuid(), page);
-            return OperationResult.ok("Panel de estado de horda abierto.");
+            return OperationResult.ok(english ? "Horde status panel opened." : "Panel de estado de horda abierto.");
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo abrir el panel de estado de horda: %s", (Object)ex.getMessage());
-            return OperationResult.fail("No se pudo abrir el panel de estado. Revisa logs del servidor.");
+            return OperationResult.fail(english ? "Could not open the status panel. Check server logs." : "No se pudo abrir el panel de estado. Revisa logs del servidor.");
         }
     }
 
     public synchronized OperationResult setEnemyType(String enemyTypeInput) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         String enemyType = HordeService.normalizeEnemyType(enemyTypeInput);
         if (!ENEMY_TYPE_HINTS.containsKey(enemyType)) {
-            return OperationResult.fail("Tipo invalido. Usa uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
+            return OperationResult.fail(english ? "Invalid type. Use one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "Tipo invalido. Usa uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
         List<String> roles = this.getAvailableRoles();
         if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, enemyType) == null) {
-            return OperationResult.fail("La categoria '" + enemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos para revisar.");
+            return OperationResult.fail(english ? "Category '" + enemyType + "' has no compatible NPCs in this modpack. Use /hordapve enemytypes." : "La categoria '" + enemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos para revisar.");
         }
         this.config.enemyType = enemyType;
         this.saveConfig();
-        return OperationResult.ok("Categoria de enemigos configurada en: " + enemyType);
+        return OperationResult.ok(english ? "Enemy category set to: " + enemyType : "Categoria de enemigos configurada en: " + enemyType);
     }
 
     public synchronized OperationResult setNpcRole(String npcRoleInput) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         String raw = HordeService.safeRoleValue(npcRoleInput).trim();
         if (raw.isEmpty() || "auto".equalsIgnoreCase(raw) || "clear".equalsIgnoreCase(raw) || "none".equalsIgnoreCase(raw) || "default".equalsIgnoreCase(raw)) {
             this.config.npcRole = "";
             this.saveConfig();
-            return OperationResult.ok("Override de rol NPC desactivado. Se volvera a usar enemyType.");
+            return OperationResult.ok(english ? "NPC role override disabled. enemyType category will be used again." : "Override de rol NPC desactivado. Se volvera a usar enemyType.");
         }
         List<String> roles = this.getAvailableRoles();
         if (roles.isEmpty()) {
-            return OperationResult.fail("No hay roles de NPC disponibles para validar '" + raw + "'.");
+            return OperationResult.fail(english ? "No NPC roles available to validate '" + raw + "'." : "No hay roles de NPC disponibles para validar '" + raw + "'.");
         }
         String resolvedRole = HordeService.findRoleByExactName(roles, raw);
         if (resolvedRole == null) {
@@ -293,27 +300,28 @@ public final class HordeService {
             if (similarRoles.size() == 1) {
                 resolvedRole = similarRoles.get(0);
             } else if (similarRoles.size() > 1) {
-                return OperationResult.fail("Rol ambiguo '" + raw + "'. Coincidencias: " + String.join((CharSequence)", ", similarRoles));
+                return OperationResult.fail(english ? "Ambiguous role '" + raw + "'. Matches: " + String.join((CharSequence)", ", similarRoles) : "Rol ambiguo '" + raw + "'. Coincidencias: " + String.join((CharSequence)", ", similarRoles));
             }
         }
         if (resolvedRole == null) {
-            return OperationResult.fail("Rol NPC no encontrado: '" + raw + "'. Usa /hordapve roles.");
+            return OperationResult.fail(english ? "NPC role not found: '" + raw + "'. Use /hordapve roles." : "Rol NPC no encontrado: '" + raw + "'. Usa /hordapve roles.");
         }
         if (HordeService.isBlockedEnemyRole(resolvedRole)) {
-            return OperationResult.fail("El rol '" + resolvedRole + "' esta bloqueado para hordas (mascota/no hostil).");
+            return OperationResult.fail(english ? "Role '" + resolvedRole + "' is blocked for hordes (pet/non-hostile)." : "El rol '" + resolvedRole + "' esta bloqueado para hordas (mascota/no hostil).");
         }
         this.config.npcRole = resolvedRole;
         this.saveConfig();
-        return OperationResult.ok("Rol NPC forzado a: " + resolvedRole);
+        return OperationResult.ok(english ? "NPC role forced to: " + resolvedRole : "Rol NPC forzado a: " + resolvedRole);
     }
 
     public synchronized OperationResult setRewardEveryRounds(int everyRounds) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (everyRounds <= 0 || everyRounds > 200) {
-            return OperationResult.fail("reward debe estar entre 1 y 200.");
+            return OperationResult.fail(english ? "reward must be between 1 and 200." : "reward debe estar entre 1 y 200.");
         }
         this.config.rewardEveryRounds = everyRounds;
         this.saveConfig();
-        return OperationResult.ok("Recompensas configuradas cada " + everyRounds + " ronda(s).");
+        return OperationResult.ok(english ? "Rewards configured every " + everyRounds + " round(s)." : "Recompensas configuradas cada " + everyRounds + " ronda(s).");
     }
 
     public synchronized OperationResult setLanguage(String languageInput) {
@@ -328,6 +336,7 @@ public final class HordeService {
     }
 
     public synchronized OperationResult setSpawnFromPlayer(PlayerRef playerRef, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         Transform transform = playerRef.getTransform();
         Vector3d position = transform.getPosition();
         this.config.spawnConfigured = true;
@@ -336,23 +345,27 @@ public final class HordeService {
         this.config.spawnY = position.y;
         this.config.spawnZ = position.z;
         this.saveConfig();
+        if (english) {
+            return OperationResult.ok(String.format(Locale.ROOT, "Horde center saved at %.2f %.2f %.2f (world: %s).", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.worldName));
+        }
         return OperationResult.ok(String.format(Locale.ROOT, "Centro de horda guardado en %.2f %.2f %.2f (mundo: %s).", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.worldName));
     }
 
     public synchronized OperationResult applyUiConfig(Map<String, String> values, World world) {
         HordeConfig updated = this.config.copy();
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         try {
-            updated.spawnX = HordeService.parseDouble(values.get("spawnX"), updated.spawnX, "spawnX");
-            updated.spawnY = HordeService.parseDouble(values.get("spawnY"), updated.spawnY, "spawnY");
-            updated.spawnZ = HordeService.parseDouble(values.get("spawnZ"), updated.spawnZ, "spawnZ");
-            updated.minSpawnRadius = HordeService.parseDouble(values.get("minRadius"), updated.minSpawnRadius, "minRadius");
-            updated.maxSpawnRadius = HordeService.parseDouble(values.get("maxRadius"), updated.maxSpawnRadius, "maxRadius");
-            updated.rounds = HordeService.parseInt(values.get("rounds"), updated.rounds, "rounds");
-            updated.baseEnemiesPerRound = HordeService.parseInt(values.get("baseEnemies"), updated.baseEnemiesPerRound, "baseEnemies");
-            updated.enemiesPerRoundIncrement = HordeService.parseInt(values.get("enemiesPerRound"), updated.enemiesPerRoundIncrement, "enemiesPerRound");
-            updated.waveDelaySeconds = HordeService.parseInt(values.get("waveDelay"), updated.waveDelaySeconds, "waveDelay");
-            updated.playerMultiplier = HordeService.parseInt(values.get("playerMultiplier"), updated.playerMultiplier, "playerMultiplier");
-            updated.rewardEveryRounds = HordeService.parseInt(values.get("rewardEveryRounds"), updated.rewardEveryRounds, "rewardEveryRounds");
+            updated.spawnX = HordeService.parseDouble(values.get("spawnX"), updated.spawnX, "spawnX", english);
+            updated.spawnY = HordeService.parseDouble(values.get("spawnY"), updated.spawnY, "spawnY", english);
+            updated.spawnZ = HordeService.parseDouble(values.get("spawnZ"), updated.spawnZ, "spawnZ", english);
+            updated.minSpawnRadius = HordeService.parseDouble(values.get("minRadius"), updated.minSpawnRadius, "minRadius", english);
+            updated.maxSpawnRadius = HordeService.parseDouble(values.get("maxRadius"), updated.maxSpawnRadius, "maxRadius", english);
+            updated.rounds = HordeService.parseInt(values.get("rounds"), updated.rounds, "rounds", english);
+            updated.baseEnemiesPerRound = HordeService.parseInt(values.get("baseEnemies"), updated.baseEnemiesPerRound, "baseEnemies", english);
+            updated.enemiesPerRoundIncrement = HordeService.parseInt(values.get("enemiesPerRound"), updated.enemiesPerRoundIncrement, "enemiesPerRound", english);
+            updated.waveDelaySeconds = HordeService.parseInt(values.get("waveDelay"), updated.waveDelaySeconds, "waveDelay", english);
+            updated.playerMultiplier = HordeService.parseInt(values.get("playerMultiplier"), updated.playerMultiplier, "playerMultiplier", english);
+            updated.rewardEveryRounds = HordeService.parseInt(values.get("rewardEveryRounds"), updated.rewardEveryRounds, "rewardEveryRounds", english);
         }
         catch (IllegalArgumentException ex) {
             return OperationResult.fail(ex.getMessage());
@@ -368,27 +381,27 @@ public final class HordeService {
             updated.language = HordeService.normalizeLanguage(updated.language);
         }
         if (!ENEMY_TYPE_HINTS.containsKey(updated.enemyType)) {
-            return OperationResult.fail("enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
+            return OperationResult.fail(english ? "enemyType must be one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
         List<String> roles = this.getAvailableRoles();
         if (!roles.isEmpty() && HordeService.resolveRoleForEnemyType(roles, updated.enemyType) == null) {
-            return OperationResult.fail("enemyType '" + updated.enemyType + "' no tiene NPCs compatibles en este modpack.");
+            return OperationResult.fail(english ? "enemyType '" + updated.enemyType + "' has no compatible NPCs in this modpack." : "enemyType '" + updated.enemyType + "' no tiene NPCs compatibles en este modpack.");
         }
         if (updated.rewardEveryRounds <= 0 || updated.rewardEveryRounds > 200) {
-            return OperationResult.fail("rewardEveryRounds debe estar entre 1 y 200.");
+            return OperationResult.fail(english ? "rewardEveryRounds must be between 1 and 200." : "rewardEveryRounds debe estar entre 1 y 200.");
         }
         String rewardItemIdRaw = values.get("rewardItemId");
         if (rewardItemIdRaw != null) {
             updated.rewardItemId = HordeService.normalizeRewardItemId(rewardItemIdRaw);
         }
         try {
-            updated.rewardItemQuantity = HordeService.parseInt(values.get("rewardItemQuantity"), updated.rewardItemQuantity, "rewardItemQuantity");
+            updated.rewardItemQuantity = HordeService.parseInt(values.get("rewardItemQuantity"), updated.rewardItemQuantity, "rewardItemQuantity", english);
         }
         catch (IllegalArgumentException ex) {
             return OperationResult.fail(ex.getMessage());
         }
         if (updated.rewardItemQuantity < MIN_REWARD_ITEM_QUANTITY || updated.rewardItemQuantity > MAX_REWARD_ITEM_QUANTITY) {
-            return OperationResult.fail("rewardItemQuantity debe estar entre " + MIN_REWARD_ITEM_QUANTITY + " y " + MAX_REWARD_ITEM_QUANTITY + ".");
+            return OperationResult.fail(english ? "rewardItemQuantity must be between " + MIN_REWARD_ITEM_QUANTITY + " and " + MAX_REWARD_ITEM_QUANTITY + "." : "rewardItemQuantity debe estar entre " + MIN_REWARD_ITEM_QUANTITY + " y " + MAX_REWARD_ITEM_QUANTITY + ".");
         }
         boolean randomRewardMode = HordeService.isRandomRewardMode(updated.rewardItemId);
         if (updated.rewardItemId == null || updated.rewardItemId.isBlank() || (!randomRewardMode && !HordeService.isUsableRewardItemId(updated.rewardItemId, updated.rewardItemQuantity))) {
@@ -401,44 +414,45 @@ public final class HordeService {
             }
         }
         if (updated.minSpawnRadius < MIN_RADIUS || updated.minSpawnRadius > MAX_RADIUS) {
-            return OperationResult.fail("minRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
+            return OperationResult.fail(english ? "minRadius must be between " + MIN_RADIUS + " and " + MAX_RADIUS + "." : "minRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
         }
         if (updated.maxSpawnRadius < MIN_RADIUS || updated.maxSpawnRadius > MAX_RADIUS) {
-            return OperationResult.fail("maxRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
+            return OperationResult.fail(english ? "maxRadius must be between " + MIN_RADIUS + " and " + MAX_RADIUS + "." : "maxRadius debe estar entre " + MIN_RADIUS + " y " + MAX_RADIUS + ".");
         }
         if (updated.maxSpawnRadius < updated.minSpawnRadius) {
-            return OperationResult.fail("maxRadius debe ser mayor o igual a minRadius.");
+            return OperationResult.fail(english ? "maxRadius must be greater than or equal to minRadius." : "maxRadius debe ser mayor o igual a minRadius.");
         }
         if (updated.rounds < MIN_ROUNDS || updated.rounds > MAX_ROUNDS) {
-            return OperationResult.fail("rounds debe estar entre " + MIN_ROUNDS + " y " + MAX_ROUNDS + ".");
+            return OperationResult.fail(english ? "rounds must be between " + MIN_ROUNDS + " and " + MAX_ROUNDS + "." : "rounds debe estar entre " + MIN_ROUNDS + " y " + MAX_ROUNDS + ".");
         }
         if (updated.baseEnemiesPerRound < MIN_ENEMIES_PER_ROUND || updated.baseEnemiesPerRound > MAX_ENEMIES_PER_ROUND) {
-            return OperationResult.fail("baseEnemies debe estar entre " + MIN_ENEMIES_PER_ROUND + " y " + MAX_ENEMIES_PER_ROUND + ".");
+            return OperationResult.fail(english ? "baseEnemies must be between " + MIN_ENEMIES_PER_ROUND + " and " + MAX_ENEMIES_PER_ROUND + "." : "baseEnemies debe estar entre " + MIN_ENEMIES_PER_ROUND + " y " + MAX_ENEMIES_PER_ROUND + ".");
         }
         if (updated.enemiesPerRoundIncrement < MIN_ENEMY_INCREMENT || updated.enemiesPerRoundIncrement > MAX_ENEMY_INCREMENT) {
-            return OperationResult.fail("enemiesPerRound debe estar entre " + MIN_ENEMY_INCREMENT + " y " + MAX_ENEMY_INCREMENT + ".");
+            return OperationResult.fail(english ? "enemiesPerRound must be between " + MIN_ENEMY_INCREMENT + " and " + MAX_ENEMY_INCREMENT + "." : "enemiesPerRound debe estar entre " + MIN_ENEMY_INCREMENT + " y " + MAX_ENEMY_INCREMENT + ".");
         }
         if (updated.playerMultiplier < MIN_PLAYER_MULTIPLIER || updated.playerMultiplier > MAX_PLAYER_MULTIPLIER) {
-            return OperationResult.fail("playerMultiplier debe estar entre " + MIN_PLAYER_MULTIPLIER + " y " + MAX_PLAYER_MULTIPLIER + ".");
+            return OperationResult.fail(english ? "playerMultiplier must be between " + MIN_PLAYER_MULTIPLIER + " and " + MAX_PLAYER_MULTIPLIER + "." : "playerMultiplier debe estar entre " + MIN_PLAYER_MULTIPLIER + " y " + MAX_PLAYER_MULTIPLIER + ".");
         }
         if (updated.waveDelaySeconds < MIN_WAVE_DELAY_SECONDS || updated.waveDelaySeconds > MAX_WAVE_DELAY_SECONDS) {
-            return OperationResult.fail("waveDelay debe estar entre " + MIN_WAVE_DELAY_SECONDS + " y " + MAX_WAVE_DELAY_SECONDS + " segundos.");
+            return OperationResult.fail(english ? "waveDelay must be between " + MIN_WAVE_DELAY_SECONDS + " and " + MAX_WAVE_DELAY_SECONDS + " seconds." : "waveDelay debe estar entre " + MIN_WAVE_DELAY_SECONDS + " y " + MAX_WAVE_DELAY_SECONDS + " segundos.");
         }
         updated.spawnConfigured = true;
         updated.worldName = world.getName();
         this.config = updated;
         this.saveConfig();
-        return OperationResult.ok("Configuracion de hordas guardada.");
+        return OperationResult.ok(english ? "Horde configuration saved." : "Configuracion de hordas guardada.");
     }
 
     public synchronized OperationResult start(Store<EntityStore> store, PlayerRef startedBy, World world) {
         HordeSession newSession;
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.session != null) {
-            return OperationResult.fail("Ya hay una horda activa.");
+            return OperationResult.fail(english ? "There is already an active horde." : "Ya hay una horda activa.");
         }
         List<String> roles = NPCPlugin.get().getRoleTemplateNames(true);
         if (roles.isEmpty()) {
-            return OperationResult.fail("No hay roles de NPC disponibles.");
+            return OperationResult.fail(english ? "There are no NPC roles available." : "No hay roles de NPC disponibles.");
         }
         if (!this.config.spawnConfigured || !Objects.equals(this.config.worldName, world.getName())) {
             Transform transform = startedBy.getTransform();
@@ -469,41 +483,47 @@ public final class HordeService {
         } else {
             selectedRole = HordeService.resolveRoleForEnemyType(roles, selectedEnemyType);
             if (selectedRole == null) {
-                return OperationResult.fail("La categoria '" + selectedEnemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos.");
+                return OperationResult.fail(english ? "Category '" + selectedEnemyType + "' has no compatible NPCs in this modpack. Use /hordapve enemytypes." : "La categoria '" + selectedEnemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordapve tipos.");
             }
         }
         if (selectedRole == null) {
-            return OperationResult.fail("No se pudo resolver un rol NPC compatible para iniciar la horda.");
+            return OperationResult.fail(english ? "Could not resolve a compatible NPC role to start the horde." : "No se pudo resolver un rol NPC compatible para iniciar la horda.");
         }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
-        long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_SECONDS * 1000L;
+        long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_TOTAL_SECONDS * 1000L;
         this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, supportedEnemyTypes, startRotation, firstRoundAtMillis);
         this.syncSessionPlayers(newSession);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, SESSION_TICK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
-        String roleSuffix = forcedRole == null ? selectedRole : selectedRole + " (forzado)";
-        world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | inicio en %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, START_COUNTDOWN_SECONDS)));
+        String roleSuffix = forcedRole == null ? selectedRole : selectedRole + (english ? " (forced)" : " (forzado)");
+        if (english) {
+            world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horde PVE prepared at %.2f %.2f %.2f | %d rounds | type: %s | role: %s | players x%d | starts in %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, START_COUNTDOWN_TOTAL_SECONDS)));
+        } else {
+            world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | inicio en %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, START_COUNTDOWN_TOTAL_SECONDS)));
+        }
         this.broadcastHordeStartAnnouncement(selectedEnemyType, selectedRole, this.config.playerMultiplier);
-        return OperationResult.ok("Horda iniciada. Cuenta atras: 3..2..1.");
+        return OperationResult.ok(english ? "Horde started. Countdown: 3..2..1." : "Horda iniciada. Cuenta atras: 3..2..1.");
     }
 
     public synchronized OperationResult stop(boolean cleanupAliveEnemies) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.session == null) {
-            return OperationResult.fail("No hay horda activa.");
+            return OperationResult.fail(english ? "There is no active horde." : "No hay horda activa.");
         }
-        this.endSession(this.session, "Horda detenida manualmente.", cleanupAliveEnemies);
-        return OperationResult.ok("Horda detenida.");
+        this.endSession(this.session, english ? "Horde stopped manually." : "Horda detenida manualmente.", cleanupAliveEnemies);
+        return OperationResult.ok(english ? "Horde stopped." : "Horda detenida.");
     }
 
     public synchronized OperationResult skipToNextRound(World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.session == null) {
-            return OperationResult.fail("No hay horda activa para saltar.");
+            return OperationResult.fail(english ? "There is no active horde to skip." : "No hay horda activa para saltar.");
         }
         HordeSession trackedSession = this.session;
         if (world != null && trackedSession.world != world) {
-            return OperationResult.fail("La horda activa esta en otro mundo.");
+            return OperationResult.fail(english ? "The active horde is running in another world." : "La horda activa esta en otro mundo.");
         }
         if (!trackedSession.world.isAlive()) {
-            return OperationResult.fail("No se puede saltar ronda: el mundo activo no esta disponible.");
+            return OperationResult.fail(english ? "Cannot skip round: the active world is unavailable." : "No se puede saltar ronda: el mundo activo no esta disponible.");
         }
         int previousRound = trackedSession.currentRound;
         int cleanedEnemies = this.cleanupAndResetTrackedEnemies(trackedSession);
@@ -511,42 +531,43 @@ public final class HordeService {
             trackedSession.roundActive = false;
             this.grantRoundRewards(trackedSession, previousRound);
             if (previousRound >= this.config.rounds) {
-                this.endSession(trackedSession, "Horda finalizada manualmente al saltar la ultima ronda.", false);
-                return OperationResult.ok("Ultima ronda forzada. Enemigos limpiados: " + cleanedEnemies + ".");
+                this.endSession(trackedSession, english ? "Horde finished manually by skipping the last round." : "Horda finalizada manualmente al saltar la ultima ronda.", false);
+                return OperationResult.ok(english ? "Last round forced. Enemies cleaned: " + cleanedEnemies + "." : "Ultima ronda forzada. Enemigos limpiados: " + cleanedEnemies + ".");
             }
             trackedSession.nextRoundAtMillis = 0L;
             trackedSession.lastIntermissionCountdownAnnouncement = -1;
             this.spawnNextRound(trackedSession, Vector3f.ZERO);
-            trackedSession.world.sendMessage(Message.raw((String)("Ronda " + previousRound + " forzada manualmente. Enemigos limpiados: " + cleanedEnemies + ".")));
+            trackedSession.world.sendMessage(Message.raw((String)(english ? "Round " + previousRound + " forced manually. Enemies cleaned: " + cleanedEnemies + "." : "Ronda " + previousRound + " forzada manualmente. Enemigos limpiados: " + cleanedEnemies + ".")));
             this.refreshStatusHud(trackedSession);
-            return OperationResult.ok("Ronda saltada. Iniciada ronda " + trackedSession.currentRound + ".");
+            return OperationResult.ok(english ? "Round skipped. Started round " + trackedSession.currentRound + "." : "Ronda saltada. Iniciada ronda " + trackedSession.currentRound + ".");
         }
         if (previousRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
             trackedSession.nextRoundAtMillis = 0L;
             trackedSession.lastStartCountdownAnnouncement = 0;
             this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
-            trackedSession.world.sendMessage(Message.raw((String)"Cuenta atras omitida. Ronda 1 iniciada manualmente."));
+            trackedSession.world.sendMessage(Message.raw((String)(english ? "Countdown skipped. Round 1 started manually." : "Cuenta atras omitida. Ronda 1 iniciada manualmente.")));
             this.refreshStatusHud(trackedSession);
-            return OperationResult.ok("Cuenta atras omitida. Ronda 1 iniciada.");
+            return OperationResult.ok(english ? "Countdown skipped. Round 1 started." : "Cuenta atras omitida. Ronda 1 iniciada.");
         }
         if (previousRound >= this.config.rounds) {
-            this.endSession(trackedSession, "Horda finalizada manualmente.", false);
-            return OperationResult.ok("La horda ya estaba en su ronda final y se finalizo manualmente.");
+            this.endSession(trackedSession, english ? "Horde finished manually." : "Horda finalizada manualmente.", false);
+            return OperationResult.ok(english ? "The horde was already at its final round and has been finished manually." : "La horda ya estaba en su ronda final y se finalizo manualmente.");
         }
         trackedSession.nextRoundAtMillis = 0L;
         trackedSession.lastIntermissionCountdownAnnouncement = -1;
         this.spawnNextRound(trackedSession, Vector3f.ZERO);
-        trackedSession.world.sendMessage(Message.raw((String)("Intermedio omitido manualmente. Ronda " + trackedSession.currentRound + " iniciada.")));
+        trackedSession.world.sendMessage(Message.raw((String)(english ? "Intermission skipped manually. Round " + trackedSession.currentRound + " started." : "Intermedio omitido manualmente. Ronda " + trackedSession.currentRound + " iniciada.")));
         this.refreshStatusHud(trackedSession);
-        return OperationResult.ok("Intermedio omitido. Iniciada ronda " + trackedSession.currentRound + ".");
+        return OperationResult.ok(english ? "Intermission skipped. Started round " + trackedSession.currentRound + "." : "Intermedio omitido. Iniciada ronda " + trackedSession.currentRound + ".");
     }
 
     public synchronized void shutdown() {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.session == null) {
             this.closeAllStatusPages();
             return;
         }
-        this.endSession(this.session, "Horda finalizada por apagado del plugin.", false);
+        this.endSession(this.session, english ? "Horde ended due to plugin shutdown." : "Horda finalizada por apagado del plugin.", false);
         this.closeAllStatusPages();
     }
 
@@ -556,7 +577,8 @@ public final class HordeService {
         }
         World world = trackedSession.world;
         if (!world.isAlive()) {
-            this.endSession(trackedSession, "Horda finalizada: el mundo dejo de estar activo.", false);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            this.endSession(trackedSession, english ? "Horde finished: the world is no longer active." : "Horda finalizada: el mundo dejo de estar activo.", false);
             return;
         }
         try {
@@ -574,12 +596,13 @@ public final class HordeService {
                         HordeService.removeInvalidRefs(trackedSession.spawnedEnemies, null);
                         this.syncSessionPlayers(trackedSession);
                         long now = System.currentTimeMillis();
+                        boolean english = HordeService.isEnglishLanguage(this.config.language);
                         if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
                             int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
                             if (now < trackedSession.nextRoundAtMillis) {
                                 if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastStartCountdownAnnouncement) {
                                     this.broadcastHordeCountdownAnnouncement(secondsRemaining, trackedSession.enemyType, trackedSession.role);
-                                    trackedSession.world.sendMessage(Message.raw((String)("La horda comienza en " + secondsRemaining + "...")));
+                                    trackedSession.world.sendMessage(Message.raw((String)(english ? "Horde starts in " + secondsRemaining + "..." : "La horda comienza en " + secondsRemaining + "...")));
                                     trackedSession.lastStartCountdownAnnouncement = secondsRemaining;
                                 }
                                 this.refreshStatusHud(trackedSession);
@@ -600,12 +623,12 @@ public final class HordeService {
                             int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
                             this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
                             if (finalRound) {
-                                this.endSession(trackedSession, "Horda completada. Todas las rondas terminadas.", false);
+                                this.endSession(trackedSession, english ? "Horde completed. All rounds finished." : "Horda completada. Todas las rondas terminadas.", false);
                                 return;
                             }
                             trackedSession.nextRoundAtMillis = now + (long)this.config.waveDelaySeconds * 1000L;
                             trackedSession.lastIntermissionCountdownAnnouncement = -1;
-                            world.sendMessage(Message.raw((String)("Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
+                            world.sendMessage(Message.raw((String)(english ? "Round " + trackedSession.currentRound + " completed. Next round starts in " + this.config.waveDelaySeconds + "s." : "Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
                         }
                         if (!trackedSession.roundActive && trackedSession.currentRound > 0 && trackedSession.currentRound < this.config.rounds) {
                             if (trackedSession.nextRoundAtMillis > now) {
@@ -628,12 +651,14 @@ public final class HordeService {
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo ejecutar tick de horda en el mundo activo: %s", (Object)ex.getMessage());
-            this.endSession(trackedSession, "Horda finalizada por error interno en tick.", false);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            this.endSession(trackedSession, english ? "Horde finished due to an internal tick error." : "Horda finalizada por error interno en tick.", false);
         }
     }
 
     private void spawnNextRound(HordeSession sessionToAdvance, Vector3f baseRotation) {
         int nextRound = sessionToAdvance.currentRound + 1;
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         int playerMultiplier = Math.max(MIN_PLAYER_MULTIPLIER, sessionToAdvance.playerMultiplier);
         int baseCount = this.config.baseEnemiesPerRound + (nextRound - 1) * this.config.enemiesPerRoundIncrement;
         int targetCount = Math.max(1, baseCount * playerMultiplier);
@@ -679,13 +704,17 @@ public final class HordeService {
             }
         }
         if (spawned == 0) {
-            this.endSession(sessionToAdvance, "La horda se cancelo: no se pudo spawnear ningun NPC con el rol " + sessionToAdvance.role + ".", false);
+            this.endSession(sessionToAdvance, english ? "Horde cancelled: could not spawn any NPC with role " + sessionToAdvance.role + "." : "La horda se cancelo: no se pudo spawnear ningun NPC con el rol " + sessionToAdvance.role + ".", false);
             return;
         }
         sessionToAdvance.currentRound = nextRound;
         sessionToAdvance.roundActive = true;
         sessionToAdvance.nextRoundAtMillis = 0L;
-        sessionToAdvance.world.sendMessage(Message.raw((String)("Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores).")));
+        if (english) {
+            sessionToAdvance.world.sendMessage(Message.raw((String)("Round " + nextRound + "/" + this.config.rounds + " started: " + spawned + " enemies (x" + playerMultiplier + " players).")));
+        } else {
+            sessionToAdvance.world.sendMessage(Message.raw((String)("Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores).")));
+        }
         this.broadcastRoundStartAnnouncement(nextRound, this.config.rounds, spawned, playerMultiplier);
     }
 
@@ -696,7 +725,8 @@ public final class HordeService {
         if (completedRound % this.config.rewardEveryRounds != 0) {
             return;
         }
-        trackedSession.world.sendMessage(Message.raw((String)("Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
         int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
         String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
         boolean configuredRandom = HordeService.isRandomRewardMode(configuredRewardItemId);
@@ -704,13 +734,13 @@ public final class HordeService {
         String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity);
         if (rewardItemId == null || rewardItemId.isBlank()) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido configurado o disponible.");
-            trackedSession.world.sendMessage(Message.raw((String)"No se pudo dropear recompensa: configura un item valido en RewardItemId."));
+            trackedSession.world.sendMessage(Message.raw((String)(english ? "Could not drop reward: configure a valid item in RewardItemId." : "No se pudo dropear recompensa: configura un item valido en RewardItemId.")));
             return;
         }
         if (!configuredValid && !configuredRandom) {
             this.config.rewardItemId = rewardItemId;
             this.saveConfig();
-            trackedSession.world.sendMessage(Message.raw((String)("RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + ".")));
+            trackedSession.world.sendMessage(Message.raw((String)(english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + "." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + ".")));
         }
         ItemStack rewardStack = new ItemStack(rewardItemId, rewardQuantity);
         Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
@@ -724,7 +754,7 @@ public final class HordeService {
             itemComponent.setPickupDelay(0.6f);
         }
         trackedSession.store.addEntity(itemEntityHolder, AddReason.SPAWN);
-        trackedSession.world.sendMessage(Message.raw((String)("Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
+        trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward item dropped at center: " + rewardItemId + " x" + rewardQuantity + "." : "Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
     }
 
     private String resolveRewardItemIdForDrop(int quantity) {
@@ -764,8 +794,9 @@ public final class HordeService {
 
     private void broadcastHordeStartAnnouncement(String enemyType, String role, int playerMultiplier) {
         try {
-            String titleText = "HORDA PVE PREPARADA";
-            String subtitleText = String.format(Locale.ROOT, "Tipo: %s | Rol: %s | Rondas: %d | Jugadores x%d | Inicio en %ds", enemyType, role, this.config.rounds, playerMultiplier, START_COUNTDOWN_SECONDS);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? "HORDE PVE READY" : "HORDA PVE PREPARADA";
+            String subtitleText = english ? String.format(Locale.ROOT, "Type: %s | Role: %s | Rounds: %d | Players x%d | Starts in %ds", enemyType, role, this.config.rounds, playerMultiplier, START_COUNTDOWN_TOTAL_SECONDS) : String.format(Locale.ROOT, "Tipo: %s | Rol: %s | Rondas: %d | Jugadores x%d | Inicio en %ds", enemyType, role, this.config.rounds, playerMultiplier, START_COUNTDOWN_TOTAL_SECONDS);
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.2f, 0.1f, 0.15f);
         }
         catch (Exception ex) {
@@ -775,8 +806,9 @@ public final class HordeService {
 
     private void broadcastHordeCountdownAnnouncement(int secondsRemaining, String enemyType, String role) {
         try {
-            String titleText = "HORDA EN " + secondsRemaining + "...";
-            String subtitleText = String.format(Locale.ROOT, "Tipo: %s | Rol: %s", enemyType, role);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? "HORDE IN " + secondsRemaining + "..." : "HORDA EN " + secondsRemaining + "...";
+            String subtitleText = english ? String.format(Locale.ROOT, "Type: %s | Role: %s", enemyType, role) : String.format(Locale.ROOT, "Tipo: %s | Rol: %s", enemyType, role);
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 0.8f, 0.15f, 0.15f);
         }
         catch (Exception ex) {
@@ -786,8 +818,9 @@ public final class HordeService {
 
     private void broadcastHordeCountdownGoAnnouncement(int round, int totalRounds) {
         try {
-            String titleText = "A LUCHAR";
-            String subtitleText = String.format(Locale.ROOT, "Ronda %d/%d iniciada", round, totalRounds);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? "FIGHT" : "A LUCHAR";
+            String subtitleText = english ? String.format(Locale.ROOT, "Round %d/%d started", round, totalRounds) : String.format(Locale.ROOT, "Ronda %d/%d iniciada", round, totalRounds);
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.6f, 0.15f, 0.2f);
         }
         catch (Exception ex) {
@@ -797,9 +830,10 @@ public final class HordeService {
 
     private void broadcastRoundCompleteAnnouncement(int completedRound, int totalRounds, int nextDelaySeconds, int totalKilled, int totalSpawned, boolean rewardUnlocked, boolean finalRound) {
         try {
-            String titleText = String.format(Locale.ROOT, "RONDA %d/%d COMPLETADA", completedRound, totalRounds);
-            String rewardText = rewardUnlocked ? " | Recompensa desbloqueada" : "";
-            String subtitleText = finalRound ? String.format(Locale.ROOT, "Horda completada | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Siguiente en %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? String.format(Locale.ROOT, "ROUND %d/%d COMPLETED", completedRound, totalRounds) : String.format(Locale.ROOT, "RONDA %d/%d COMPLETADA", completedRound, totalRounds);
+            String rewardText = rewardUnlocked ? (english ? " | Reward unlocked" : " | Recompensa desbloqueada") : "";
+            String subtitleText = finalRound ? (english ? String.format(Locale.ROOT, "Horde completed | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Horda completada | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText)) : (english ? String.format(Locale.ROOT, "Next in %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Siguiente en %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText));
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", finalRound ? 3.2f : 2.8f, 0.4f, 0.5f);
         }
         catch (Exception ex) {
@@ -809,8 +843,9 @@ public final class HordeService {
 
     private void broadcastRoundCountdownAnnouncement(int round, int totalRounds, int secondsRemaining) {
         try {
-            String titleText = String.format(Locale.ROOT, "RONDA %d EN %d...", round, secondsRemaining);
-            String subtitleText = String.format(Locale.ROOT, "Preparados para %d/%d", round, totalRounds);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? String.format(Locale.ROOT, "ROUND %d IN %d...", round, secondsRemaining) : String.format(Locale.ROOT, "RONDA %d EN %d...", round, secondsRemaining);
+            String subtitleText = english ? String.format(Locale.ROOT, "Get ready for %d/%d", round, totalRounds) : String.format(Locale.ROOT, "Preparados para %d/%d", round, totalRounds);
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 0.9f, 0.12f, 0.12f);
         }
         catch (Exception ex) {
@@ -820,8 +855,9 @@ public final class HordeService {
 
     private void broadcastRoundStartAnnouncement(int round, int totalRounds, int spawned, int playerMultiplier) {
         try {
-            String titleText = String.format(Locale.ROOT, "RONDA %d/%d", round, totalRounds);
-            String subtitleText = String.format(Locale.ROOT, "Enemigos: %d | Jugadores x%d", spawned, playerMultiplier);
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
+            String titleText = english ? String.format(Locale.ROOT, "ROUND %d/%d", round, totalRounds) : String.format(Locale.ROOT, "RONDA %d/%d", round, totalRounds);
+            String subtitleText = english ? String.format(Locale.ROOT, "Enemies: %d | Players x%d", spawned, playerMultiplier) : String.format(Locale.ROOT, "Enemigos: %d | Jugadores x%d", spawned, playerMultiplier);
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.7f, 0.15f, 0.2f);
         }
         catch (Exception ex) {
@@ -831,10 +867,11 @@ public final class HordeService {
 
     private void broadcastHordeEndAnnouncement(String reason, int aliveAtEnd) {
         try {
+            boolean english = HordeService.isEnglishLanguage(this.config.language);
             String normalizedReason = reason == null ? "" : reason.toLowerCase(Locale.ROOT);
-            String titleText = normalizedReason.contains("completada") ? "HORDA PVE COMPLETADA" : "HORDA PVE FINALIZADA";
-            String subtitleBase = normalizedReason.contains("completada") ? "Todas las rondas terminadas" : HordeService.compactText(reason, 64);
-            String subtitleText = subtitleBase + " | Vivos restantes: " + aliveAtEnd;
+            String titleText = normalizedReason.contains("complet") ? (english ? "HORDE PVE COMPLETED" : "HORDA PVE COMPLETADA") : (english ? "HORDE PVE ENDED" : "HORDA PVE FINALIZADA");
+            String subtitleBase = normalizedReason.contains("complet") ? (english ? "All rounds finished" : "Todas las rondas terminadas") : HordeService.compactText(reason, 64, english);
+            String subtitleText = subtitleBase + (english ? " | Alive remaining: " : " | Vivos restantes: ") + aliveAtEnd;
             EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 4.0f, 1.0f, 1.0f);
         }
         catch (Exception ex) {
@@ -846,6 +883,7 @@ public final class HordeService {
         if (this.session != trackedSession) {
             return;
         }
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (trackedSession.ticker != null) {
             trackedSession.ticker.cancel(false);
         }
@@ -854,8 +892,9 @@ public final class HordeService {
         trackedSession.activeEnemies.clear();
         trackedSession.spawnedEnemies.clear();
         this.session = null;
-        String cleanInfo = cleanupAliveEnemies ? " | limpiados: " + cleanedEnemies : "";
-        trackedSession.world.sendMessage(Message.raw((String)(reason + " (vivos restantes: " + aliveAtEnd + cleanInfo + ").")));
+        String cleanInfo = cleanupAliveEnemies ? (english ? " | cleaned: " + cleanedEnemies : " | limpiados: " + cleanedEnemies) : "";
+        String aliveLabel = english ? "alive remaining: " : "vivos restantes: ";
+        trackedSession.world.sendMessage(Message.raw((String)(reason + " (" + aliveLabel + aliveAtEnd + cleanInfo + ").")));
         this.broadcastHordeEndAnnouncement(reason, aliveAtEnd);
         this.refreshStatusHud(null);
     }
@@ -1653,7 +1692,7 @@ public final class HordeService {
         return alive;
     }
 
-    private static int parseInt(String input, int currentValue, String name) {
+    private static int parseInt(String input, int currentValue, String name, boolean english) {
         if (input == null || input.isBlank()) {
             return currentValue;
         }
@@ -1661,11 +1700,11 @@ public final class HordeService {
             return Integer.parseInt(HordeService.normalizeNumberInput(input, false));
         }
         catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(name + " debe ser un numero entero. Valor recibido: " + input);
+            throw new IllegalArgumentException(english ? name + " must be an integer number. Received value: " + input : name + " debe ser un numero entero. Valor recibido: " + input);
         }
     }
 
-    private static double parseDouble(String input, double currentValue, String name) {
+    private static double parseDouble(String input, double currentValue, String name, boolean english) {
         if (input == null || input.isBlank()) {
             return currentValue;
         }
@@ -1673,7 +1712,7 @@ public final class HordeService {
             return Double.parseDouble(HordeService.normalizeNumberInput(input, true));
         }
         catch (NumberFormatException ex) {
-            throw new IllegalArgumentException(name + " debe ser un numero decimal valido. Valor recibido: " + input);
+            throw new IllegalArgumentException(english ? name + " must be a valid decimal number. Received value: " + input : name + " debe ser un numero decimal valido. Valor recibido: " + input);
         }
     }
 
@@ -1685,9 +1724,9 @@ public final class HordeService {
         return normalized;
     }
 
-    private static String compactText(String input, int maxLength) {
+    private static String compactText(String input, int maxLength, boolean english) {
         if (input == null || input.isBlank()) {
-            return "Horda finalizada";
+            return english ? "Horde ended" : "Horda finalizada";
         }
         String cleaned = input.trim().replace('\n', ' ').replace('\r', ' ');
         if (cleaned.length() <= maxLength) {

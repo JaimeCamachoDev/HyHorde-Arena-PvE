@@ -32,6 +32,7 @@ extends AbstractPlayerCommand {
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+        boolean english = this.isEnglish();
         String[] actionAndValue = this.resolveActionAndValue(commandContext);
         String action = actionAndValue[0];
         String value = actionAndValue[1];
@@ -55,7 +56,7 @@ extends AbstractPlayerCommand {
             }
             case "logs":
             case "log": {
-                playerRef.sendMessage(Message.raw((String)("Ruta de logs: " + this.hordeService.getLogsPathHint())));
+                playerRef.sendMessage(Message.raw((String)((english ? "Logs path: " : "Ruta de logs: ") + this.hordeService.getLogsPathHint())));
                 return;
             }
             case "setspawn":
@@ -92,81 +93,91 @@ extends AbstractPlayerCommand {
                 return;
             }
             default: {
-                playerRef.sendMessage(Message.raw((String)("Subcomando no valido: " + action + ". Usa /hordahelp.")));
+                playerRef.sendMessage(Message.raw((String)(english ? "Invalid subcommand: " + action + ". Use /hordahelp." : "Subcomando no valido: " + action + ". Usa /hordahelp.")));
             }
         }
     }
 
     private void openUi(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            playerRef.sendMessage(Message.raw((String)"No se pudo abrir la interfaz ahora mismo. Usa /hordahelp."));
+            playerRef.sendMessage(Message.raw((String)(english ? "Could not open the interface right now. Use /hordahelp." : "No se pudo abrir la interfaz ahora mismo. Usa /hordahelp.")));
             return;
         }
         try {
             HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
         }
         catch (Exception ex) {
-            playerRef.sendMessage(Message.raw((String)"La interfaz fallo al abrirse. Revisa logs del servidor."));
+            playerRef.sendMessage(Message.raw((String)(english ? "The interface failed to open. Check server logs." : "La interfaz fallo al abrirse. Revisa logs del servidor.")));
         }
     }
 
     private void handleEnemyType(String value, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         String enemyType = value == null ? "" : value.trim();
         if (enemyType.isBlank()) {
             List<String> options = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
             String usage = options.isEmpty() ? "undead|goblins|scarak|void|wild|elementals" : String.join("|", options);
-            playerRef.sendMessage(Message.raw((String)("Uso: /hordapve enemy <" + usage + ">")));
+            playerRef.sendMessage(Message.raw((String)((english ? "Usage: /hordapve enemy <" : "Uso: /hordapve enemy <") + usage + ">")));
             return;
         }
         playerRef.sendMessage(Message.raw((String)this.hordeService.setEnemyType(enemyType).getMessage()));
     }
 
     private void handleEnemyTypes(PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        playerRef.sendMessage(Message.raw((String)"Categorias de horda y roles detectados:"));
+        playerRef.sendMessage(Message.raw((String)(english ? "Detected horde categories and roles:" : "Categorias de horda y roles detectados:")));
         for (String entry : diagnostics) {
             playerRef.sendMessage(Message.raw((String)(" - " + entry)));
         }
     }
 
     private void handleRole(String value, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         String requestedRole = value == null ? "" : value.trim();
         if (requestedRole.isBlank()) {
             String currentRole = this.hordeService.getConfiguredNpcRole();
-            String roleState = currentRole == null || currentRole.isBlank() ? "sin override (por categoria enemyType)" : currentRole;
-            playerRef.sendMessage(Message.raw((String)("Rol NPC actual: " + roleState)));
-            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve role <rolNpc|auto>"));
+            String roleState = currentRole == null || currentRole.isBlank() ? (english ? "no override (using enemyType category)" : "sin override (por categoria enemyType)") : currentRole;
+            playerRef.sendMessage(Message.raw((String)((english ? "Current NPC role: " : "Rol NPC actual: ") + roleState)));
+            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordapve role <npcRole|auto>" : "Uso: /hordapve role <rolNpc|auto>")));
             return;
         }
         playerRef.sendMessage(Message.raw((String)this.hordeService.setNpcRole(requestedRole).getMessage()));
     }
 
     private void handleRoles(PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         List<String> roles = this.hordeService.getAvailableRoles();
         if (roles.isEmpty()) {
-            playerRef.sendMessage(Message.raw((String)"No hay roles NPC disponibles."));
+            playerRef.sendMessage(Message.raw((String)(english ? "No NPC roles available." : "No hay roles NPC disponibles.")));
             return;
         }
-        playerRef.sendMessage(Message.raw((String)("Roles NPC disponibles (" + roles.size() + "):")));
+        playerRef.sendMessage(Message.raw((String)((english ? "Available NPC roles (" : "Roles NPC disponibles (") + roles.size() + "):")));
         playerRef.sendMessage(Message.raw((String)String.join(", ", roles)));
     }
 
     private void handleReward(String value, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
         int everyRounds;
         String raw = value == null ? "" : value.trim();
         if (raw.isBlank()) {
-            playerRef.sendMessage(Message.raw((String)"Uso: /hordapve reward <rondas>"));
+            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordapve reward <rounds>" : "Uso: /hordapve reward <rondas>")));
             return;
         }
         try {
             everyRounds = Integer.parseInt(raw);
         }
         catch (Exception ex) {
-            playerRef.sendMessage(Message.raw((String)"El valor de reward debe ser un numero entero positivo."));
+            playerRef.sendMessage(Message.raw((String)(english ? "Reward value must be a positive integer." : "El valor de reward debe ser un numero entero positivo.")));
             return;
         }
         playerRef.sendMessage(Message.raw((String)this.hordeService.setRewardEveryRounds(everyRounds).getMessage()));
+    }
+
+    private boolean isEnglish() {
+        return HordeService.isEnglishLanguage(this.hordeService.getLanguage());
     }
 
     private String[] resolveActionAndValue(CommandContext commandContext) {

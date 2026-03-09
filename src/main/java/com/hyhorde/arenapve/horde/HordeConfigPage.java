@@ -48,11 +48,12 @@ extends CustomUIPage {
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
         JsonObject payload;
+        boolean english = this.isEnglish();
         try {
             payload = JsonParser.parseString((String)payloadText).getAsJsonObject();
         }
         catch (Exception ex) {
-            this.playerRef.sendMessage(Message.raw((String)"No se pudo interpretar el evento de la UI."));
+            this.playerRef.sendMessage(Message.raw((String)(english ? "Could not parse the UI event payload." : "No se pudo interpretar el evento de la UI.")));
             return;
         }
         try {
@@ -60,7 +61,7 @@ extends CustomUIPage {
             EntityStore entityStore = (EntityStore)store.getExternalData();
             World world = entityStore == null ? null : entityStore.getWorld();
             if (world == null && HordeConfigPage.requiresWorld(action)) {
-                this.playerRef.sendMessage(Message.raw((String)"No se pudo acceder al mundo actual para procesar la accion de UI."));
+                this.playerRef.sendMessage(Message.raw((String)(english ? "Could not access the active world to process this UI action." : "No se pudo acceder al mundo actual para procesar la accion de UI.")));
                 this.safeRebuild();
                 return;
             }
@@ -126,7 +127,7 @@ extends CustomUIPage {
                     break;
                 }
                 default: {
-                    result = HordeService.OperationResult.fail("Accion de UI desconocida: " + action);
+                    result = HordeService.OperationResult.fail(english ? "Unknown UI action: " + action : "Accion de UI desconocida: " + action);
                 }
             }
             if (result != null) {
@@ -134,7 +135,7 @@ extends CustomUIPage {
             }
         }
         catch (Exception ex) {
-            this.playerRef.sendMessage(Message.raw((String)"Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo."));
+            this.playerRef.sendMessage(Message.raw((String)(english ? "Internal error while processing horde UI. Check server logs and try again." : "Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo.")));
         }
         this.safeRebuild();
     }
@@ -175,7 +176,8 @@ extends CustomUIPage {
 
     private void sendEnemyTypesPreview() {
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        this.playerRef.sendMessage(Message.raw((String)("Categorias detectadas (" + diagnostics.size() + "):")));
+        boolean english = this.isEnglish();
+        this.playerRef.sendMessage(Message.raw((String)((english ? "Detected categories" : "Categorias detectadas") + " (" + diagnostics.size() + "):")));
         for (String line : diagnostics) {
             this.playerRef.sendMessage(Message.raw((String)(" - " + line)));
         }
@@ -183,8 +185,9 @@ extends CustomUIPage {
 
     private void sendRewardTypesPreview() {
         List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        boolean english = this.isEnglish();
         if (suggestions.isEmpty()) {
-            this.playerRef.sendMessage(Message.raw((String)"No hay items recompensa validos detectados en este modpack."));
+            this.playerRef.sendMessage(Message.raw((String)(english ? "No valid reward items detected in this modpack." : "No hay items recompensa validos detectados en este modpack.")));
             return;
         }
         int total = suggestions.size();
@@ -196,20 +199,21 @@ extends CustomUIPage {
             safeTestItem = candidate;
             break;
         }
-        this.playerRef.sendMessage(Message.raw((String)("Items recompensa detectados: " + total + ".")));
-        this.playerRef.sendMessage(Message.raw((String)("Item de test recomendado (seguro): " + safeTestItem)));
+        this.playerRef.sendMessage(Message.raw((String)((english ? "Detected reward items: " : "Items recompensa detectados: ") + total + ".")));
+        this.playerRef.sendMessage(Message.raw((String)((english ? "Recommended safe test item: " : "Item de test recomendado (seguro): ") + safeTestItem)));
         this.playerRef.sendMessage(Message.raw((String)("Preview (" + previewCount + "): " + String.join(", ", preview))));
         if (total > previewCount) {
-            this.playerRef.sendMessage(Message.raw((String)("Hay +" + (total - previewCount) + " IDs. Usa los botones < > para recorrer mas opciones.")));
+            this.playerRef.sendMessage(Message.raw((String)(english ? "There are +" + (total - previewCount) + " IDs. Use < > buttons to browse more options." : "Hay +" + (total - previewCount) + " IDs. Usa los botones < > para recorrer mas opciones.")));
         }
-        this.playerRef.sendMessage(Message.raw((String)"Tip extra: usa 'random' en RewardItemId para loot aleatorio por cada recompensa."));
-        this.playerRef.sendMessage(Message.raw((String)"Tambien puedes pegar una linea completa de ItemDumper y se intentara extraer el ID automaticamente."));
+        this.playerRef.sendMessage(Message.raw((String)(english ? "Tip: use 'random' in RewardItemId for randomized loot each reward cycle." : "Tip extra: usa 'random' en RewardItemId para loot aleatorio por cada recompensa.")));
+        this.playerRef.sendMessage(Message.raw((String)(english ? "You can also paste a full ItemDumper line and the ID will be auto-extracted." : "Tambien puedes pegar una linea completa de ItemDumper y se intentara extraer el ID automaticamente.")));
     }
 
     private HordeService.OperationResult cycleEnemyType(Map<String, String> values, World world, int offset) {
         List<String> enemyTypes = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
+        boolean english = this.isEnglish();
         if (enemyTypes.isEmpty()) {
-            return HordeService.OperationResult.fail("No hay categorias de horda disponibles.");
+            return HordeService.OperationResult.fail(english ? "No horde categories available." : "No hay categorias de horda disponibles.");
         }
         String currentType = HordeConfigPage.normalizeEnemyTypeInput(HordeConfigPage.firstNonEmpty(values.get("enemyType"), this.hordeService.getConfigSnapshot().enemyType));
         int currentIndex = enemyTypes.indexOf(currentType);
@@ -222,8 +226,9 @@ extends CustomUIPage {
 
     private HordeService.OperationResult cycleRewardItem(Map<String, String> values, World world, int offset) {
         List<String> suggestions = this.hordeService.getRewardItemSuggestions();
+        boolean english = this.isEnglish();
         if (suggestions.isEmpty()) {
-            return HordeService.OperationResult.fail("No hay items recompensa sugeridos.");
+            return HordeService.OperationResult.fail(english ? "No suggested reward items available." : "No hay items recompensa sugeridos.");
         }
         String currentItem = HordeConfigPage.firstNonEmpty(values.get("rewardItemId")).trim();
         int currentIndex = suggestions.indexOf(currentItem);
@@ -237,8 +242,9 @@ extends CustomUIPage {
 
     private HordeService.OperationResult cycleLanguage(Map<String, String> values, World world, int offset) {
         List<String> options = this.hordeService.getLanguageOptions();
+        boolean english = this.isEnglish();
         if (options.isEmpty()) {
-            return HordeService.OperationResult.fail("No hay idiomas disponibles.");
+            return HordeService.OperationResult.fail(english ? "No language options available." : "No hay idiomas disponibles.");
         }
         String current = HordeService.normalizeLanguage(HordeConfigPage.extractLanguage(HordeConfigPage.firstNonEmpty(values.get("language"), this.hordeService.getLanguage())));
         int currentIndex = options.indexOf(current);
@@ -346,6 +352,10 @@ extends CustomUIPage {
             }
         }
         return "-";
+    }
+
+    private boolean isEnglish() {
+        return HordeService.isEnglishLanguage(this.hordeService.getLanguage());
     }
 
     private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english) {

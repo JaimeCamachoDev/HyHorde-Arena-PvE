@@ -8,22 +8,27 @@ import com.hypixel.hytale.server.core.command.system.basecommands.AbstractPlayer
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hyhorde.arenapve.horde.HordeService;
 import javax.annotation.Nonnull;
 
 public final class HordeHelpCommand
 extends AbstractPlayerCommand {
-    public HordeHelpCommand(@Nonnull String name, @Nonnull String description) {
+    private final HordeService hordeService;
+
+    public HordeHelpCommand(@Nonnull String name, @Nonnull String description, HordeService hordeService) {
         super(name, description);
+        this.hordeService = hordeService;
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        playerRef.sendMessage(Message.raw((String)"[Horda PVE] Ayuda"));
-        playerRef.sendMessage(Message.raw((String)"/hordahelp -> muestra esta ayuda"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve -> abre la configuracion (alias: /hordepve)"));
+        boolean english = HordeService.isEnglishLanguage(this.hordeService.getLanguage());
+        playerRef.sendMessage(Message.raw((String)(english ? "[Horde PVE] Help" : "[Horda PVE] Ayuda")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordahelp -> show this help" : "/hordahelp -> muestra esta ayuda")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve -> open configuration (alias: /hordepve)" : "/hordapve -> abre la configuracion (alias: /hordepve)")));
         playerRef.sendMessage(Message.raw((String)"/hordapve start | stop | status | logs | setspawn"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve enemy <categoria> | tipos"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve role <rolNpc|auto> | roles"));
-        playerRef.sendMessage(Message.raw((String)"/hordapve reward <rondas>"));
-        playerRef.sendMessage(Message.raw((String)"/hordareload config"));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve enemy <category> | enemytypes" : "/hordapve enemy <categoria> | tipos")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve role <npcRole|auto> | roles" : "/hordapve role <rolNpc|auto> | roles")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve reward <rounds>" : "/hordapve reward <rondas>")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordareload [config|mod]" : "/hordareload [config|mod]")));
     }
 }

@@ -37,15 +37,16 @@ extends AbstractPlayerCommand {
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
+        boolean english = HordeService.isEnglishLanguage(this.hordeService.getLanguage());
         String action = HordeCommand.readAction(commandContext, this.actionArg);
         if (!action.isBlank()) {
-            playerRef.sendMessage(Message.raw((String)"El comando /horda no usa subcomandos. Usa /hordahelp."));
+            playerRef.sendMessage(Message.raw((String)(english ? "The /horda command does not use subcommands. Use /hordahelp." : "El comando /horda no usa subcomandos. Usa /hordahelp.")));
             return;
         }
         NPCPlugin npcPlugin = NPCPlugin.get();
         List spawnableRoles = npcPlugin.getRoleTemplateNames(true);
         if (spawnableRoles.isEmpty()) {
-            playerRef.sendMessage(Message.raw((String)"No hay roles de NPC disponibles para spawnear enemigos."));
+            playerRef.sendMessage(Message.raw((String)(english ? "No NPC roles are available to spawn enemies." : "No hay roles de NPC disponibles para spawnear enemigos.")));
             return;
         }
         String enemyRole = HordeCommand.chooseEnemyRole(spawnableRoles);
@@ -70,10 +71,10 @@ extends AbstractPlayerCommand {
             }
         }
         if (spawned == 0) {
-            playerRef.sendMessage(Message.raw((String)("No se pudo generar la horda (rol usado: " + enemyRole + ").")));
+            playerRef.sendMessage(Message.raw((String)(english ? "Could not create horde (role used: " + enemyRole + ")." : "No se pudo generar la horda (rol usado: " + enemyRole + ").")));
             return;
         }
-        playerRef.sendMessage(Message.raw((String)("Horda creada: " + spawned + "/12 enemigos (rol: " + enemyRole + ").")));
+        playerRef.sendMessage(Message.raw((String)(english ? "Horde created: " + spawned + "/12 enemies (role: " + enemyRole + ")." : "Horda creada: " + spawned + "/12 enemigos (rol: " + enemyRole + ").")));
     }
 
     private static String chooseEnemyRole(List<String> roles) {
