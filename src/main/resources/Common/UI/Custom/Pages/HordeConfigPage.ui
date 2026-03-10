@@ -143,13 +143,13 @@ Group {
   }
 
   Label #ArenaJoinRadiusLabel {
-    Anchor: (Left: 456, Top: 320, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 262, Width: 180, Height: 28);
     Text: "Radio jugadores";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextField #ArenaJoinRadius {
-    Anchor: (Left: 642, Top: 318, Width: 188, Height: 34);
+    Anchor: (Left: 642, Top: 260, Width: 188, Height: 34);
     Value: "32.00";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -157,12 +157,12 @@ Group {
   }
 
   TextButton #ReloadModButton {
-    Anchor: (Left: 1264, Top: 318, Width: 200, Height: 34);
+    Anchor: (Left: 706, Top: 844, Width: 170, Height: 46);
     Text: "Recargar config";
     Style: TextButtonStyle(
-      Default: (Background: #6a4f1f, LabelStyle: (FontSize: 13, TextColor: #fff6e7, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #896628, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #524018, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #6a4f1f, LabelStyle: (FontSize: 14, TextColor: #fff6e7, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #896628, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #524018, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
   }
 
@@ -287,13 +287,13 @@ Group {
   }
 
   Label #LanguageLabel {
-    Anchor: (Left: 456, Top: 390, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 320, Width: 180, Height: 28);
     Text: "Idioma de interfaz";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #LanguagePrevButton {
-    Anchor: (Left: 642, Top: 390, Width: 38, Height: 34);
+    Anchor: (Left: 642, Top: 320, Width: 38, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -303,7 +303,7 @@ Group {
   }
 
   TextField #Language {
-    Anchor: (Left: 686, Top: 390, Width: 286, Height: 34);
+    Anchor: (Left: 686, Top: 320, Width: 286, Height: 34);
     Value: "Espanol (es)";
     Style: (FontSize: 13, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -311,7 +311,7 @@ Group {
   }
 
   TextButton #LanguageNextButton {
-    Anchor: (Left: 978, Top: 390, Width: 46, Height: 34);
+    Anchor: (Left: 978, Top: 320, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -321,13 +321,13 @@ Group {
   }
 
   Label #FinalBossLabel {
-    Anchor: (Left: 456, Top: 436, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 390, Width: 180, Height: 28);
     Text: "Boss final";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #FinalBossPrevButton {
-    Anchor: (Left: 642, Top: 436, Width: 46, Height: 34);
+    Anchor: (Left: 642, Top: 390, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -337,7 +337,7 @@ Group {
   }
 
   TextField #FinalBossEnabled {
-    Anchor: (Left: 694, Top: 436, Width: 278, Height: 34);
+    Anchor: (Left: 694, Top: 390, Width: 278, Height: 34);
     Value: "No";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -345,7 +345,7 @@ Group {
   }
 
   TextButton #FinalBossNextButton {
-    Anchor: (Left: 978, Top: 436, Width: 46, Height: 34);
+    Anchor: (Left: 978, Top: 390, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -355,13 +355,19 @@ Group {
   }
 
   Label #EnemyLevelRangeLabel {
-    Anchor: (Left: 1030, Top: 438, Width: 176, Height: 24);
+    Anchor: (Left: 1030, Top: 392, Width: 188, Height: 24);
     Text: "Nivel enemigos";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
+  Label #EnemyLevelWipLabel {
+    Anchor: (Left: 1220, Top: 392, Width: 244, Height: 24);
+    Text: "WIP";
+    Style: (FontSize: 12, TextColor: #f2c48b, RenderBold: true, VerticalAlignment: Center);
+  }
+
   TextField #EnemyLevelMin {
-    Anchor: (Left: 1210, Top: 436, Width: 108, Height: 34);
+    Anchor: (Left: 1210, Top: 390, Width: 108, Height: 34);
     Value: "1";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -369,13 +375,13 @@ Group {
   }
 
   Label #EnemyLevelRangeSeparator {
-    Anchor: (Left: 1322, Top: 438, Width: 24, Height: 24);
+    Anchor: (Left: 1322, Top: 392, Width: 24, Height: 24);
     Text: "-";
     Style: (FontSize: 16, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
   }
 
   TextField #EnemyLevelMax {
-    Anchor: (Left: 1350, Top: 436, Width: 114, Height: 34);
+    Anchor: (Left: 1350, Top: 390, Width: 114, Height: 34);
     Value: "1";
     Style: (FontSize: 14, TextColor: #e8f1ff);
     Padding: (Left: 8);
@@ -389,19 +395,19 @@ Group {
   }
 
   Label #PlayersListTitle {
-    Anchor: (Left: 456, Top: 262, Width: 420, Height: 30);
+    Anchor: (Left: 456, Top: 300, Width: 420, Height: 30);
     Text: "Jugadores en area";
     Style: (FontSize: 18, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersCountLabel {
-    Anchor: (Left: 882, Top: 266, Width: 94, Height: 22);
+    Anchor: (Left: 882, Top: 304, Width: 94, Height: 22);
     Text: "Detectados";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersCountValue {
-    Anchor: (Left: 978, Top: 266, Width: 58, Height: 22);
+    Anchor: (Left: 978, Top: 304, Width: 58, Height: 22);
     Text: "0";
     Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
   }
@@ -417,30 +423,30 @@ Group {
   }
 
   Label #PlayersListHint {
-    Anchor: (Left: 456, Top: 294, Width: 1008, Height: 22);
+    Anchor: (Left: 456, Top: 332, Width: 1008, Height: 22);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #PlayersHeaderName {
-    Anchor: (Left: 478, Top: 320, Width: 430, Height: 22);
+    Anchor: (Left: 478, Top: 356, Width: 430, Height: 22);
     Text: "Jugador";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersHeaderMode {
-    Anchor: (Left: 912, Top: 320, Width: 180, Height: 22);
+    Anchor: (Left: 912, Top: 356, Width: 180, Height: 22);
     Text: "Modo";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Group #AudiencePlayersRows {
-    Anchor: (Left: 456, Top: 346, Width: 1008, Height: 280);
+    Anchor: (Left: 456, Top: 382, Width: 1008, Height: 244);
     LayoutMode: TopScrolling;
   }
 
   Label #AudiencePlayersEmptyLabel {
-    Anchor: (Left: 478, Top: 350, Width: 964, Height: 24);
+    Anchor: (Left: 478, Top: 386, Width: 964, Height: 24);
     Text: "";
     Style: (FontSize: 13, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
@@ -581,7 +587,7 @@ Group {
   }
 
   TextButton #SaveButton {
-    Anchor: (Left: 456, Top: 844, Width: 238, Height: 46);
+    Anchor: (Left: 456, Top: 844, Width: 236, Height: 46);
     Text: "Guardar config";
     Style: TextButtonStyle(
       Default: (Background: #265f3f, LabelStyle: (FontSize: 15, TextColor: #f4fff9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -591,7 +597,7 @@ Group {
   }
 
   TextButton #StartButton {
-    Anchor: (Left: 708, Top: 844, Width: 208, Height: 46);
+    Anchor: (Left: 890, Top: 844, Width: 176, Height: 46);
     Text: "Iniciar horda";
     Style: TextButtonStyle(
       Default: (Background: #1c7a4a, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -601,7 +607,7 @@ Group {
   }
 
   TextButton #StopButton {
-    Anchor: (Left: 708, Top: 844, Width: 208, Height: 46);
+    Anchor: (Left: 890, Top: 844, Width: 176, Height: 46);
     Text: "Detener horda";
     Visible: false;
     Style: TextButtonStyle(
@@ -612,7 +618,7 @@ Group {
   }
 
   TextButton #SkipRoundButton {
-    Anchor: (Left: 930, Top: 844, Width: 288, Height: 46);
+    Anchor: (Left: 1080, Top: 844, Width: 190, Height: 46);
     Text: "Pasar ronda";
     Visible: false;
     Style: TextButtonStyle(
@@ -623,7 +629,7 @@ Group {
   }
 
   TextButton #CloseButton {
-    Anchor: (Left: 1282, Top: 844, Width: 182, Height: 46);
+    Anchor: (Left: 1286, Top: 844, Width: 178, Height: 46);
     Text: "Cerrar";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 15, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
