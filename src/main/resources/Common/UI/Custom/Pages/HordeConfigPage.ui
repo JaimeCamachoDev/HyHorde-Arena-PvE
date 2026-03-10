@@ -29,7 +29,7 @@ Group {
   }
 
   TextButton #TabGeneralButton {
-    Anchor: (Left: 1006, Top: 94, Width: 108, Height: 32);
+    Anchor: (Left: 1006, Top: 94, Width: 88, Height: 32);
     Text: "General";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -39,7 +39,7 @@ Group {
   }
 
   TextButton #TabHordeButton {
-    Anchor: (Left: 1120, Top: 94, Width: 108, Height: 32);
+    Anchor: (Left: 1100, Top: 94, Width: 88, Height: 32);
     Text: "Horda";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -49,7 +49,7 @@ Group {
   }
 
   TextButton #TabPlayersButton {
-    Anchor: (Left: 1234, Top: 94, Width: 108, Height: 32);
+    Anchor: (Left: 1194, Top: 94, Width: 88, Height: 32);
     Text: "Jugadores";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -58,8 +58,18 @@ Group {
     );
   }
 
+  TextButton #TabSoundsButton {
+    Anchor: (Left: 1288, Top: 94, Width: 88, Height: 32);
+    Text: "Sonidos";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
   TextButton #TabRewardsButton {
-    Anchor: (Left: 1348, Top: 94, Width: 116, Height: 32);
+    Anchor: (Left: 1382, Top: 94, Width: 108, Height: 32);
     Text: "Recompensas";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -352,6 +362,80 @@ Group {
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
+  }
+
+  Label #RoundStartSoundLabel {
+    Anchor: (Left: 456, Top: 436, Width: 180, Height: 28);
+    Text: "Sonido inicio ronda";
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextButton #RoundStartSoundPrevButton {
+    Anchor: (Left: 642, Top: 436, Width: 46, Height: 34);
+    Text: "<";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextField #RoundStartSoundId {
+    Anchor: (Left: 694, Top: 436, Width: 532, Height: 34);
+    Value: "auto";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  TextButton #RoundStartSoundNextButton {
+    Anchor: (Left: 1232, Top: 436, Width: 46, Height: 34);
+    Text: ">";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  Label #RoundVictorySoundLabel {
+    Anchor: (Left: 456, Top: 478, Width: 180, Height: 28);
+    Text: "Sonido victoria ronda";
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  TextButton #RoundVictorySoundPrevButton {
+    Anchor: (Left: 642, Top: 478, Width: 46, Height: 34);
+    Text: "<";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextField #RoundVictorySoundId {
+    Anchor: (Left: 694, Top: 478, Width: 532, Height: 34);
+    Value: "auto";
+    Style: (FontSize: 14, TextColor: #e8f1ff);
+    Padding: (Left: 8);
+    Background: #0f1825;
+  }
+
+  TextButton #RoundVictorySoundNextButton {
+    Anchor: (Left: 1232, Top: 478, Width: 46, Height: 34);
+    Text: ">";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  Label #RoundSoundHelpLabel {
+    Anchor: (Left: 642, Top: 518, Width: 822, Height: 24);
+    Text: "";
+    Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #EnemyLevelRangeLabel {

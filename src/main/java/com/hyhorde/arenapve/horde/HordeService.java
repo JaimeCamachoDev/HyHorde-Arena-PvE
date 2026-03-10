@@ -60,7 +60,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 public final class HordeService {
-    private static final List<String> PREFERRED_REWARD_TEST_ITEMS = List.of("Armor_Bronze_Chest", "Armor_Copper_Chest", "Armor_Iron_Chest", "Tool_Watering_Can_State_Filled_Water", "*Container_Bucket_State_Filled_Water", "item/resource/wood", "item/resource/stone", "item/consumable/apple", "item/material/iron_ingot", "item/weapon/sword_iron");
+    private static final List<String> PREFERRED_REWARD_TEST_ITEMS = List.of(
+            "Weapon_Daggers_Thorium",
+            "Armor_Bronze_Chest",
+            "Armor_Iron_Chest",
+            "Armor_Thorium_Chest",
+            "Armor_Mithril_Chest",
+            "Armor_Onyxium_Chest",
+            "Tool_Pickaxe_Iron",
+            "Tool_Hatchet_Iron",
+            "Tool_Pickaxe_Thorium",
+            "Tool_Hatchet_Thorium",
+            "Ingredient_Bar_Iron",
+            "Ingredient_Bar_Thorium",
+            "Ingredient_Bar_Mithril",
+            "Ingredient_Bar_Onyxium",
+            "Ingredient_Bar_Cobalt",
+            "Ingredient_Bar_Adamantite",
+            "Ingredient_Crystal_Red",
+            "Ingredient_Crystal_Blue",
+            "Ingredient_Crystal_Green",
+            "Ingredient_Crystal_Yellow",
+            "Ingredient_Crystal_Purple"
+    );
     private static final String ENEMY_MODE_RANDOM = "random";
     private static final String ENEMY_MODE_RANDOM_ALL = "random-all";
     private static final String DEFAULT_ENEMY_TYPE = "undead";
@@ -68,6 +90,7 @@ public final class HordeService {
     private static final boolean ENEMY_LEVEL_SYSTEM_ENABLED = false;
     private static final String REWARD_MODE_RANDOM_CATEGORY = "random";
     private static final String REWARD_MODE_RANDOM_ALL = "random_all";
+    private static final Map<String, String> LEGACY_REWARD_ITEM_ID_ALIASES = HordeService.buildLegacyRewardItemIdAliases();
     private static final Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
     private static final Map<String, List<String>> REWARD_CATEGORY_ITEMS = HordeService.buildRewardCategoryItems();
     private static final String[] FINAL_BOSS_ROLE_HINTS = new String[]{"Goblin_Ogre", "Cave_Rex", "Earthen_Golem", "Ember_Golem", "Frost_Elemental", "Fire_Elemental", "Burnt_Skeleton_Praetorian", "Burnt_Skeleton_Knight", "Dungeon_Scarak_Broodmother_Young", "Feran_Longtooth", "Feran_Sharptooth", "Armored_Skeleton_Horse"};
@@ -87,7 +110,14 @@ public final class HordeService {
     private static final float TITLE_FAST_FADE_IN_SECONDS = 0.04f;
     private static final float TITLE_FAST_STAY_SECONDS = 0.62f;
     private static final float TITLE_FAST_FADE_OUT_SECONDS = 0.1f;
-    private static final String[] HORDE_START_SOUND_EVENT_HINTS = new String[]{"warhorn", "war_horn", "horn", "fanfare", "trumpet", "battle_start", "raid_start", "alert"};
+    private static final String SOUND_SELECTION_AUTO = "auto";
+    private static final String SOUND_SELECTION_NONE = "none";
+    private static final String[] ROUND_START_SOUND_EVENT_HINTS = new String[]{"warhorn", "war_horn", "horn", "fanfare", "trumpet", "battle_start", "raid_start", "combat", "danger", "warning", "encounter", "start", "begin", "countdown", "ready", "go", "signal", "notification", "event"};
+    private static final String[] ROUND_VICTORY_SOUND_EVENT_HINTS = new String[]{"victory", "win", "success", "sleep_success", "complete", "completed", "quest_complete", "reward", "fanfare", "stinger", "jingle", "clear", "triumph", "level_up"};
+    private static final String[] ROUND_START_SOUND_BLOCKED_KEYWORDS = new String[]{"alerted", "squirrel", "antelope", "bird", "sheep", "cow", "goat", "pig", "chicken", "cat", "dog", "wolf"};
+    private static final String[] ROUND_SOUND_WEAK_KEYWORDS = new String[]{"step", "foot", "cloth", "equip", "unequip", "swim", "splash", "eat", "drink", "grunt", "breath", "idle", "heartbeat", "swing", "hit", "hurt", "alerted", "squirrel", "antelope", "bird", "sheep", "cow", "goat", "pig", "chicken", "cat", "dog", "wolf"};
+    private static final int MAX_SOUND_SUGGESTIONS = 48;
+    private static final int MAX_SOUND_TOP_SCORE_SUGGESTIONS = 14;
     private static final long SESSION_TICK_INTERVAL_MILLIS = 250L;
     private static final int MIN_ROUNDS = 1;
     private static final int MAX_ROUNDS = 200;
@@ -125,6 +155,10 @@ public final class HordeService {
     private final Set<UUID> audienceExitOverrides;
     private Integer cachedHordeStartSoundEventIndex;
     private String cachedHordeStartSoundEventId;
+    private String cachedHordeStartSoundSelection;
+    private Integer cachedRoundVictorySoundEventIndex;
+    private String cachedRoundVictorySoundEventId;
+    private String cachedRoundVictorySoundSelection;
     private boolean pluginReloadInProgress;
     private HordeConfig config;
     private HordeSession session;
@@ -138,6 +172,10 @@ public final class HordeService {
         this.audienceExitOverrides = new HashSet<UUID>();
         this.cachedHordeStartSoundEventIndex = null;
         this.cachedHordeStartSoundEventId = "";
+        this.cachedHordeStartSoundSelection = "";
+        this.cachedRoundVictorySoundEventIndex = null;
+        this.cachedRoundVictorySoundEventId = "";
+        this.cachedRoundVictorySoundSelection = "";
         this.config = HordeConfig.defaults();
         this.loadConfig();
     }
@@ -250,6 +288,22 @@ public final class HordeService {
 
     public synchronized String getRewardCategory() {
         return HordeService.normalizeRewardCategory(this.config.rewardCategory);
+    }
+
+    public synchronized List<String> getRoundStartSoundOptions() {
+        return HordeService.buildRoundSoundOptions(this.config.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+    }
+
+    public synchronized List<String> getRoundVictorySoundOptions() {
+        return HordeService.buildRoundSoundOptions(this.config.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, null);
+    }
+
+    public synchronized String getRoundStartSoundSelection() {
+        return HordeService.normalizeRoundSoundSelection(this.config.roundStartSoundId);
+    }
+
+    public synchronized String getRoundVictorySoundSelection() {
+        return HordeService.normalizeRoundSoundSelection(this.config.roundVictorySoundId);
     }
 
     public synchronized List<String> getLanguageOptions() {
@@ -689,6 +743,18 @@ public final class HordeService {
         } else {
             updated.language = HordeService.normalizeLanguage(updated.language);
         }
+        String roundStartSoundValue = values.get("roundStartSoundId");
+        if (roundStartSoundValue != null) {
+            updated.roundStartSoundId = HordeService.sanitizeRoundSoundSelection(roundStartSoundValue, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+        } else {
+            updated.roundStartSoundId = HordeService.sanitizeRoundSoundSelection(updated.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+        }
+        String roundVictorySoundValue = values.get("roundVictorySoundId");
+        if (roundVictorySoundValue != null) {
+            updated.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(roundVictorySoundValue, ROUND_VICTORY_SOUND_EVENT_HINTS, null);
+        } else {
+            updated.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(updated.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, null);
+        }
         if (!ENEMY_TYPE_OPTIONS.contains(updated.enemyType)) {
             return OperationResult.fail(english ? "enemyType must be one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
         }
@@ -771,6 +837,7 @@ public final class HordeService {
         updated.spawnConfigured = true;
         updated.worldName = world.getName();
         this.config = updated;
+        this.invalidateCachedRoundSoundIndexes();
         this.saveConfig();
         return OperationResult.ok(english ? "Horde configuration saved." : "Configuracion de hordas guardada.");
     }
@@ -880,6 +947,7 @@ public final class HordeService {
         if (trackedSession.roundActive) {
             trackedSession.roundActive = false;
             this.grantRoundRewards(trackedSession, previousRound);
+            this.playRoundVictorySound(trackedSession);
             if (previousRound >= this.config.rounds) {
                 this.endSession(trackedSession, english ? "Horde finished manually by skipping the last round." : "Horda finalizada manualmente al saltar la ultima ronda.", false);
                 return OperationResult.ok(english ? "Last round forced. Enemies cleaned: " + cleanedEnemies + "." : "Ultima ronda forzada. Enemigos limpiados: " + cleanedEnemies + ".");
@@ -968,6 +1036,7 @@ public final class HordeService {
                         if (trackedSession.roundActive && trackedSession.activeEnemies.isEmpty()) {
                             trackedSession.roundActive = false;
                             this.grantRoundRewards(trackedSession, trackedSession.currentRound);
+                            this.playRoundVictorySound(trackedSession);
                             boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
                             boolean finalRound = trackedSession.currentRound >= this.config.rounds;
                             int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
@@ -1087,9 +1156,7 @@ public final class HordeService {
         sessionToAdvance.currentRound = nextRound;
         sessionToAdvance.roundActive = true;
         sessionToAdvance.nextRoundAtMillis = 0L;
-        if (nextRound == 1) {
-            this.playHordeStartSound(sessionToAdvance);
-        }
+        this.playRoundStartSound(sessionToAdvance);
         String levelInfo = ENEMY_LEVEL_SYSTEM_ENABLED ? "lvl " + levelMin + "-" + levelMax : (english ? "lvl WIP" : "nivel WIP");
         if (english) {
             String bossSuffix = spawnFinalBoss ? (bossSpawned ? " | Final boss spawned" + (bossRoleUsed.isBlank() ? "." : " (" + bossRoleUsed + ").") : " | Final boss requested but could not spawn.") : "";
@@ -1109,16 +1176,16 @@ public final class HordeService {
             return;
         }
         boolean english = HordeService.isEnglishLanguage(this.config.language);
-        this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
         int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
+        this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
         String rewardCategory = HordeService.normalizeRewardCategory(this.config.rewardCategory);
         String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
         boolean configuredRandom = HordeService.isRandomRewardMode(configuredRewardItemId);
         boolean configuredValid = configuredRandom || HordeService.isRewardItemAllowedForCategory(configuredRewardItemId, rewardCategory) && HordeService.isUsableRewardItemId(configuredRewardItemId, rewardQuantity);
         String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity, rewardCategory, configuredRewardItemId);
         if (rewardItemId == null || rewardItemId.isBlank()) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido configurado o disponible.");
-            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Could not drop reward: configure a valid item in RewardItemId." : "No se pudo dropear recompensa: configura un item valido en RewardItemId.")));
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido disponible.");
+            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Could not drop reward item: no valid reward IDs were resolved." : "No se pudo dropear el item de recompensa: no se resolvieron IDs validas.")));
             return;
         }
         if (!configuredValid && !configuredRandom) {
@@ -1238,12 +1305,16 @@ public final class HordeService {
         }
     }
 
-    private void playHordeStartSound(HordeSession session) {
-        if (session == null || session.world == null) {
-            return;
-        }
-        int soundEventIndex = this.resolveHordeStartSoundEventIndex();
-        if (soundEventIndex < 0) {
+    private void playRoundStartSound(HordeSession session) {
+        this.playRoundSound(session, this.resolveRoundStartSoundEventIndex());
+    }
+
+    private void playRoundVictorySound(HordeSession session) {
+        this.playRoundSound(session, this.resolveRoundVictorySoundEventIndex());
+    }
+
+    private void playRoundSound(HordeSession session, int soundEventIndex) {
+        if (session == null || session.world == null || soundEventIndex < 0) {
             return;
         }
         for (PlayerRef playerRef : session.world.getPlayerRefs()) {
@@ -1257,62 +1328,407 @@ public final class HordeService {
         }
     }
 
-    private int resolveHordeStartSoundEventIndex() {
-        if (this.cachedHordeStartSoundEventIndex != null) {
+    private int resolveRoundStartSoundEventIndex() {
+        return this.resolveRoundSoundEventIndex(this.config.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS, true);
+    }
+
+    private int resolveRoundVictorySoundEventIndex() {
+        return this.resolveRoundSoundEventIndex(this.config.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, null, false);
+    }
+
+    private int resolveRoundSoundEventIndex(String configuredSelectionInput, String[] hintKeywords, String[] blockedKeywords, boolean startSound) {
+        String configuredSelection = HordeService.sanitizeRoundSoundSelection(configuredSelectionInput, hintKeywords, blockedKeywords);
+        if (startSound && this.cachedHordeStartSoundEventIndex != null && configuredSelection.equals(this.cachedHordeStartSoundSelection)) {
             return this.cachedHordeStartSoundEventIndex.intValue();
+        }
+        if (!startSound && this.cachedRoundVictorySoundEventIndex != null && configuredSelection.equals(this.cachedRoundVictorySoundSelection)) {
+            return this.cachedRoundVictorySoundEventIndex.intValue();
         }
         int resolvedIndex = -1;
         String resolvedId = "";
         try {
             Map<String, SoundEvent> soundEvents = SoundEvent.getAssetMap().getAssetMap();
-            String selectedId = HordeService.findPreferredHordeStartSoundEventId(soundEvents);
+            String selectedId = HordeService.resolveSoundSelectionToEventId(soundEvents, configuredSelection, hintKeywords, blockedKeywords);
             if (selectedId != null && !selectedId.isBlank()) {
                 SoundEvent selectedSound = soundEvents.get(selectedId);
                 if (selectedSound != null && selectedSound != SoundEvent.EMPTY_SOUND_EVENT) {
                     resolvedIndex = SoundEvent.getAssetMap().getIndex(selectedId);
-                    resolvedId = selectedId;
+                    if (resolvedIndex >= 0) {
+                        resolvedId = selectedId;
+                    }
                 }
             }
         }
         catch (Exception ex) {
-            this.plugin.getLogger().at(Level.FINE).log("No se pudo resolver sonido de inicio de horda: %s", (Object)ex.getMessage());
+            this.plugin.getLogger().at(Level.FINE).log("No se pudo resolver sonido de ronda (%s): %s", (Object)(startSound ? "inicio" : "victoria"), (Object)ex.getMessage());
         }
-        this.cachedHordeStartSoundEventIndex = resolvedIndex;
-        this.cachedHordeStartSoundEventId = resolvedId;
-        if (!resolvedId.isBlank()) {
-            this.plugin.getLogger().at(Level.INFO).log("Sonido de inicio de horda: %s (index %d).", (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
+        if (startSound) {
+            this.cachedHordeStartSoundSelection = configuredSelection;
+            this.cachedHordeStartSoundEventIndex = resolvedIndex;
+            this.cachedHordeStartSoundEventId = resolvedId;
+            if (resolvedIndex >= 0 && !resolvedId.isBlank()) {
+                this.plugin.getLogger().at(Level.INFO).log("Sonido inicio ronda resuelto: %s (index %d).", (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
+            } else {
+                this.plugin.getLogger().at(Level.WARNING).log("No se pudo resolver sonido valido para inicio de ronda. Seleccion: %s", (Object)configuredSelection);
+            }
         } else {
-            this.plugin.getLogger().at(Level.INFO).log("No se encontro SoundEvent tipo horn; la horda iniciara sin sonido.");
+            this.cachedRoundVictorySoundSelection = configuredSelection;
+            this.cachedRoundVictorySoundEventIndex = resolvedIndex;
+            this.cachedRoundVictorySoundEventId = resolvedId;
+            if (resolvedIndex >= 0 && !resolvedId.isBlank()) {
+                this.plugin.getLogger().at(Level.INFO).log("Sonido victoria ronda resuelto: %s (index %d).", (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
+            } else {
+                this.plugin.getLogger().at(Level.WARNING).log("No se pudo resolver sonido valido para victoria de ronda. Seleccion: %s", (Object)configuredSelection);
+            }
         }
         return resolvedIndex;
     }
 
-    private static String findPreferredHordeStartSoundEventId(Map<String, SoundEvent> soundEvents) {
+    private static String resolveSoundSelectionToEventId(Map<String, SoundEvent> soundEvents, String selectionInput, String[] hintKeywords, String[] blockedKeywords) {
         if (soundEvents == null || soundEvents.isEmpty()) {
             return "";
         }
-        ArrayList<String> keys = new ArrayList<String>();
+        String selection = HordeService.normalizeRoundSoundSelection(selectionInput);
+        if (HordeService.isNoneRoundSoundSelection(selection)) {
+            return "";
+        }
+        if (HordeService.isAutoRoundSoundSelection(selection)) {
+            return HordeService.findPreferredSoundEventId(soundEvents, hintKeywords, blockedKeywords);
+        }
+        String resolvedSpecific = HordeService.resolveSoundEventAssetId(soundEvents, selection);
+        if (resolvedSpecific != null && !resolvedSpecific.isBlank() && !HordeService.containsBlockedRoundSoundKeyword(resolvedSpecific, blockedKeywords)) {
+            return resolvedSpecific;
+        }
+        return HordeService.findPreferredSoundEventId(soundEvents, hintKeywords, blockedKeywords);
+    }
+
+    private static String resolveSoundEventAssetId(Map<String, SoundEvent> soundEvents, String candidate) {
+        if (soundEvents == null || soundEvents.isEmpty() || candidate == null || candidate.isBlank()) {
+            return "";
+        }
+        SoundEvent direct = soundEvents.get(candidate);
+        if (direct != null && direct != SoundEvent.EMPTY_SOUND_EVENT) {
+            return candidate;
+        }
         for (Map.Entry<String, SoundEvent> entry : soundEvents.entrySet()) {
             String key = entry.getKey();
             SoundEvent value = entry.getValue();
-            if (key == null || key.isBlank() || value == null || value == SoundEvent.EMPTY_SOUND_EVENT) continue;
+            if (key == null || key.isBlank() || value == null || value == SoundEvent.EMPTY_SOUND_EVENT || !key.equalsIgnoreCase(candidate)) continue;
+            return key;
+        }
+        return "";
+    }
+
+    private static List<String> buildRoundSoundOptions(String configuredSelectionInput, String[] hintKeywords, String[] blockedKeywords) {
+        LinkedHashSet<String> options = new LinkedHashSet<String>();
+        options.add(SOUND_SELECTION_AUTO);
+        options.add(SOUND_SELECTION_NONE);
+        String configuredSelection = HordeService.normalizeRoundSoundSelection(configuredSelectionInput);
+        if (!HordeService.isAutoRoundSoundSelection(configuredSelection) && !HordeService.isNoneRoundSoundSelection(configuredSelection)) {
+            options.add(configuredSelection);
+        }
+        try {
+            Map<String, SoundEvent> soundEvents = SoundEvent.getAssetMap().getAssetMap();
+            if (soundEvents == null || soundEvents.isEmpty()) {
+                return new ArrayList<String>(options);
+            }
+            String resolvedConfigured = HordeService.resolveSoundSelectionToEventId(soundEvents, configuredSelection, hintKeywords, blockedKeywords);
+            if (!resolvedConfigured.isBlank() && !HordeService.isAutoRoundSoundSelection(configuredSelection) && !HordeService.isNoneRoundSoundSelection(configuredSelection)) {
+                options.remove(configuredSelection);
+                options.add(resolvedConfigured);
+            }
+            ArrayList<String> usable = HordeService.buildUsableSoundEventIds(soundEvents);
+            String preferredAuto = HordeService.findPreferredSoundEventId(soundEvents, hintKeywords, blockedKeywords);
+            if (preferredAuto != null && !preferredAuto.isBlank()) {
+                options.add(preferredAuto);
+            }
+            HordeService.addTopScoredSoundEventIds(options, usable, hintKeywords, blockedKeywords, MAX_SOUND_TOP_SCORE_SUGGESTIONS);
+            HordeService.addHintMatchedSoundEventIds(options, usable, hintKeywords, blockedKeywords);
+            if (options.size() <= 2) {
+                HordeService.addTopScoredSoundEventIds(options, usable, hintKeywords, blockedKeywords, Math.min(8, MAX_SOUND_TOP_SCORE_SUGGESTIONS));
+            }
+        }
+        catch (Exception ignored) {
+            // keep mode-only options
+        }
+        ArrayList<String> result = new ArrayList<String>(options);
+        if (result.size() > MAX_SOUND_SUGGESTIONS) {
+            return new ArrayList<String>(result.subList(0, MAX_SOUND_SUGGESTIONS));
+        }
+        return result;
+    }
+
+    private static void addTopScoredSoundEventIds(Set<String> target, List<String> candidates, String[] hintKeywords, String[] blockedKeywords, int maxAdds) {
+        if (target == null || candidates == null || candidates.isEmpty() || maxAdds <= 0) {
+            return;
+        }
+        ArrayList<String> ranked = new ArrayList<String>(candidates);
+        ranked.sort((left, right) -> {
+            int rightScore = HordeService.scoreRoundSoundCandidate(right, hintKeywords);
+            int leftScore = HordeService.scoreRoundSoundCandidate(left, hintKeywords);
+            if (rightScore != leftScore) {
+                return Integer.compare(rightScore, leftScore);
+            }
+            return String.CASE_INSENSITIVE_ORDER.compare(left, right);
+        });
+        int added = 0;
+        for (String soundId : ranked) {
+            if (HordeService.containsBlockedRoundSoundKeyword(soundId, blockedKeywords)) {
+                continue;
+            }
+            if (HordeService.scoreRoundSoundCandidate(soundId, hintKeywords) <= 0) {
+                continue;
+            }
+            if (!target.add(soundId)) {
+                continue;
+            }
+            ++added;
+            if (added >= maxAdds || target.size() >= MAX_SOUND_SUGGESTIONS) {
+                return;
+            }
+        }
+        if (added > 0) {
+            return;
+        }
+        int weakAdded = 0;
+        for (String soundId : ranked) {
+            if (HordeService.containsBlockedRoundSoundKeyword(soundId, blockedKeywords)) {
+                continue;
+            }
+            if (!target.add(soundId)) {
+                continue;
+            }
+            ++weakAdded;
+            if (weakAdded >= Math.min(3, maxAdds) || target.size() >= MAX_SOUND_SUGGESTIONS) {
+                return;
+            }
+        }
+    }
+
+    private static ArrayList<String> buildUsableSoundEventIds(Map<String, SoundEvent> soundEvents) {
+        ArrayList<String> keys = new ArrayList<String>();
+        if (soundEvents == null || soundEvents.isEmpty()) {
+            return keys;
+        }
+        for (Map.Entry<String, SoundEvent> entry : soundEvents.entrySet()) {
+            String key = entry.getKey();
+            SoundEvent value = entry.getValue();
+            if (key == null || key.isBlank() || value == null || value == SoundEvent.EMPTY_SOUND_EVENT || !HordeService.isUsableRoundSoundEvent(key)) continue;
             keys.add(key);
         }
+        keys.sort(String.CASE_INSENSITIVE_ORDER);
+        return keys;
+    }
+
+    private static void addHintMatchedSoundEventIds(Set<String> target, List<String> candidates, String[] hintKeywords, String[] blockedKeywords) {
+        if (target == null || candidates == null || candidates.isEmpty() || hintKeywords == null || hintKeywords.length == 0) {
+            return;
+        }
+        for (String hint : hintKeywords) {
+            String normalizedHint = hint == null ? "" : hint.trim().toLowerCase(Locale.ROOT);
+            if (normalizedHint.isBlank()) {
+                continue;
+            }
+            for (String key : candidates) {
+                String normalizedKey = key.toLowerCase(Locale.ROOT);
+                if (!normalizedKey.contains(normalizedHint)) {
+                    continue;
+                }
+                if (HordeService.containsBlockedRoundSoundKeyword(key, blockedKeywords) || HordeService.scoreRoundSoundCandidate(key, hintKeywords) <= 0) {
+                    continue;
+                }
+                target.add(key);
+                if (target.size() >= MAX_SOUND_SUGGESTIONS) {
+                    return;
+                }
+            }
+        }
+    }
+
+    private static String findPreferredSoundEventId(Map<String, SoundEvent> soundEvents, String[] hintKeywords, String[] blockedKeywords) {
+        ArrayList<String> keys = HordeService.buildUsableSoundEventIds(soundEvents);
         if (keys.isEmpty()) {
             return "";
         }
-        keys.sort(String.CASE_INSENSITIVE_ORDER);
-        for (String hint : HORDE_START_SOUND_EVENT_HINTS) {
-            String normalizedHint = hint == null ? "" : hint.trim().toLowerCase(Locale.ROOT);
-            if (normalizedHint.isBlank()) continue;
-            for (String key : keys) {
-                String normalizedKey = key.toLowerCase(Locale.ROOT);
-                if (normalizedKey.contains("music") || normalizedKey.contains("ambient") || normalizedKey.contains("loop")) continue;
-                if (!normalizedKey.contains(normalizedHint)) continue;
-                return key;
+        String bestId = "";
+        int bestScore = Integer.MIN_VALUE;
+        String uiFallback = "";
+        String genericFallback = "";
+        for (String key : keys) {
+            if (HordeService.containsBlockedRoundSoundKeyword(key, blockedKeywords)) {
+                continue;
+            }
+            String normalizedKey = key.toLowerCase(Locale.ROOT);
+            if (uiFallback.isBlank() && (normalizedKey.contains("ui") || normalizedKey.contains("notification") || normalizedKey.contains("event"))) {
+                uiFallback = key;
+            }
+            if (genericFallback.isBlank()) {
+                genericFallback = key;
+            }
+            int score = HordeService.scoreRoundSoundCandidate(key, hintKeywords);
+            if (score <= bestScore) continue;
+            bestScore = score;
+            bestId = key;
+        }
+        if (bestScore > 0 && !bestId.isBlank()) {
+            return bestId;
+        }
+        if (!uiFallback.isBlank()) {
+            return uiFallback;
+        }
+        if (!genericFallback.isBlank()) {
+            return genericFallback;
+        }
+        return bestId;
+    }
+
+    private static int scoreRoundSoundCandidate(String soundEventId, String[] hintKeywords) {
+        if (soundEventId == null || soundEventId.isBlank()) {
+            return Integer.MIN_VALUE;
+        }
+        String normalized = soundEventId.toLowerCase(Locale.ROOT);
+        int score = 0;
+        if (hintKeywords != null) {
+            for (String hint : hintKeywords) {
+                String normalizedHint = hint == null ? "" : hint.trim().toLowerCase(Locale.ROOT);
+                if (normalizedHint.isBlank()) {
+                    continue;
+                }
+                if (normalized.equals(normalizedHint) || normalized.endsWith("/" + normalizedHint) || normalized.endsWith("_" + normalizedHint)) {
+                    score += 70;
+                    continue;
+                }
+                if (normalized.contains(normalizedHint)) {
+                    score += 32;
+                }
             }
         }
-        return "";
+        if (normalized.contains("ui")) {
+            score += 18;
+        }
+        if (normalized.contains("notification") || normalized.contains("notify")) {
+            score += 14;
+        }
+        if (normalized.contains("quest") || normalized.contains("event")) {
+            score += 10;
+        }
+        if (normalized.contains("fanfare") || normalized.contains("stinger") || normalized.contains("trumpet")) {
+            score += 20;
+        }
+        if (normalized.contains("victory") || normalized.contains("success") || normalized.contains("win")) {
+            score += 24;
+        }
+        if (normalized.contains("alert") || normalized.contains("alarm") || normalized.contains("warhorn") || normalized.contains("horn")) {
+            score += 24;
+        }
+        for (String weak : ROUND_SOUND_WEAK_KEYWORDS) {
+            String normalizedWeak = weak == null ? "" : weak.trim().toLowerCase(Locale.ROOT);
+            if (normalizedWeak.isBlank() || !normalized.contains(normalizedWeak)) continue;
+            score -= 28;
+        }
+        return score;
+    }
+
+    private static boolean containsBlockedRoundSoundKeyword(String soundEventId, String[] blockedKeywords) {
+        if (soundEventId == null || soundEventId.isBlank() || blockedKeywords == null || blockedKeywords.length == 0) {
+            return false;
+        }
+        String normalized = soundEventId.toLowerCase(Locale.ROOT);
+        for (String blocked : blockedKeywords) {
+            String normalizedBlocked = blocked == null ? "" : blocked.trim().toLowerCase(Locale.ROOT);
+            if (normalizedBlocked.isBlank() || !normalized.contains(normalizedBlocked)) continue;
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean isUsableRoundSoundEvent(String soundEventId) {
+        if (soundEventId == null || soundEventId.isBlank()) {
+            return false;
+        }
+        String normalized = soundEventId.toLowerCase(Locale.ROOT);
+        if (normalized.contains("music") || normalized.contains("ambient") || normalized.contains("loop")) {
+            return false;
+        }
+        if (normalized.contains("rain") || normalized.contains("wind") || normalized.contains("waterfall") || normalized.contains("ocean") || normalized.contains("river") || normalized.contains("biome")) {
+            return false;
+        }
+        if (normalized.contains("debug") || normalized.contains("test_") || normalized.contains("placeholder") || normalized.contains("dummy")) {
+            return false;
+        }
+        return true;
+    }
+
+    private static String normalizeRoundSoundSelection(String input) {
+        if (input == null || input.isBlank()) {
+            return SOUND_SELECTION_AUTO;
+        }
+        String trimmed = input.trim();
+        String normalized = trimmed.toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+        switch (normalized) {
+            case "auto":
+            case "automatic":
+            case "default":
+            case "predeterminado":
+            case "por_defecto":
+                return SOUND_SELECTION_AUTO;
+            case "none":
+            case "off":
+            case "disable":
+            case "disabled":
+            case "mute":
+            case "silence":
+            case "sin_sonido":
+            case "ninguno":
+            case "no":
+                return SOUND_SELECTION_NONE;
+        }
+        return trimmed;
+    }
+
+    private static boolean isAutoRoundSoundSelection(String value) {
+        return SOUND_SELECTION_AUTO.equalsIgnoreCase(value == null ? "" : value.trim());
+    }
+
+    private static boolean isNoneRoundSoundSelection(String value) {
+        return SOUND_SELECTION_NONE.equalsIgnoreCase(value == null ? "" : value.trim());
+    }
+
+    private static String sanitizeRoundSoundSelection(String input, String[] hintKeywords, String[] blockedKeywords) {
+        String normalized = HordeService.normalizeRoundSoundSelection(input);
+        if (HordeService.isAutoRoundSoundSelection(normalized) || HordeService.isNoneRoundSoundSelection(normalized)) {
+            return normalized;
+        }
+        try {
+            Map<String, SoundEvent> soundEvents = SoundEvent.getAssetMap().getAssetMap();
+            if (soundEvents == null || soundEvents.isEmpty()) {
+                return normalized;
+            }
+            String resolved = HordeService.resolveSoundEventAssetId(soundEvents, normalized);
+            if (resolved != null && !resolved.isBlank()) {
+                int score = HordeService.scoreRoundSoundCandidate(resolved, hintKeywords);
+                if (score > 0 && !HordeService.containsBlockedRoundSoundKeyword(resolved, blockedKeywords)) {
+                    return resolved;
+                }
+            }
+            String fallback = HordeService.findPreferredSoundEventId(soundEvents, hintKeywords, blockedKeywords);
+            if (fallback != null && !fallback.isBlank()) {
+                return fallback;
+            }
+        }
+        catch (Exception ignored) {
+            // keep fallback below
+        }
+        return SOUND_SELECTION_AUTO;
+    }
+
+    private void invalidateCachedRoundSoundIndexes() {
+        this.cachedHordeStartSoundSelection = "";
+        this.cachedHordeStartSoundEventIndex = null;
+        this.cachedHordeStartSoundEventId = "";
+        this.cachedRoundVictorySoundSelection = "";
+        this.cachedRoundVictorySoundEventIndex = null;
+        this.cachedRoundVictorySoundEventId = "";
     }
 
     private void broadcastHordeStartAnnouncement(HordeSession session, String enemyType, String role, int playerMultiplier) {
@@ -2095,59 +2511,95 @@ public final class HordeService {
     private static Map<String, List<String>> buildRewardCategoryItems() {
         LinkedHashMap<String, List<String>> categories = new LinkedHashMap<String, List<String>>();
         categories.put("mithril", List.of(
-                "weapon_longsword_mithril",
-                "weapon_battleaxe_mithril",
-                "weapon_mace_mithril",
-                "weapon_daggers_mithril",
-                "weapon_shortbow_mithril",
-                "armor_mithril_head",
-                "armor_mithril_chest",
-                "armor_mithril_hands",
-                "armor_mithril_legs",
-                "tool_pickaxe_mithril",
-                "tool_hatchet_mithril"
+                "Ingredient_Bar_Mithril",
+                "Ore_Mithril",
+                "Armor_Mithril_Head",
+                "Armor_Mithril_Chest",
+                "Armor_Mithril_Hands",
+                "Armor_Mithril_Legs",
+                "Tool_Hatchet_Mithril",
+                "Tool_Pickaxe_Mithril",
+                "Weapon_Sword_Mithril",
+                "Weapon_Longsword_Mithril",
+                "Weapon_Daggers_Mithril",
+                "Weapon_Battleaxe_Mithril",
+                "Weapon_Mace_Mithril",
+                "Weapon_Shortbow_Mithril"
         ));
         categories.put("onyxium", List.of(
-                "weapon_longsword_onyxium",
-                "weapon_battleaxe_onyxium",
-                "weapon_mace_onyxium",
-                "weapon_daggers_onyxium",
-                "weapon_shortbow_onyxium",
-                "armor_onyxium_head",
-                "armor_onyxium_chest",
-                "armor_onyxium_hands",
-                "armor_onyxium_legs",
-                "tool_pickaxe_onyxium",
-                "tool_hatchet_onyxium"
+                "Ingredient_Bar_Onyxium",
+                "Ore_Onyxium",
+                "Armor_Onyxium_Head",
+                "Armor_Onyxium_Chest",
+                "Armor_Onyxium_Hands",
+                "Armor_Onyxium_Legs",
+                "Tool_Hatchet_Onyxium",
+                "Tool_Pickaxe_Onyxium",
+                "Weapon_Sword_Onyxium",
+                "Weapon_Longsword_Onyxium",
+                "Weapon_Daggers_Onyxium",
+                "Weapon_Battleaxe_Onyxium",
+                "Weapon_Mace_Onyxium",
+                "Weapon_Shortbow_Onyxium"
         ));
         categories.put("gemas", List.of(
-                "rock_gem_sapphire",
-                "rock_gem_emerald",
-                "rock_gem_ruby",
-                "rock_gem_topaz",
-                "rock_gem_diamond"
+                "Ingredient_Crystal_Red",
+                "Ingredient_Crystal_Green",
+                "Ingredient_Crystal_Blue",
+                "Ingredient_Crystal_Yellow",
+                "Ingredient_Crystal_Purple"
         ));
         categories.put("metales", List.of(
-                "ore_iron",
-                "ore_thorium",
-                "ore_gold",
-                "ore_copper"
+                "Ingredient_Bar_Bronze",
+                "Ingredient_Bar_Copper",
+                "Ingredient_Bar_Iron",
+                "Ingredient_Bar_Silver",
+                "Ingredient_Bar_Gold",
+                "Ingredient_Bar_Cobalt",
+                "Ingredient_Bar_Thorium",
+                "Ingredient_Bar_Adamantite",
+                "Ore_Copper",
+                "Ore_Iron",
+                "Ore_Silver",
+                "Ore_Gold",
+                "Ore_Cobalt",
+                "Ore_Thorium",
+                "Ore_Mithril",
+                "Ore_Onyxium",
+                "Ore_Adamantite"
         ));
         categories.put("materiales_raros", List.of(
-                "ingredient_voidheart",
-                "ingredient_leather_heavy",
-                "ingredient_salt",
-                "ingredient_bone",
-                "ingredient_scale"
+                "Ingredient_Voidheart",
+                "Ingredient_Leather_Heavy",
+                "Ingredient_Leather_Medium",
+                "Ingredient_Leather_Light",
+                "Ingredient_Leather_Storm",
+                "Ingredient_Ice_Essence",
+                "Ingredient_Crystal_Purple"
         ));
         categories.put("armas_especiales", List.of(
-                "weapon_kunai",
-                "weapon_handgun",
-                "weapon_longsword_flame"
+                "Weapon_Daggers_Thorium",
+                "Weapon_Hammer_Thorium",
+                "Weapon_Longsword_Flame",
+                "Weapon_Longsword_Spectral",
+                "Weapon_Sword_Bone",
+                "Weapon_Crossbow_Ancient_Steel",
+                "Weapon_Hammer_Ancient_Steel",
+                "Weapon_Halberd_Ancient_Steel"
         ));
         categories.put("items_especiales", List.of(
-                "deco_trophy_harvest",
-                "egg_spawner_lantern"
+                "Armor_Steel_Ancient_Head",
+                "Armor_Steel_Ancient_Chest",
+                "Armor_Steel_Ancient_Hands",
+                "Armor_Steel_Ancient_Legs",
+                "Armor_Bone_Head",
+                "Armor_Bone_Chest",
+                "Armor_Bone_Hands",
+                "Armor_Bone_Legs",
+                "Armor_Bandit_Head",
+                "Armor_Bandit_Chest",
+                "Armor_Bandit_Hands",
+                "Armor_Bandit_Legs"
         ));
         return categories;
     }
@@ -2298,6 +2750,72 @@ public final class HordeService {
         return "";
     }
 
+    private static Map<String, String> buildLegacyRewardItemIdAliases() {
+        LinkedHashMap<String, String> aliases = new LinkedHashMap<String, String>();
+        aliases.put("mithril_ingot", "Ingredient_Bar_Mithril");
+        aliases.put("onyxium_ingot", "Ingredient_Bar_Onyxium");
+        aliases.put("item/material/mithril_ingot", "Ingredient_Bar_Mithril");
+        aliases.put("item/material/onyxium_ingot", "Ingredient_Bar_Onyxium");
+        aliases.put("item/material/iron_ingot", "Ingredient_Bar_Iron");
+        aliases.put("item/material/copper_ingot", "Ingredient_Bar_Copper");
+        aliases.put("item/material/gold_ingot", "Ingredient_Bar_Gold");
+        aliases.put("item/material/silver_ingot", "Ingredient_Bar_Silver");
+        aliases.put("weapon_longsword_mithril", "Weapon_Longsword_Mithril");
+        aliases.put("weapon_battleaxe_mithril", "Weapon_Battleaxe_Mithril");
+        aliases.put("weapon_mace_mithril", "Weapon_Mace_Mithril");
+        aliases.put("weapon_daggers_mithril", "Weapon_Daggers_Mithril");
+        aliases.put("weapon_shortbow_mithril", "Weapon_Shortbow_Mithril");
+        aliases.put("armor_mithril_head", "Armor_Mithril_Head");
+        aliases.put("armor_mithril_chest", "Armor_Mithril_Chest");
+        aliases.put("armor_mithril_hands", "Armor_Mithril_Hands");
+        aliases.put("armor_mithril_legs", "Armor_Mithril_Legs");
+        aliases.put("tool_pickaxe_mithril", "Tool_Pickaxe_Mithril");
+        aliases.put("tool_hatchet_mithril", "Tool_Hatchet_Mithril");
+        aliases.put("weapon_longsword_onyxium", "Weapon_Longsword_Onyxium");
+        aliases.put("weapon_battleaxe_onyxium", "Weapon_Battleaxe_Onyxium");
+        aliases.put("weapon_mace_onyxium", "Weapon_Mace_Onyxium");
+        aliases.put("weapon_daggers_onyxium", "Weapon_Daggers_Onyxium");
+        aliases.put("weapon_shortbow_onyxium", "Weapon_Shortbow_Onyxium");
+        aliases.put("armor_onyxium_head", "Armor_Onyxium_Head");
+        aliases.put("armor_onyxium_chest", "Armor_Onyxium_Chest");
+        aliases.put("armor_onyxium_hands", "Armor_Onyxium_Hands");
+        aliases.put("armor_onyxium_legs", "Armor_Onyxium_Legs");
+        aliases.put("tool_pickaxe_onyxium", "Tool_Pickaxe_Onyxium");
+        aliases.put("tool_hatchet_onyxium", "Tool_Hatchet_Onyxium");
+        aliases.put("ore_iron", "Ore_Iron");
+        aliases.put("ore_copper", "Ore_Copper");
+        aliases.put("ore_gold", "Ore_Gold");
+        aliases.put("ore_thorium", "Ore_Thorium");
+        aliases.put("ingredient_voidheart", "Ingredient_Voidheart");
+        aliases.put("ingredient_leather_heavy", "Ingredient_Leather_Heavy");
+        aliases.put("ingredient_leather_medium", "Ingredient_Leather_Medium");
+        aliases.put("ingredient_leather_light", "Ingredient_Leather_Light");
+        aliases.put("ingredient_leather_storm", "Ingredient_Leather_Storm");
+        aliases.put("item/weapon/sword_iron", "Weapon_Sword_Iron");
+        aliases.put("weapon_daggers_thorium", "Weapon_Daggers_Thorium");
+        return aliases;
+    }
+
+    private static String resolveLegacyRewardItemAlias(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return "";
+        }
+        String normalized = HordeService.normalizeLegacyRewardAliasKey(rawValue);
+        String mapped = LEGACY_REWARD_ITEM_ID_ALIASES.get(normalized);
+        return mapped == null ? "" : mapped;
+    }
+
+    private static String normalizeLegacyRewardAliasKey(String rawValue) {
+        if (rawValue == null || rawValue.isBlank()) {
+            return "";
+        }
+        String normalized = rawValue.trim().toLowerCase(Locale.ROOT);
+        if (normalized.startsWith("*")) {
+            normalized = normalized.substring(1);
+        }
+        return normalized.replace('-', '_').replace(' ', '_');
+    }
+
     private static String normalizeRewardItemId(String input) {
         if (input == null) {
             return "";
@@ -2309,6 +2827,10 @@ public final class HordeService {
         String randomMode = HordeService.resolveRandomRewardAlias(raw);
         if (!randomMode.isBlank()) {
             return randomMode;
+        }
+        String legacyAlias = HordeService.resolveLegacyRewardItemAlias(raw);
+        if (!legacyAlias.isBlank()) {
+            raw = legacyAlias;
         }
         LinkedHashSet<String> candidates = HordeService.buildRewardItemIdCandidates(raw);
         String firstCandidate = "";
@@ -2557,7 +3079,11 @@ public final class HordeService {
             if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
                 continue;
             }
-            target.add(normalized);
+            String resolved = HordeService.resolveRewardItemAssetId(normalized);
+            if (!HordeService.isUsableRewardItemIdRaw(resolved, 1)) {
+                continue;
+            }
+            target.add(resolved);
         }
     }
 
@@ -3144,6 +3670,7 @@ public final class HordeService {
         }
         if (!Files.exists(this.configPath, new LinkOption[0])) {
             this.saveConfig();
+            this.invalidateCachedRoundSoundIndexes();
             return;
         }
         try (BufferedReader reader = Files.newBufferedReader(this.configPath, StandardCharsets.UTF_8);){
@@ -3151,10 +3678,12 @@ public final class HordeService {
             if (loaded != null) {
                 this.config = HordeService.sanitize(loaded);
             }
+            this.invalidateCachedRoundSoundIndexes();
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo leer horde-config.json, se usaran valores por defecto: %s", (Object)ex.getMessage());
             this.config = HordeConfig.defaults();
+            this.invalidateCachedRoundSoundIndexes();
             this.saveConfig();
         }
     }
@@ -3235,6 +3764,8 @@ public final class HordeService {
                 sanitized.rewardItemId = safeRewardItemId;
             }
         }
+        sanitized.roundStartSoundId = HordeService.sanitizeRoundSoundSelection(sanitized.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+        sanitized.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(sanitized.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, null);
         sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, MIN_RADIUS, MAX_RADIUS);
         sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, MIN_RADIUS, MAX_RADIUS);
         if (sanitized.maxSpawnRadius < sanitized.minSpawnRadius) {
@@ -3290,6 +3821,8 @@ public final class HordeService {
         public String rewardCategory;
         public String rewardItemId;
         public int rewardItemQuantity;
+        public String roundStartSoundId;
+        public String roundVictorySoundId;
         public boolean finalBossEnabled;
         public int enemyLevelMin;
         public int enemyLevelMax;
@@ -3316,6 +3849,8 @@ public final class HordeService {
             defaults.rewardCategory = DEFAULT_REWARD_CATEGORY;
             defaults.rewardItemId = HordeService.resolveDefaultRewardItemIdForCategory(defaults.rewardCategory, 1);
             defaults.rewardItemQuantity = 1;
+            defaults.roundStartSoundId = SOUND_SELECTION_AUTO;
+            defaults.roundVictorySoundId = SOUND_SELECTION_AUTO;
             defaults.finalBossEnabled = false;
             defaults.enemyLevelMin = 1;
             defaults.enemyLevelMax = 1;
@@ -3344,6 +3879,8 @@ public final class HordeService {
             copy.rewardCategory = this.rewardCategory;
             copy.rewardItemId = this.rewardItemId;
             copy.rewardItemQuantity = this.rewardItemQuantity;
+            copy.roundStartSoundId = this.roundStartSoundId;
+            copy.roundVictorySoundId = this.roundVictorySoundId;
             copy.finalBossEnabled = this.finalBossEnabled;
             copy.enemyLevelMin = this.enemyLevelMin;
             copy.enemyLevelMax = this.enemyLevelMax;

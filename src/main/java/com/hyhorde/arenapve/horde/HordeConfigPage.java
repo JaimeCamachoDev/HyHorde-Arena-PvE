@@ -28,6 +28,7 @@ extends CustomUIPage {
     private static final String TAB_GENERAL = "general";
     private static final String TAB_HORDE = "horde";
     private static final String TAB_PLAYERS = "players";
+    private static final String TAB_SOUNDS = "sounds";
     private static final String TAB_REWARDS = "rewards";
     private static final int MAX_AUDIENCE_ROWS = 10;
     private final HordeService hordeService;
@@ -50,8 +51,11 @@ extends CustomUIPage {
         boolean active = this.hordeService.isActive();
         List<String> enemyTypeOptions = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
         List<String> rewardCategoryOptions = this.hordeService.getRewardCategoryOptions();
+        List<String> roundStartSoundOptions = this.hordeService.getRoundStartSoundOptions();
+        List<String> roundVictorySoundOptions = this.hordeService.getRoundVictorySoundOptions();
         String rewardCategory = HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory());
         List<String> rewardItemSuggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
+        String rewardHint = HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english);
         String tab = HordeConfigPage.normalizeTab(this.activeTab);
         this.activeTab = tab;
         EntityStore entityStore = (EntityStore)store.getExternalData();
@@ -76,6 +80,8 @@ extends CustomUIPage {
                 .set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId)
                 .set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity))
                 .set("#FinalBossEnabled.Value", HordeConfigPage.finalBossDisplay(config.finalBossEnabled, english))
+                .set("#RoundStartSoundId.Value", this.hordeService.getRoundStartSoundSelection())
+                .set("#RoundVictorySoundId.Value", this.hordeService.getRoundVictorySoundSelection())
                 .set("#EnemyLevelMin.Value", Integer.toString(config.enemyLevelMin))
                 .set("#EnemyLevelMax.Value", Integer.toString(config.enemyLevelMax))
                 .set("#AudienceInfoLabel.Text", HordeConfigPage.buildAudienceInfo(config.arenaJoinRadius, audienceRows.size(), english))
@@ -85,7 +91,8 @@ extends CustomUIPage {
                 .set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english))
                 .set("#StatusLabel.Text", this.hordeService.getStatusLine())
                 .set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english))
-                .set("#RewardCommandsHelpLabel.Text", HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english))
+                .set("#RoundSoundHelpLabel.Text", HordeConfigPage.buildRoundSoundHint(roundStartSoundOptions, this.hordeService.getRoundStartSoundSelection(), roundVictorySoundOptions, this.hordeService.getRoundVictorySoundSelection(), english))
+                .set("#RewardCommandsHelpLabel.Text", rewardHint)
                 .set("#ReloadModButton.Visible", true)
                 .set("#StartButton.Visible", !active)
                 .set("#StopButton.Visible", active)
@@ -97,6 +104,7 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabGeneralButton", EventData.of((String)"action", (String)"tab_general"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabHordeButton", EventData.of((String)"action", (String)"tab_horde"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabPlayersButton", EventData.of((String)"action", (String)"tab_players"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabSoundsButton", EventData.of((String)"action", (String)"tab_sounds"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabRewardsButton", EventData.of((String)"action", (String)"tab_rewards"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types"))
@@ -110,6 +118,10 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossPrevButton", this.buildConfigSnapshotEvent("final_boss_prev"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossNextButton", this.buildConfigSnapshotEvent("final_boss_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RoundStartSoundPrevButton", this.buildConfigSnapshotEvent("round_start_sound_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RoundStartSoundNextButton", this.buildConfigSnapshotEvent("round_start_sound_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RoundVictorySoundPrevButton", this.buildConfigSnapshotEvent("round_victory_sound_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RoundVictorySoundNextButton", this.buildConfigSnapshotEvent("round_victory_sound_next"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersRefreshButton", EventData.of((String)"action", (String)"refresh_players"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", EventData.of((String)"action", (String)"reload_config"))
@@ -154,6 +166,10 @@ extends CustomUIPage {
                 }
                 case "tab_players": {
                     this.activeTab = TAB_PLAYERS;
+                    break;
+                }
+                case "tab_sounds": {
+                    this.activeTab = TAB_SOUNDS;
                     break;
                 }
                 case "tab_rewards": {
@@ -207,6 +223,22 @@ extends CustomUIPage {
                 }
                 case "language_next": {
                     result = this.cycleLanguage(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "round_start_sound_prev": {
+                    result = this.cycleRoundStartSound(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "round_start_sound_next": {
+                    result = this.cycleRoundStartSound(HordeConfigPage.extractConfigValues(payload), world, 1);
+                    break;
+                }
+                case "round_victory_sound_prev": {
+                    result = this.cycleRoundVictorySound(HordeConfigPage.extractConfigValues(payload), world, -1);
+                    break;
+                }
+                case "round_victory_sound_next": {
+                    result = this.cycleRoundVictorySound(HordeConfigPage.extractConfigValues(payload), world, 1);
                     break;
                 }
                 case "reward_types": {
@@ -272,6 +304,10 @@ extends CustomUIPage {
             case "final_boss_next":
             case "language_prev":
             case "language_next":
+            case "round_start_sound_prev":
+            case "round_start_sound_next":
+            case "round_victory_sound_prev":
+            case "round_victory_sound_next":
             case "save":
             case "skip_round":
             case "start": {
@@ -311,7 +347,7 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@ArenaJoinRadius", "#ArenaJoinRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@ArenaJoinRadius", "#ArenaJoinRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@RoundStartSoundId", "#RoundStartSoundId.Value").append("@RoundVictorySoundId", "#RoundVictorySoundId.Value");
     }
 
     private void populateAudienceRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.AudiencePlayerSnapshot> rows, boolean english) {
@@ -458,6 +494,48 @@ extends CustomUIPage {
         return this.hordeService.setLanguage(options.get(nextIndex));
     }
 
+    private HordeService.OperationResult cycleRoundStartSound(Map<String, String> values, World world, int offset) {
+        List<String> options = this.hordeService.getRoundStartSoundOptions();
+        boolean english = this.isEnglish();
+        if (options.isEmpty()) {
+            return HordeService.OperationResult.fail(english ? "No round start sounds available." : "No hay sonidos de inicio de ronda disponibles.");
+        }
+        String current = HordeConfigPage.firstNonEmpty(values.get("roundStartSoundId"), this.hordeService.getRoundStartSoundSelection()).trim();
+        int currentIndex = -1;
+        for (int i = 0; i < options.size(); ++i) {
+            if (!options.get(i).equalsIgnoreCase(current)) continue;
+            currentIndex = i;
+            break;
+        }
+        if (currentIndex < 0) {
+            currentIndex = offset > 0 ? -1 : 0;
+        }
+        int nextIndex = Math.floorMod(currentIndex + offset, options.size());
+        values.put("roundStartSoundId", options.get(nextIndex));
+        return this.hordeService.applyUiConfig(values, world);
+    }
+
+    private HordeService.OperationResult cycleRoundVictorySound(Map<String, String> values, World world, int offset) {
+        List<String> options = this.hordeService.getRoundVictorySoundOptions();
+        boolean english = this.isEnglish();
+        if (options.isEmpty()) {
+            return HordeService.OperationResult.fail(english ? "No round victory sounds available." : "No hay sonidos de victoria de ronda disponibles.");
+        }
+        String current = HordeConfigPage.firstNonEmpty(values.get("roundVictorySoundId"), this.hordeService.getRoundVictorySoundSelection()).trim();
+        int currentIndex = -1;
+        for (int i = 0; i < options.size(); ++i) {
+            if (!options.get(i).equalsIgnoreCase(current)) continue;
+            currentIndex = i;
+            break;
+        }
+        if (currentIndex < 0) {
+            currentIndex = offset > 0 ? -1 : 0;
+        }
+        int nextIndex = Math.floorMod(currentIndex + offset, options.size());
+        values.put("roundVictorySoundId", options.get(nextIndex));
+        return this.hordeService.applyUiConfig(values, world);
+    }
+
     private HordeService.OperationResult cycleFinalBoss(Map<String, String> values, World world) {
         boolean english = this.isEnglish();
         boolean current = HordeConfigPage.parseFinalBoss(values.get("finalBossEnabled"), this.hordeService.getConfigSnapshot().finalBossEnabled);
@@ -489,6 +567,8 @@ extends CustomUIPage {
         values.put("rewardItemId", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemId"), HordeConfigPage.read(payload, "@RewardItemId"), HordeConfigPage.read(payload, "RewardItemId")));
         values.put("rewardItemQuantity", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardItemQuantity"), HordeConfigPage.read(payload, "@RewardItemQuantity"), HordeConfigPage.read(payload, "RewardItemQuantity")));
         values.put("finalBossEnabled", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "finalBossEnabled"), HordeConfigPage.read(payload, "@FinalBossEnabled"), HordeConfigPage.read(payload, "FinalBossEnabled")));
+        values.put("roundStartSoundId", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "roundStartSoundId"), HordeConfigPage.read(payload, "@RoundStartSoundId"), HordeConfigPage.read(payload, "RoundStartSoundId")));
+        values.put("roundVictorySoundId", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "roundVictorySoundId"), HordeConfigPage.read(payload, "@RoundVictorySoundId"), HordeConfigPage.read(payload, "RoundVictorySoundId")));
         values.put("enemyLevelMin", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMin"), HordeConfigPage.read(payload, "@EnemyLevelMin"), HordeConfigPage.read(payload, "EnemyLevelMin")));
         values.put("enemyLevelMax", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMax"), HordeConfigPage.read(payload, "@EnemyLevelMax"), HordeConfigPage.read(payload, "EnemyLevelMax")));
         return values;
@@ -523,6 +603,17 @@ extends CustomUIPage {
             return "Use < > to change category | Current: " + currentLabel + " | IDs: " + currentIds + " | Available: " + available + availableSuffix;
         }
         return "Usa < > para cambiar categoria | Actual: " + currentLabel + " | IDs: " + currentIds + " | Disponibles: " + available + availableSuffix;
+    }
+
+    private static String buildRoundSoundHint(List<String> roundStartOptions, String selectedRoundStart, List<String> roundVictoryOptions, String selectedRoundVictory, boolean english) {
+        String startCurrent = HordeConfigPage.firstNonEmpty(selectedRoundStart, roundStartOptions == null || roundStartOptions.isEmpty() ? "auto" : roundStartOptions.get(0));
+        String victoryCurrent = HordeConfigPage.firstNonEmpty(selectedRoundVictory, roundVictoryOptions == null || roundVictoryOptions.isEmpty() ? "auto" : roundVictoryOptions.get(0));
+        List<String> startPreview = roundStartOptions == null || roundStartOptions.isEmpty() ? List.of("auto", "none") : roundStartOptions.subList(0, Math.min(4, roundStartOptions.size()));
+        List<String> victoryPreview = roundVictoryOptions == null || roundVictoryOptions.isEmpty() ? List.of("auto", "none") : roundVictoryOptions.subList(0, Math.min(4, roundVictoryOptions.size()));
+        if (english) {
+            return "Use < > to change round sounds | Start: " + startCurrent + " | Victory: " + victoryCurrent + " | Start options: " + String.join(", ", startPreview) + " | Victory options: " + String.join(", ", victoryPreview);
+        }
+        return "Usa < > para cambiar sonidos de ronda | Inicio: " + startCurrent + " | Victoria: " + victoryCurrent + " | Opciones inicio: " + String.join(", ", startPreview) + " | Opciones victoria: " + String.join(", ", victoryPreview);
     }
 
     private static String buildRewardItemsHint(List<String> rewardCategoryOptions, String selectedCategory, List<String> rewardItems, String selectedItemId, boolean english) {
@@ -641,12 +732,14 @@ extends CustomUIPage {
         boolean generalTab = TAB_GENERAL.equals(tab);
         boolean hordeTab = TAB_HORDE.equals(tab);
         boolean playersTab = TAB_PLAYERS.equals(tab);
+        boolean soundsTab = TAB_SOUNDS.equals(tab);
         boolean rewardsTab = TAB_REWARDS.equals(tab);
         commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config")
-                .set("#SubTitleLabel.Text", english ? "Split setup by tabs: general, horde, players and rewards" : "Configuracion en pestanas: general, horda, jugadores y recompensas")
+                .set("#SubTitleLabel.Text", english ? "Split setup by tabs: general, horde, players, sounds and rewards" : "Configuracion en pestanas: general, horda, jugadores, sonidos y recompensas")
                 .set("#TabGeneralButton.Text", english ? (generalTab ? "General *" : "General") : (generalTab ? "General *" : "General"))
                 .set("#TabHordeButton.Text", english ? (hordeTab ? "Horde *" : "Horde") : (hordeTab ? "Horda *" : "Horda"))
                 .set("#TabPlayersButton.Text", english ? (playersTab ? "Players *" : "Players") : (playersTab ? "Jugadores *" : "Jugadores"))
+                .set("#TabSoundsButton.Text", english ? (soundsTab ? "Sounds *" : "Sounds") : (soundsTab ? "Sonidos *" : "Sonidos"))
                 .set("#TabRewardsButton.Text", english ? (rewardsTab ? "Rewards *" : "Rewards") : (rewardsTab ? "Recompensas *" : "Recompensas"))
                 .set("#TabHintLabel.Text", english ? "Tabs only change the editor view. Save applies the full config." : "Las pestanas solo cambian la vista. Guardar aplica toda la configuracion.")
                 .set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)")
@@ -675,6 +768,8 @@ extends CustomUIPage {
                 .set("#RewardTypesButton.Text", english ? "View loot" : "Ver loot")
                 .set("#RewardItemQuantityLabel.Text", english ? "Qty." : "Cant.")
                 .set("#FinalBossLabel.Text", english ? "Final boss" : "Boss final")
+                .set("#RoundStartSoundLabel.Text", english ? "Round start sound" : "Sonido inicio ronda")
+                .set("#RoundVictorySoundLabel.Text", english ? "Round victory sound" : "Sonido victoria ronda")
                 .set("#StatusTitleLabel.Text", english ? "Current status" : "Estado actual")
                 .set("#ReloadModButton.Text", english ? "Reload config" : "Recargar config")
                 .set("#SaveButton.Text", english ? "Save config" : "Guardar config")
@@ -688,11 +783,13 @@ extends CustomUIPage {
         boolean generalTab = TAB_GENERAL.equals(tab);
         boolean hordeTab = TAB_HORDE.equals(tab);
         boolean playersTab = TAB_PLAYERS.equals(tab);
+        boolean soundsTab = TAB_SOUNDS.equals(tab);
         boolean rewardsTab = TAB_REWARDS.equals(tab);
 
         this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RadiusLabel", "#MinRadius", "#MaxRadius", "#LanguageLabel", "#LanguagePrevButton", "#Language", "#LanguageNextButton");
         this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossPrevButton", "#FinalBossEnabled", "#FinalBossNextButton", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
+        this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundPrevButton", "#RoundStartSoundId", "#RoundStartSoundNextButton", "#RoundVictorySoundLabel", "#RoundVictorySoundPrevButton", "#RoundVictorySoundId", "#RoundVictorySoundNextButton", "#RoundSoundHelpLabel");
         this.setVisible(commandBuilder, rewardsTab, "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategoryPrevButton", "#RewardCategory", "#RewardCategoryNextButton", "#RewardTypesButton", "#RewardCommandsLabel", "#RewardItemPrevButton", "#RewardItemId", "#RewardItemNextButton", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#RewardCommandsHelpLabel");
         this.setVisible(commandBuilder, false, "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax");
     }
@@ -716,6 +813,7 @@ extends CustomUIPage {
             case TAB_GENERAL:
             case TAB_HORDE:
             case TAB_PLAYERS:
+            case TAB_SOUNDS:
             case TAB_REWARDS: {
                 return normalized;
             }
