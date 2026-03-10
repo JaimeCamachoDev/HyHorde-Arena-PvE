@@ -44,7 +44,8 @@ extends EntityTickingSystem<EntityStore> {
                 continue;
             }
             UUID playerId = playerRef.getUuid();
-            if (!hordeActiveInWorld) {
+            boolean shouldShowHud = hordeActiveInWorld && this.hordeService.isArenaPlayer(playerRef);
+            if (!shouldShowHud) {
                 if (this.huds.containsKey(playerId) || this.tickCounters.containsKey(playerId)) {
                     this.removeHudForPlayer(player, playerRef, playerId);
                 } else {

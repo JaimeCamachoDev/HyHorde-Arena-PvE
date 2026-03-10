@@ -69,9 +69,13 @@ extends AbstractPlayerCommand {
                 return;
             }
             case "reload":
+            case "reloadconfig": {
+                playerRef.sendMessage(Message.raw((String)this.hordeService.reloadConfigFromDisk().getMessage()));
+                return;
+            }
             case "reloadmod":
             case "reloadplugin": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.reloadPlugin().getMessage()));
+                playerRef.sendMessage(Message.raw((String)(english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.")));
                 return;
             }
             case "enemy":
@@ -100,6 +104,23 @@ extends AbstractPlayerCommand {
             }
             case "reward": {
                 this.handleReward(value, playerRef);
+                return;
+            }
+            case "spectator":
+            case "spectate":
+            case "espectador": {
+                this.handleSpectatorPreference(value, playerRef);
+                return;
+            }
+            case "player":
+            case "jugador": {
+                playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, false).getMessage()));
+                return;
+            }
+            case "arearadius":
+            case "radarena":
+            case "radioarena": {
+                this.handleArenaRadius(value, playerRef);
                 return;
             }
             default: {
@@ -184,6 +205,45 @@ extends AbstractPlayerCommand {
             return;
         }
         playerRef.sendMessage(Message.raw((String)this.hordeService.setRewardEveryRounds(everyRounds).getMessage()));
+    }
+
+    private void handleSpectatorPreference(String value, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
+        String raw = value == null ? "" : value.trim().toLowerCase(Locale.ROOT);
+        if (raw.isBlank()) {
+            boolean spectator = this.hordeService.isSpectatorPreferenceEnabled(playerRef);
+            String current = spectator ? (english ? "SPECTATOR" : "ESPECTADOR") : (english ? "PLAYER" : "JUGADOR");
+            playerRef.sendMessage(Message.raw((String)((english ? "Current pre-start role: " : "Rol previo al inicio: ") + current)));
+            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordapve spectator <on|off>" : "Uso: /hordapve spectator <on|off>")));
+            return;
+        }
+        if ("on".equals(raw) || "true".equals(raw) || "1".equals(raw) || "yes".equals(raw) || "si".equals(raw) || "espectador".equals(raw) || "spectator".equals(raw)) {
+            playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, true).getMessage()));
+            return;
+        }
+        if ("off".equals(raw) || "false".equals(raw) || "0".equals(raw) || "no".equals(raw) || "jugador".equals(raw) || "player".equals(raw)) {
+            playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, false).getMessage()));
+            return;
+        }
+        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordapve spectator <on|off>" : "Uso: /hordapve spectator <on|off>")));
+    }
+
+    private void handleArenaRadius(String value, PlayerRef playerRef) {
+        boolean english = this.isEnglish();
+        String raw = value == null ? "" : value.trim();
+        if (raw.isBlank()) {
+            playerRef.sendMessage(Message.raw((String)String.format(Locale.ROOT, english ? "Current arena radius: %.2f blocks. Usage: /hordapve arearadius <value>" : "Radio de arena actual: %.2f bloques. Uso: /hordapve arearadius <valor>", this.hordeService.getArenaJoinRadius())));
+            return;
+        }
+        double radius;
+        try {
+            radius = Double.parseDouble(raw);
+        }
+        catch (Exception ex) {
+            playerRef.sendMessage(Message.raw((String)(english ? "Arena radius must be a valid number." : "El radio de arena debe ser un numero valido.")));
+            return;
+        }
+        playerRef.sendMessage(Message.raw((String)this.hordeService.setArenaJoinRadius(radius).getMessage()));
     }
 
     private boolean isEnglish() {

@@ -21,6 +21,9 @@ Version actual: `1.0.4`.
 - `/hordapve role <rolNpc|auto>` -> fuerza un rol NPC o vuelve a auto.
 - `/hordapve roles` -> lista roles NPC disponibles.
 - `/hordapve reward <rondas>` -> configura cada cuantas rondas hay recompensa.
+- `/hordapve spectator <on|off>` -> te marca como espectador/jugador para el siguiente inicio de horda.
+- `/hordapve player` -> atajo para volver a modo jugador.
+- `/hordapve arearadius <bloques>` -> radio de la arena para bloquear jugadores/espectadores al inicio.
 - `/hordareload config` -> recarga `horde-config.json`.
 
 ## Tipos de enemigo soportados
@@ -51,14 +54,17 @@ Nota: los roles reales dependen de tu modpack. Verificalo con `/hordapve tipos`.
 
 1. Ejecuta `/hordapve`.
 2. Pulsa `Usar mi posicion actual` (o usa `/hordapve setspawn`).
-3. Configura rondas, enemigos, idioma y recompensas.
-4. Guarda configuracion.
-5. Inicia con `/hordapve start`.
-6. Deten y limpia con `/hordapve stop`.
+3. Configura por pestanas: `General`, `Jugadores`, `Recompensas`.
+4. En `Jugadores`, ajusta `arearadius` y tu modo `jugador/espectador` para el bloqueo al inicio.
+5. Configura rondas, enemigos, idioma y recompensas.
+6. Guarda configuracion.
+7. Inicia con `/hordapve start`.
+8. Deten y limpia con `/hordapve stop`.
 
 ## Archivo de configuracion
 
 - `horde-config.json` en la carpeta de datos del plugin.
+- `arenaJoinRadius` define el radio alrededor del centro para bloquear participantes al iniciar (jugadores/espectadores).
 
 ## Build
 

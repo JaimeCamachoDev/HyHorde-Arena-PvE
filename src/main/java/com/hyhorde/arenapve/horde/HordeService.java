@@ -97,13 +97,20 @@ public final class HordeService {
     private static final float FINAL_BOSS_HEALTH_MULTIPLIER = 1.35f;
     private static final double MIN_RADIUS = 1.0;
     private static final double MAX_RADIUS = 128.0;
+    private static final double MIN_ARENA_JOIN_RADIUS = 4.0;
+    private static final double MAX_ARENA_JOIN_RADIUS = 512.0;
     private static final String LANGUAGE_SPANISH = "es";
     private static final String LANGUAGE_ENGLISH = "en";
+    private static final String AUDIENCE_MODE_PLAYER = "player";
+    private static final String AUDIENCE_MODE_SPECTATOR = "spectator";
+    private static final String AUDIENCE_MODE_EXIT = "exit";
     private static final List<String> LANGUAGE_OPTIONS = List.of(LANGUAGE_SPANISH, LANGUAGE_ENGLISH);
     private final PluginBase plugin;
     private final Gson gson;
     private final Path configPath;
     private final Map<UUID, HordeStatusPage> statusPages;
+    private final Set<UUID> spectatorOverrides;
+    private final Set<UUID> audienceExitOverrides;
     private boolean pluginReloadInProgress;
     private HordeConfig config;
     private HordeSession session;
@@ -113,6 +120,8 @@ public final class HordeService {
         this.gson = new GsonBuilder().setPrettyPrinting().create();
         this.configPath = plugin.getDataDirectory().resolve("horde-config.json");
         this.statusPages = new HashMap<UUID, HordeStatusPage>();
+        this.spectatorOverrides = new HashSet<UUID>();
+        this.audienceExitOverrides = new HashSet<UUID>();
         this.config = HordeConfig.defaults();
         this.loadConfig();
     }
@@ -136,13 +145,15 @@ public final class HordeService {
         this.syncSessionPlayers(this.session);
         int alive = HordeService.countAlive(this.session.activeEnemies);
         int totalDeaths = HordeService.getTotalDeaths(this.session.playerStats);
+        int lockedPlayers = this.session.arenaPlayerIds.size();
+        int lockedSpectators = this.session.arenaSpectatorIds.size();
         String rewardInfo = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, false);
         String finalBossInfo = this.config.finalBossEnabled ? (HordeService.isEnglishLanguage(language) ? "on" : "si") : (HordeService.isEnglishLanguage(language) ? "off" : "no");
         if (HordeService.isEnglishLanguage(language)) {
             rewardInfo = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, true);
-            return "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + this.session.playerMultiplier + " | Levels: " + this.config.enemyLevelMin + "-" + this.config.enemyLevelMax + " | Final boss: " + finalBossInfo + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo;
+            return "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + this.session.playerMultiplier + " | Locked players: " + lockedPlayers + " | Spectators: " + lockedSpectators + " | Levels: " + this.config.enemyLevelMin + "-" + this.config.enemyLevelMax + " | Final boss: " + finalBossInfo + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo;
         }
-        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Muertes de jugadores: " + totalDeaths + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Niveles: " + this.config.enemyLevelMin + "-" + this.config.enemyLevelMax + " | Boss final: " + finalBossInfo + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
+        return "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Muertes de jugadores: " + totalDeaths + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + this.session.playerMultiplier + " | Jugadores bloqueados: " + lockedPlayers + " | Espectadores: " + lockedSpectators + " | Niveles: " + this.config.enemyLevelMin + "-" + this.config.enemyLevelMax + " | Boss final: " + finalBossInfo + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo;
     }
 
     public synchronized List<String> getAvailableRoles() {
@@ -223,6 +234,116 @@ public final class HordeService {
         return HordeService.normalizeLanguage(this.config.language);
     }
 
+    public synchronized double getArenaJoinRadius() {
+        return HordeService.clamp(this.config.arenaJoinRadius, MIN_ARENA_JOIN_RADIUS, MAX_ARENA_JOIN_RADIUS);
+    }
+
+    public synchronized OperationResult setArenaJoinRadius(double radius) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (Double.isNaN(radius) || Double.isInfinite(radius)) {
+            return OperationResult.fail(english ? "Area radius must be a valid number." : "El radio de area debe ser un numero valido.");
+        }
+        double normalized = HordeService.clamp(radius, MIN_ARENA_JOIN_RADIUS, MAX_ARENA_JOIN_RADIUS);
+        this.config.arenaJoinRadius = normalized;
+        this.saveConfig();
+        if (english) {
+            return OperationResult.ok(String.format(Locale.ROOT, "Arena join radius set to %.2f blocks.", normalized));
+        }
+        return OperationResult.ok(String.format(Locale.ROOT, "Radio de entrada a arena configurado en %.2f bloques.", normalized));
+    }
+
+    public synchronized OperationResult setSpectatorPreference(PlayerRef playerRef, boolean spectator) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return OperationResult.fail(english ? "Could not resolve your player identity." : "No se pudo resolver tu identidad de jugador.");
+        }
+        UUID playerId = playerRef.getUuid();
+        this.audienceExitOverrides.remove(playerId);
+        if (spectator) {
+            this.spectatorOverrides.add(playerId);
+            return OperationResult.ok(english ? "You will be locked as SPECTATOR if you are inside the arena area when the horde starts." : "Quedaras bloqueado como ESPECTADOR si estas dentro del area de arena al iniciar la horda.");
+        }
+        this.spectatorOverrides.remove(playerId);
+        return OperationResult.ok(english ? "You will be locked as PLAYER if you are inside the arena area when the horde starts." : "Quedaras bloqueado como JUGADOR si estas dentro del area de arena al iniciar la horda.");
+    }
+
+    public synchronized List<AudiencePlayerSnapshot> getArenaAudiencePlayers(World world) {
+        if (world == null) {
+            return List.of();
+        }
+        double radius = this.getArenaJoinRadius();
+        ArrayList<AudiencePlayerSnapshot> entries = new ArrayList<AudiencePlayerSnapshot>();
+        for (PlayerRef playerRef : world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null || !this.isInsideArenaArea(playerRef, radius)) continue;
+            UUID playerId = playerRef.getUuid();
+            entries.add(new AudiencePlayerSnapshot(playerId, HordeService.safePlayerName(playerRef), this.resolveAudienceMode(playerId)));
+        }
+        entries.sort(Comparator.comparing((AudiencePlayerSnapshot row) -> row.username, String.CASE_INSENSITIVE_ORDER));
+        return entries;
+    }
+
+    public synchronized OperationResult setArenaAudienceMode(UUID playerId, String rawMode, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (playerId == null) {
+            return OperationResult.fail(english ? "Could not resolve target player." : "No se pudo resolver el jugador objetivo.");
+        }
+        String mode = HordeService.normalizeAudienceMode(rawMode);
+        if (mode == null) {
+            return OperationResult.fail(english ? "Unknown audience mode. Use: player, spectator or exit." : "Modo de audiencia desconocido. Usa: jugador, espectador o salir.");
+        }
+        String username = this.resolveAudiencePlayerName(world, playerId);
+        if (AUDIENCE_MODE_PLAYER.equals(mode)) {
+            this.spectatorOverrides.remove(playerId);
+            this.audienceExitOverrides.remove(playerId);
+        } else if (AUDIENCE_MODE_SPECTATOR.equals(mode)) {
+            this.spectatorOverrides.add(playerId);
+            this.audienceExitOverrides.remove(playerId);
+        } else if (AUDIENCE_MODE_EXIT.equals(mode)) {
+            this.spectatorOverrides.remove(playerId);
+            this.audienceExitOverrides.add(playerId);
+        }
+        this.applySessionAudienceOverride(playerId, mode, world);
+        this.refreshStatusHud(this.session);
+        if (english) {
+            if (AUDIENCE_MODE_PLAYER.equals(mode)) {
+                return OperationResult.ok("Audience mode for " + username + ": PLAYER.");
+            }
+            if (AUDIENCE_MODE_SPECTATOR.equals(mode)) {
+                return OperationResult.ok("Audience mode for " + username + ": SPECTATOR.");
+            }
+            return OperationResult.ok("Audience mode for " + username + ": EXIT.");
+        }
+        if (AUDIENCE_MODE_PLAYER.equals(mode)) {
+            return OperationResult.ok("Modo de audiencia para " + username + ": JUGADOR.");
+        }
+        if (AUDIENCE_MODE_SPECTATOR.equals(mode)) {
+            return OperationResult.ok("Modo de audiencia para " + username + ": ESPECTADOR.");
+        }
+        return OperationResult.ok("Modo de audiencia para " + username + ": SALIR.");
+    }
+
+    public synchronized boolean isSpectatorPreferenceEnabled(PlayerRef playerRef) {
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return false;
+        }
+        return this.spectatorOverrides.contains(playerRef.getUuid());
+    }
+
+    public synchronized boolean isArenaPlayer(PlayerRef playerRef) {
+        if (this.session == null || playerRef == null || playerRef.getUuid() == null) {
+            return false;
+        }
+        return this.session.arenaPlayerIds.contains(playerRef.getUuid());
+    }
+
+    public synchronized boolean isArenaAudience(PlayerRef playerRef) {
+        if (this.session == null || playerRef == null || playerRef.getUuid() == null) {
+            return false;
+        }
+        UUID playerId = playerRef.getUuid();
+        return this.session.arenaPlayerIds.contains(playerId) || this.session.arenaSpectatorIds.contains(playerId);
+    }
+
     public synchronized String getConfiguredNpcRole() {
         return HordeService.safeRoleValue(this.config.npcRole);
     }
@@ -259,7 +380,13 @@ public final class HordeService {
         if (!this.session.accountedEnemyDeaths.add(enemyRef)) {
             return;
         }
+        if (!this.isArenaPlayer(attackerPlayer)) {
+            return;
+        }
         PlayerCombatStats attackerStats = this.getOrCreatePlayerStats(this.session, attackerPlayer);
+        if (attackerStats == null) {
+            return;
+        }
         attackerStats.kills = attackerStats.kills + 1;
         this.refreshStatusHud(this.session);
     }
@@ -276,12 +403,18 @@ public final class HordeService {
         if (victimId == null) {
             return;
         }
+        if (!this.session.arenaPlayerIds.contains(victimId)) {
+            return;
+        }
         Long lastRecorded = this.session.lastPlayerDeathAt.get(victimId);
         if (lastRecorded != null && now - lastRecorded.longValue() <= 750L) {
             return;
         }
         this.session.lastPlayerDeathAt.put(victimId, now);
         PlayerCombatStats victimStats = this.getOrCreatePlayerStats(this.session, victimPlayer);
+        if (victimStats == null) {
+            return;
+        }
         victimStats.deaths = victimStats.deaths + 1;
         this.refreshStatusHud(this.session);
     }
@@ -495,6 +628,7 @@ public final class HordeService {
             updated.spawnZ = HordeService.parseDouble(values.get("spawnZ"), updated.spawnZ, "spawnZ", english);
             updated.minSpawnRadius = HordeService.parseDouble(values.get("minRadius"), updated.minSpawnRadius, "minRadius", english);
             updated.maxSpawnRadius = HordeService.parseDouble(values.get("maxRadius"), updated.maxSpawnRadius, "maxRadius", english);
+            updated.arenaJoinRadius = HordeService.parseDouble(values.get("arenaJoinRadius"), updated.arenaJoinRadius, "arenaJoinRadius", english);
             updated.rounds = HordeService.parseInt(values.get("rounds"), updated.rounds, "rounds", english);
             updated.baseEnemiesPerRound = HordeService.parseInt(values.get("baseEnemies"), updated.baseEnemiesPerRound, "baseEnemies", english);
             updated.enemiesPerRoundIncrement = HordeService.parseInt(values.get("enemiesPerRound"), updated.enemiesPerRoundIncrement, "enemiesPerRound", english);
@@ -576,6 +710,9 @@ public final class HordeService {
         }
         if (updated.maxSpawnRadius < updated.minSpawnRadius) {
             return OperationResult.fail(english ? "maxRadius must be greater than or equal to minRadius." : "maxRadius debe ser mayor o igual a minRadius.");
+        }
+        if (updated.arenaJoinRadius < MIN_ARENA_JOIN_RADIUS || updated.arenaJoinRadius > MAX_ARENA_JOIN_RADIUS) {
+            return OperationResult.fail(english ? "arenaJoinRadius must be between " + MIN_ARENA_JOIN_RADIUS + " and " + MAX_ARENA_JOIN_RADIUS + "." : "arenaJoinRadius debe estar entre " + MIN_ARENA_JOIN_RADIUS + " y " + MAX_ARENA_JOIN_RADIUS + ".");
         }
         if (updated.rounds < MIN_ROUNDS || updated.rounds > MAX_ROUNDS) {
             return OperationResult.fail(english ? "rounds must be between " + MIN_ROUNDS + " and " + MAX_ROUNDS + "." : "rounds debe estar entre " + MIN_ROUNDS + " y " + MAX_ROUNDS + ".");
@@ -661,19 +798,28 @@ public final class HordeService {
         if (selectedRole == null) {
             return OperationResult.fail(english ? "Could not resolve a compatible NPC role to start the horde." : "No se pudo resolver un rol NPC compatible para iniciar la horda.");
         }
+        LinkedHashSet<UUID> lockedPlayers = new LinkedHashSet<UUID>();
+        LinkedHashSet<UUID> lockedSpectators = new LinkedHashSet<UUID>();
+        this.captureArenaAudience(world, lockedPlayers, lockedSpectators);
+        if (lockedPlayers.isEmpty()) {
+            if (english) {
+                return OperationResult.fail(String.format(Locale.ROOT, "No arena players found inside radius %.2f. Move into the arena area (or disable spectator mode) before starting.", this.getArenaJoinRadius()));
+            }
+            return OperationResult.fail(String.format(Locale.ROOT, "No hay jugadores de arena dentro del radio %.2f. Entra al area (o quita modo espectador) antes de iniciar.", this.getArenaJoinRadius()));
+        }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
         long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_TOTAL_SECONDS * 1000L;
-        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis);
+        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), this.config.playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis, lockedPlayers, lockedSpectators);
         this.syncSessionPlayers(newSession);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, SESSION_TICK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         String roleSuffix = forcedRole == null ? selectedRole : selectedRole + (english ? " (forced)" : " (forzado)");
         String finalBossState = this.config.finalBossEnabled ? (english ? "on" : "si") : (english ? "off" : "no");
         if (english) {
-            world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horde PVE prepared at %.2f %.2f %.2f | %d rounds | type: %s | role: %s | players x%d | levels: %d-%d | final boss: %s | starts in %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, finalBossState, START_COUNTDOWN_TOTAL_SECONDS)));
+            this.sendAudienceMessage(newSession, Message.raw((String)String.format(Locale.ROOT, "Horde PVE prepared at %.2f %.2f %.2f | %d rounds | type: %s | role: %s | players x%d | levels: %d-%d | final boss: %s | starts in %ds | locked players: %d | spectators: %d", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, finalBossState, START_COUNTDOWN_TOTAL_SECONDS, lockedPlayers.size(), lockedSpectators.size())));
         } else {
-            world.sendMessage(Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | niveles: %d-%d | boss final: %s | inicio en %ds", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, finalBossState, START_COUNTDOWN_TOTAL_SECONDS)));
+            this.sendAudienceMessage(newSession, Message.raw((String)String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | niveles: %d-%d | boss final: %s | inicio en %ds | jugadores bloqueados: %d | espectadores: %d", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, this.config.playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, finalBossState, START_COUNTDOWN_TOTAL_SECONDS, lockedPlayers.size(), lockedSpectators.size())));
         }
-        this.broadcastHordeStartAnnouncement(selectedEnemyType, selectedRole, this.config.playerMultiplier);
+        this.broadcastHordeStartAnnouncement(newSession, selectedEnemyType, selectedRole, this.config.playerMultiplier);
         return OperationResult.ok(english ? "Horde started. Countdown: 3..2..1." : "Horda iniciada. Cuenta atras: 3..2..1.");
     }
 
@@ -710,7 +856,7 @@ public final class HordeService {
             trackedSession.nextRoundAtMillis = 0L;
             trackedSession.lastIntermissionCountdownAnnouncement = -1;
             this.spawnNextRound(trackedSession, Vector3f.ZERO);
-            trackedSession.world.sendMessage(Message.raw((String)(english ? "Round " + previousRound + " forced manually. Enemies cleaned: " + cleanedEnemies + "." : "Ronda " + previousRound + " forzada manualmente. Enemigos limpiados: " + cleanedEnemies + ".")));
+            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Round " + previousRound + " forced manually. Enemies cleaned: " + cleanedEnemies + "." : "Ronda " + previousRound + " forzada manualmente. Enemigos limpiados: " + cleanedEnemies + ".")));
             this.refreshStatusHud(trackedSession);
             return OperationResult.ok(english ? "Round skipped. Started round " + trackedSession.currentRound + "." : "Ronda saltada. Iniciada ronda " + trackedSession.currentRound + ".");
         }
@@ -718,7 +864,7 @@ public final class HordeService {
             trackedSession.nextRoundAtMillis = 0L;
             trackedSession.lastStartCountdownAnnouncement = 0;
             this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
-            trackedSession.world.sendMessage(Message.raw((String)(english ? "Countdown skipped. Round 1 started manually." : "Cuenta atras omitida. Ronda 1 iniciada manualmente.")));
+            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Countdown skipped. Round 1 started manually." : "Cuenta atras omitida. Ronda 1 iniciada manualmente.")));
             this.refreshStatusHud(trackedSession);
             return OperationResult.ok(english ? "Countdown skipped. Round 1 started." : "Cuenta atras omitida. Ronda 1 iniciada.");
         }
@@ -729,7 +875,7 @@ public final class HordeService {
         trackedSession.nextRoundAtMillis = 0L;
         trackedSession.lastIntermissionCountdownAnnouncement = -1;
         this.spawnNextRound(trackedSession, Vector3f.ZERO);
-        trackedSession.world.sendMessage(Message.raw((String)(english ? "Intermission skipped manually. Round " + trackedSession.currentRound + " started." : "Intermedio omitido manualmente. Ronda " + trackedSession.currentRound + " iniciada.")));
+        this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Intermission skipped manually. Round " + trackedSession.currentRound + " started." : "Intermedio omitido manualmente. Ronda " + trackedSession.currentRound + " iniciada.")));
         this.refreshStatusHud(trackedSession);
         return OperationResult.ok(english ? "Intermission skipped. Started round " + trackedSession.currentRound + "." : "Intermedio omitido. Iniciada ronda " + trackedSession.currentRound + ".");
     }
@@ -774,14 +920,14 @@ public final class HordeService {
                             int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
                             if (now < trackedSession.nextRoundAtMillis) {
                                 if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastStartCountdownAnnouncement) {
-                                    this.broadcastHordeCountdownAnnouncement(secondsRemaining, trackedSession.enemyType, trackedSession.role);
-                                    trackedSession.world.sendMessage(Message.raw((String)(english ? "Horde starts in " + secondsRemaining + "..." : "La horda comienza en " + secondsRemaining + "...")));
+                                    this.broadcastHordeCountdownAnnouncement(trackedSession, secondsRemaining, trackedSession.enemyType, trackedSession.role);
+                                    this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Horde starts in " + secondsRemaining + "..." : "La horda comienza en " + secondsRemaining + "...")));
                                     trackedSession.lastStartCountdownAnnouncement = secondsRemaining;
                                 }
                                 this.refreshStatusHud(trackedSession);
                                 return;
                             }
-                            this.broadcastHordeCountdownGoAnnouncement(1, this.config.rounds);
+                            this.broadcastHordeCountdownGoAnnouncement(trackedSession, 1, this.config.rounds);
                             trackedSession.lastStartCountdownAnnouncement = 0;
                             trackedSession.nextRoundAtMillis = 0L;
                             this.spawnNextRound(trackedSession, new Vector3f(trackedSession.startRotation));
@@ -794,20 +940,20 @@ public final class HordeService {
                             boolean rewardUnlocked = trackedSession.currentRound > 0 && this.config.rewardEveryRounds > 0 && trackedSession.currentRound % this.config.rewardEveryRounds == 0;
                             boolean finalRound = trackedSession.currentRound >= this.config.rounds;
                             int nextDelaySeconds = finalRound ? 0 : this.config.waveDelaySeconds;
-                            this.broadcastRoundCompleteAnnouncement(trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
+                            this.broadcastRoundCompleteAnnouncement(trackedSession, trackedSession.currentRound, this.config.rounds, nextDelaySeconds, trackedSession.totalKilled, trackedSession.totalSpawned, rewardUnlocked, finalRound);
                             if (finalRound) {
                                 this.endSession(trackedSession, english ? "Horde completed. All rounds finished." : "Horda completada. Todas las rondas terminadas.", false);
                                 return;
                             }
                             trackedSession.nextRoundAtMillis = now + (long)this.config.waveDelaySeconds * 1000L;
                             trackedSession.lastIntermissionCountdownAnnouncement = -1;
-                            world.sendMessage(Message.raw((String)(english ? "Round " + trackedSession.currentRound + " completed. Next round starts in " + this.config.waveDelaySeconds + "s." : "Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
+                            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Round " + trackedSession.currentRound + " completed. Next round starts in " + this.config.waveDelaySeconds + "s." : "Ronda " + trackedSession.currentRound + " completada. La siguiente ronda empieza en " + this.config.waveDelaySeconds + "s.")));
                         }
                         if (!trackedSession.roundActive && trackedSession.currentRound > 0 && trackedSession.currentRound < this.config.rounds) {
                             if (trackedSession.nextRoundAtMillis > now) {
                                 int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
                                 if (secondsRemaining > 0 && secondsRemaining <= START_COUNTDOWN_SECONDS && secondsRemaining != trackedSession.lastIntermissionCountdownAnnouncement) {
-                                    this.broadcastRoundCountdownAnnouncement(trackedSession.currentRound + 1, this.config.rounds, secondsRemaining);
+                                    this.broadcastRoundCountdownAnnouncement(trackedSession, trackedSession.currentRound + 1, this.config.rounds, secondsRemaining);
                                     trackedSession.lastIntermissionCountdownAnnouncement = secondsRemaining;
                                 }
                             } else {
@@ -910,12 +1056,12 @@ public final class HordeService {
         sessionToAdvance.nextRoundAtMillis = 0L;
         if (english) {
             String bossSuffix = spawnFinalBoss ? (bossSpawned ? " | Final boss spawned" + (bossRoleUsed.isBlank() ? "." : " (" + bossRoleUsed + ").") : " | Final boss requested but could not spawn.") : "";
-            sessionToAdvance.world.sendMessage(Message.raw((String)("Round " + nextRound + "/" + this.config.rounds + " started: " + spawned + " enemies (x" + playerMultiplier + " players, lvl " + levelMin + "-" + levelMax + ")." + bossSuffix)));
+            this.sendAudienceMessage(sessionToAdvance, Message.raw((String)("Round " + nextRound + "/" + this.config.rounds + " started: " + spawned + " enemies (x" + playerMultiplier + " players, lvl " + levelMin + "-" + levelMax + ")." + bossSuffix)));
         } else {
             String bossSuffix = spawnFinalBoss ? (bossSpawned ? " | Boss final invocado" + (bossRoleUsed.isBlank() ? "." : " (" + bossRoleUsed + ").") : " | Boss final solicitado pero no se pudo invocar.") : "";
-            sessionToAdvance.world.sendMessage(Message.raw((String)("Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores, nivel " + levelMin + "-" + levelMax + ")." + bossSuffix)));
+            this.sendAudienceMessage(sessionToAdvance, Message.raw((String)("Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores, nivel " + levelMin + "-" + levelMax + ")." + bossSuffix)));
         }
-        this.broadcastRoundStartAnnouncement(nextRound, this.config.rounds, spawned, playerMultiplier);
+        this.broadcastRoundStartAnnouncement(sessionToAdvance, nextRound, this.config.rounds, spawned, playerMultiplier);
     }
 
     private void grantRoundRewards(HordeSession trackedSession, int completedRound) {
@@ -926,7 +1072,7 @@ public final class HordeService {
             return;
         }
         boolean english = HordeService.isEnglishLanguage(this.config.language);
-        trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
+        this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".")));
         int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
         String rewardCategory = HordeService.normalizeRewardCategory(this.config.rewardCategory);
         String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
@@ -935,14 +1081,14 @@ public final class HordeService {
         String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity, rewardCategory, configuredRewardItemId);
         if (rewardItemId == null || rewardItemId.isBlank()) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido configurado o disponible.");
-            trackedSession.world.sendMessage(Message.raw((String)(english ? "Could not drop reward: configure a valid item in RewardItemId." : "No se pudo dropear recompensa: configura un item valido en RewardItemId.")));
+            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Could not drop reward: configure a valid item in RewardItemId." : "No se pudo dropear recompensa: configura un item valido en RewardItemId.")));
             return;
         }
         if (!configuredValid && !configuredRandom) {
             this.config.rewardItemId = rewardItemId;
             this.config.rewardCategory = rewardCategory;
             this.saveConfig();
-            trackedSession.world.sendMessage(Message.raw((String)(english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + " (category: " + rewardCategory + ")." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + " (categoria: " + rewardCategory + ").")));
+            this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + " (category: " + rewardCategory + ")." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + " (categoria: " + rewardCategory + ").")));
         }
         ItemStack rewardStack = new ItemStack(rewardItemId, rewardQuantity);
         Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
@@ -956,7 +1102,7 @@ public final class HordeService {
             itemComponent.setPickupDelay(0.6f);
         }
         trackedSession.store.addEntity(itemEntityHolder, AddReason.SPAWN);
-        trackedSession.world.sendMessage(Message.raw((String)(english ? "Reward item dropped at center: " + rewardItemId + " x" + rewardQuantity + "." : "Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
+        this.sendAudienceMessage(trackedSession, Message.raw((String)(english ? "Reward item dropped at center: " + rewardItemId + " x" + rewardQuantity + "." : "Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".")));
     }
 
     private String resolveRewardItemIdForDrop(int quantity, String rewardCategoryInput, String configuredRewardItemId) {
@@ -1011,91 +1157,123 @@ public final class HordeService {
         return pool.get(randomIndex);
     }
 
-    private void broadcastHordeStartAnnouncement(String enemyType, String role, int playerMultiplier) {
+    private void sendAudienceMessage(HordeSession session, Message message) {
+        if (session == null || message == null || session.world == null) {
+            return;
+        }
+        for (PlayerRef playerRef : session.world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null || !session.isAudience(playerRef.getUuid())) continue;
+            try {
+                playerRef.sendMessage(message);
+            }
+            catch (Exception ignored) {
+                // ignore failed sends for disconnected players
+            }
+        }
+    }
+
+    private void sendAudienceTitle(HordeSession session, String titleText, String subtitleText) {
+        if (session == null || session.world == null) {
+            return;
+        }
+        Message title = Message.raw((String)(titleText == null ? "" : titleText));
+        Message subtitle = Message.raw((String)(subtitleText == null ? "" : subtitleText));
+        for (PlayerRef playerRef : session.world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null || !session.isAudience(playerRef.getUuid())) continue;
+            try {
+                EventTitleUtil.showEventTitleToPlayer((PlayerRef)playerRef, (Message)title, (Message)subtitle, (boolean)true);
+            }
+            catch (Exception ignored) {
+                // best-effort title delivery
+            }
+        }
+    }
+
+    private void broadcastHordeStartAnnouncement(HordeSession session, String enemyType, String role, int playerMultiplier) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? "HORDE PVE READY" : "HORDA PVE PREPARADA";
             String bossState = this.config.finalBossEnabled ? (english ? "on" : "si") : (english ? "off" : "no");
             String subtitleText = english ? String.format(Locale.ROOT, "Type: %s | Role: %s | Rounds: %d | Players x%d | Lvl %d-%d | Final boss %s | Starts in %ds", enemyType, role, this.config.rounds, playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, bossState, START_COUNTDOWN_TOTAL_SECONDS) : String.format(Locale.ROOT, "Tipo: %s | Rol: %s | Rondas: %d | Jugadores x%d | Niv %d-%d | Boss final %s | Inicio en %ds", enemyType, role, this.config.rounds, playerMultiplier, this.config.enemyLevelMin, this.config.enemyLevelMax, bossState, START_COUNTDOWN_TOTAL_SECONDS);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.2f, 0.1f, 0.15f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio global de inicio de horda: %s", (Object)ex.getMessage());
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio de inicio de horda: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastHordeCountdownAnnouncement(int secondsRemaining, String enemyType, String role) {
+    private void broadcastHordeCountdownAnnouncement(HordeSession session, int secondsRemaining, String enemyType, String role) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? "HORDE IN " + secondsRemaining + "..." : "HORDA EN " + secondsRemaining + "...";
             String subtitleText = english ? String.format(Locale.ROOT, "Type: %s | Role: %s", enemyType, role) : String.format(Locale.ROOT, "Tipo: %s | Rol: %s", enemyType, role);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 0.8f, 0.15f, 0.15f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar countdown de horda: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastHordeCountdownGoAnnouncement(int round, int totalRounds) {
+    private void broadcastHordeCountdownGoAnnouncement(HordeSession session, int round, int totalRounds) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? "FIGHT" : "A LUCHAR";
             String subtitleText = english ? String.format(Locale.ROOT, "Round %d/%d started", round, totalRounds) : String.format(Locale.ROOT, "Ronda %d/%d iniciada", round, totalRounds);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.6f, 0.15f, 0.2f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio GO de horda: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastRoundCompleteAnnouncement(int completedRound, int totalRounds, int nextDelaySeconds, int totalKilled, int totalSpawned, boolean rewardUnlocked, boolean finalRound) {
+    private void broadcastRoundCompleteAnnouncement(HordeSession session, int completedRound, int totalRounds, int nextDelaySeconds, int totalKilled, int totalSpawned, boolean rewardUnlocked, boolean finalRound) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? String.format(Locale.ROOT, "ROUND %d/%d COMPLETED", completedRound, totalRounds) : String.format(Locale.ROOT, "RONDA %d/%d COMPLETADA", completedRound, totalRounds);
             String rewardText = rewardUnlocked ? (english ? " | Reward unlocked" : " | Recompensa desbloqueada") : "";
             String subtitleText = finalRound ? (english ? String.format(Locale.ROOT, "Horde completed | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Horda completada | Kills: %d | Spawn: %d%s", totalKilled, totalSpawned, rewardText)) : (english ? String.format(Locale.ROOT, "Next in %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText) : String.format(Locale.ROOT, "Siguiente en %ds | Kills: %d | Spawn: %d%s", nextDelaySeconds, totalKilled, totalSpawned, rewardText));
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", finalRound ? 3.2f : 2.8f, 0.4f, 0.5f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio de ronda completada: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastRoundCountdownAnnouncement(int round, int totalRounds, int secondsRemaining) {
+    private void broadcastRoundCountdownAnnouncement(HordeSession session, int round, int totalRounds, int secondsRemaining) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? String.format(Locale.ROOT, "ROUND %d IN %d...", round, secondsRemaining) : String.format(Locale.ROOT, "RONDA %d EN %d...", round, secondsRemaining);
             String subtitleText = english ? String.format(Locale.ROOT, "Get ready for %d/%d", round, totalRounds) : String.format(Locale.ROOT, "Preparados para %d/%d", round, totalRounds);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 0.9f, 0.12f, 0.12f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar countdown entre rondas: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastRoundStartAnnouncement(int round, int totalRounds, int spawned, int playerMultiplier) {
+    private void broadcastRoundStartAnnouncement(HordeSession session, int round, int totalRounds, int spawned, int playerMultiplier) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String titleText = english ? String.format(Locale.ROOT, "ROUND %d/%d", round, totalRounds) : String.format(Locale.ROOT, "RONDA %d/%d", round, totalRounds);
             String subtitleText = english ? String.format(Locale.ROOT, "Enemies: %d | Players x%d", spawned, playerMultiplier) : String.format(Locale.ROOT, "Enemigos: %d | Jugadores x%d", spawned, playerMultiplier);
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 1.7f, 0.15f, 0.2f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar inicio de ronda: %s", (Object)ex.getMessage());
         }
     }
 
-    private void broadcastHordeEndAnnouncement(String reason, int aliveAtEnd) {
+    private void broadcastHordeEndAnnouncement(HordeSession session, String reason, int aliveAtEnd) {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String normalizedReason = reason == null ? "" : reason.toLowerCase(Locale.ROOT);
             String titleText = normalizedReason.contains("complet") ? (english ? "HORDE PVE COMPLETED" : "HORDA PVE COMPLETADA") : (english ? "HORDE PVE ENDED" : "HORDA PVE FINALIZADA");
             String subtitleBase = normalizedReason.contains("complet") ? (english ? "All rounds finished" : "Todas las rondas terminadas") : HordeService.compactText(reason, 64, english);
             String subtitleText = subtitleBase + (english ? " | Alive remaining: " : " | Vivos restantes: ") + aliveAtEnd;
-            EventTitleUtil.showEventTitleToUniverse(Message.raw((String)titleText), Message.raw((String)subtitleText), true, "", 4.0f, 1.0f, 1.0f);
+            this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio global de fin de horda: %s", (Object)ex.getMessage());
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio de fin de horda: %s", (Object)ex.getMessage());
         }
     }
 
@@ -1114,8 +1292,8 @@ public final class HordeService {
         this.session = null;
         String cleanInfo = cleanupAliveEnemies ? (english ? " | cleaned: " + cleanedEnemies : " | limpiados: " + cleanedEnemies) : "";
         String aliveLabel = english ? "alive remaining: " : "vivos restantes: ";
-        trackedSession.world.sendMessage(Message.raw((String)(reason + " (" + aliveLabel + aliveAtEnd + cleanInfo + ").")));
-        this.broadcastHordeEndAnnouncement(reason, aliveAtEnd);
+        this.sendAudienceMessage(trackedSession, Message.raw((String)(reason + " (" + aliveLabel + aliveAtEnd + cleanInfo + ").")));
+        this.broadcastHordeEndAnnouncement(trackedSession, reason, aliveAtEnd);
         this.refreshStatusHud(null);
     }
 
@@ -1211,9 +1389,146 @@ public final class HordeService {
             return;
         }
         for (PlayerRef playerRef : trackedSession.world.getPlayerRefs()) {
-            if (playerRef == null || playerRef.getUuid() == null) continue;
+            if (playerRef == null || playerRef.getUuid() == null || !trackedSession.arenaPlayerIds.contains(playerRef.getUuid())) continue;
             this.getOrCreatePlayerStats(trackedSession, playerRef);
         }
+    }
+
+    private String resolveAudienceMode(UUID playerId) {
+        if (playerId == null) {
+            return AUDIENCE_MODE_PLAYER;
+        }
+        if (this.audienceExitOverrides.contains(playerId)) {
+            return AUDIENCE_MODE_EXIT;
+        }
+        if (this.session != null) {
+            if (this.session.arenaSpectatorIds.contains(playerId)) {
+                return AUDIENCE_MODE_SPECTATOR;
+            }
+            if (this.session.arenaPlayerIds.contains(playerId)) {
+                return AUDIENCE_MODE_PLAYER;
+            }
+        }
+        if (this.spectatorOverrides.contains(playerId)) {
+            return AUDIENCE_MODE_SPECTATOR;
+        }
+        return AUDIENCE_MODE_PLAYER;
+    }
+
+    private void applySessionAudienceOverride(UUID playerId, String mode, World world) {
+        if (this.session == null || playerId == null) {
+            return;
+        }
+        if (world != null && this.session.world != world) {
+            return;
+        }
+        if (AUDIENCE_MODE_PLAYER.equals(mode)) {
+            this.session.arenaSpectatorIds.remove(playerId);
+            this.session.arenaPlayerIds.add(playerId);
+            PlayerRef playerRef = this.findPlayerRefById(this.session.world, playerId);
+            if (playerRef != null) {
+                this.getOrCreatePlayerStats(this.session, playerRef);
+            }
+            return;
+        }
+        if (AUDIENCE_MODE_SPECTATOR.equals(mode)) {
+            this.session.arenaPlayerIds.remove(playerId);
+            this.session.arenaSpectatorIds.add(playerId);
+            return;
+        }
+        this.session.arenaPlayerIds.remove(playerId);
+        this.session.arenaSpectatorIds.remove(playerId);
+    }
+
+    private PlayerRef findPlayerRefById(World world, UUID playerId) {
+        if (world == null || playerId == null) {
+            return null;
+        }
+        for (PlayerRef playerRef : world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null || !playerId.equals((Object)playerRef.getUuid())) continue;
+            return playerRef;
+        }
+        return null;
+    }
+
+    private String resolveAudiencePlayerName(World world, UUID playerId) {
+        PlayerRef sameWorld = this.findPlayerRefById(world, playerId);
+        if (sameWorld != null) {
+            return HordeService.safePlayerName(sameWorld);
+        }
+        if (this.session != null) {
+            PlayerRef sessionPlayer = this.findPlayerRefById(this.session.world, playerId);
+            if (sessionPlayer != null) {
+                return HordeService.safePlayerName(sessionPlayer);
+            }
+        }
+        String raw = playerId == null ? "" : playerId.toString();
+        return raw.length() > 8 ? raw.substring(0, 8) : raw;
+    }
+
+    private static String normalizeAudienceMode(String rawMode) {
+        if (rawMode == null || rawMode.isBlank()) {
+            return null;
+        }
+        String normalized = rawMode.trim().toLowerCase(Locale.ROOT);
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace('_', '-').replace(' ', '-');
+        switch (normalized) {
+            case "player":
+            case "jugador":
+            case "normal":
+                return AUDIENCE_MODE_PLAYER;
+            case "spectator":
+            case "espectador":
+            case "observer":
+            case "observador":
+                return AUDIENCE_MODE_SPECTATOR;
+            case "exit":
+            case "salir":
+            case "out":
+            case "leave":
+            case "remove":
+            case "quitar":
+                return AUDIENCE_MODE_EXIT;
+        }
+        return null;
+    }
+
+    private void captureArenaAudience(World world, Set<UUID> players, Set<UUID> spectators) {
+        if (world == null || players == null || spectators == null) {
+            return;
+        }
+        double radius = this.getArenaJoinRadius();
+        for (PlayerRef playerRef : world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null || !this.isInsideArenaArea(playerRef, radius)) continue;
+            UUID playerId = playerRef.getUuid();
+            if (this.audienceExitOverrides.contains(playerId)) {
+                continue;
+            }
+            if (this.spectatorOverrides.contains(playerId)) {
+                spectators.add(playerId);
+                continue;
+            }
+            players.add(playerId);
+        }
+    }
+
+    private boolean isInsideArenaArea(PlayerRef playerRef, double radius) {
+        if (playerRef == null) {
+            return false;
+        }
+        Transform transform = playerRef.getTransform();
+        if (transform == null) {
+            return false;
+        }
+        Vector3d position = transform.getPosition();
+        if (position == null) {
+            return false;
+        }
+        double dx = position.x - this.config.spawnX;
+        double dz = position.z - this.config.spawnZ;
+        double distanceSquared = dx * dx + dz * dz;
+        return distanceSquared <= radius * radius;
     }
 
     private PlayerCombatStats getOrCreatePlayerStats(HordeSession trackedSession, PlayerRef playerRef) {
@@ -2796,6 +3111,10 @@ public final class HordeService {
             sanitized.minSpawnRadius = sanitized.maxSpawnRadius;
             sanitized.maxSpawnRadius = temp;
         }
+        if (sanitized.arenaJoinRadius <= 0.0) {
+            sanitized.arenaJoinRadius = HordeConfig.defaults().arenaJoinRadius;
+        }
+        sanitized.arenaJoinRadius = HordeService.clamp(sanitized.arenaJoinRadius, MIN_ARENA_JOIN_RADIUS, MAX_ARENA_JOIN_RADIUS);
         sanitized.enemyType = HordeService.normalizeEnemyType(sanitized.enemyType);
         if (!ENEMY_TYPE_OPTIONS.contains(sanitized.enemyType)) {
             sanitized.enemyType = DEFAULT_ENEMY_TYPE;
@@ -2827,6 +3146,7 @@ public final class HordeService {
         public double spawnZ;
         public double minSpawnRadius;
         public double maxSpawnRadius;
+        public double arenaJoinRadius;
         public int rounds;
         public int baseEnemiesPerRound;
         public int enemiesPerRoundIncrement;
@@ -2852,6 +3172,7 @@ public final class HordeService {
             defaults.spawnZ = 0.0;
             defaults.minSpawnRadius = 5.0;
             defaults.maxSpawnRadius = 12.0;
+            defaults.arenaJoinRadius = 32.0;
             defaults.rounds = 5;
             defaults.baseEnemiesPerRound = 10;
             defaults.enemiesPerRoundIncrement = 3;
@@ -2879,6 +3200,7 @@ public final class HordeService {
             copy.spawnZ = this.spawnZ;
             copy.minSpawnRadius = this.minSpawnRadius;
             copy.maxSpawnRadius = this.maxSpawnRadius;
+            copy.arenaJoinRadius = this.arenaJoinRadius;
             copy.rounds = this.rounds;
             copy.baseEnemiesPerRound = this.baseEnemiesPerRound;
             copy.enemiesPerRoundIncrement = this.enemiesPerRoundIncrement;
@@ -2920,6 +3242,8 @@ public final class HordeService {
         private final List<String> randomEnemyTypes;
         private final int playerMultiplier;
         private final Vector3f startRotation;
+        private final Set<UUID> arenaPlayerIds;
+        private final Set<UUID> arenaSpectatorIds;
         private final Set<Ref<EntityStore>> activeEnemies;
         private final Set<Ref<EntityStore>> spawnedEnemies;
         private final Set<Ref<EntityStore>> accountedEnemyDeaths;
@@ -2935,7 +3259,7 @@ public final class HordeService {
         private final long startedAtMillis;
         private ScheduledFuture<?> ticker;
 
-        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, long firstRoundAtMillis) {
+        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, long firstRoundAtMillis, Set<UUID> arenaPlayerIds, Set<UUID> arenaSpectatorIds) {
             this.world = world;
             this.store = store;
             this.role = role;
@@ -2945,6 +3269,8 @@ public final class HordeService {
             this.randomEnemyTypes = randomEnemyTypes == null ? new ArrayList<String>() : new ArrayList<String>(randomEnemyTypes);
             this.playerMultiplier = Math.max(MIN_PLAYER_MULTIPLIER, playerMultiplier);
             this.startRotation = startRotation == null ? Vector3f.ZERO : new Vector3f(startRotation);
+            this.arenaPlayerIds = arenaPlayerIds == null ? new LinkedHashSet<UUID>() : new LinkedHashSet<UUID>(arenaPlayerIds);
+            this.arenaSpectatorIds = arenaSpectatorIds == null ? new LinkedHashSet<UUID>() : new LinkedHashSet<UUID>(arenaSpectatorIds);
             this.activeEnemies = new HashSet<Ref<EntityStore>>();
             this.spawnedEnemies = new HashSet<Ref<EntityStore>>();
             this.accountedEnemyDeaths = new HashSet<Ref<EntityStore>>();
@@ -2958,6 +3284,25 @@ public final class HordeService {
             this.lastIntermissionCountdownAnnouncement = -1;
             this.nextRoundAtMillis = Math.max(0L, firstRoundAtMillis);
             this.startedAtMillis = System.currentTimeMillis();
+        }
+
+        private boolean isAudience(UUID playerId) {
+            if (playerId == null) {
+                return false;
+            }
+            return this.arenaPlayerIds.contains(playerId) || this.arenaSpectatorIds.contains(playerId);
+        }
+    }
+
+    public static final class AudiencePlayerSnapshot {
+        public final UUID playerId;
+        public final String username;
+        public final String mode;
+
+        private AudiencePlayerSnapshot(UUID playerId, String username, String mode) {
+            this.playerId = playerId;
+            this.username = username == null || username.isBlank() ? "Jugador" : username;
+            this.mode = mode == null || mode.isBlank() ? AUDIENCE_MODE_PLAYER : mode;
         }
     }
 

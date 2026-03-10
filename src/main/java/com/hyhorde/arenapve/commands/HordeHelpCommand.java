@@ -29,6 +29,8 @@ extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw((String)(english ? "/hordapve enemy <category> | enemytypes" : "/hordapve enemy <categoria> | tipos")));
         playerRef.sendMessage(Message.raw((String)(english ? "/hordapve role <npcRole|auto> | roles" : "/hordapve role <rolNpc|auto> | roles")));
         playerRef.sendMessage(Message.raw((String)(english ? "/hordapve reward <rounds>" : "/hordapve reward <rondas>")));
-        playerRef.sendMessage(Message.raw((String)(english ? "/hordareload [config|mod]" : "/hordareload [config|mod]")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve spectator <on|off> | player" : "/hordapve spectator <on|off> | jugador")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordapve arearadius <blocks>" : "/hordapve arearadius <bloques>")));
+        playerRef.sendMessage(Message.raw((String)(english ? "/hordareload [config] (mod/jar requires restart)" : "/hordareload [config] (mod/jar requiere reinicio)")));
     }
 }

@@ -1,0 +1,56 @@
+Group #HordeAudiencePlayerRow {
+  LayoutMode: Left;
+  FlexWeight: 1;
+  Anchor: (Bottom: 6);
+
+  Label #RowName {
+    Anchor: (Width: 400, Height: 32);
+    Text: "Jugador";
+    Style: (
+      FontSize: 14,
+      TextColor: #e8f1ff,
+      VerticalAlignment: Center
+    );
+  }
+
+  Label #RowMode {
+    Anchor: (Width: 170, Height: 32);
+    Text: "Jugador";
+    Style: (
+      FontSize: 13,
+      TextColor: #c8d9ef,
+      RenderBold: true,
+      VerticalAlignment: Center
+    );
+  }
+
+  TextButton #SetPlayerButton {
+    Anchor: (Width: 120, Height: 32);
+    Text: "Jugador";
+    Style: TextButtonStyle(
+      Default: (Background: #24553a, LabelStyle: (FontSize: 12, TextColor: #e8fff4, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #2d6e4a, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #1a3f2b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextButton #SetSpectatorButton {
+    Anchor: (Width: 130, Height: 32);
+    Text: "Espectador";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
+  TextButton #SetExitButton {
+    Anchor: (Width: 100, Height: 32);
+    Text: "Salir";
+    Style: TextButtonStyle(
+      Default: (Background: #6b3122, LabelStyle: (FontSize: 12, TextColor: #ffece8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #874032, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #54271b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+}

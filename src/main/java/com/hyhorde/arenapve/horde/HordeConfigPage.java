@@ -20,15 +20,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 
 public final class HordeConfigPage
 extends CustomUIPage {
     private static final String LAYOUT = "Pages/HordeConfigPage.ui";
+    private static final String TAB_GENERAL = "general";
+    private static final String TAB_HORDE = "horde";
+    private static final String TAB_PLAYERS = "players";
+    private static final String TAB_REWARDS = "rewards";
+    private static final int MAX_AUDIENCE_ROWS = 10;
     private final HordeService hordeService;
+    private String activeTab;
 
     private HordeConfigPage(PlayerRef playerRef, HordeService hordeService) {
         super(playerRef, CustomPageLifetime.CanDismiss);
         this.hordeService = hordeService;
+        this.activeTab = TAB_GENERAL;
     }
 
     public static void open(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, Player player, PlayerRef playerRef, HordeService hordeService) {
@@ -44,9 +52,70 @@ extends CustomUIPage {
         List<String> rewardCategoryOptions = this.hordeService.getRewardCategoryOptions();
         String rewardCategory = HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory());
         List<String> rewardItemSuggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
-        commandBuilder.append(LAYOUT).set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX)).set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY)).set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ)).set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius)).set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius)).set("#Rounds.Value", Integer.toString(config.rounds)).set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound)).set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement)).set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds)).set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier)).set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType).set("#Language.Value", HordeService.getLanguageDisplay(config.language)).set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds)).set("#RewardCategory.Value", rewardCategory).set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId).set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity)).set("#FinalBossEnabled.Value", HordeConfigPage.finalBossDisplay(config.finalBossEnabled, english)).set("#EnemyLevelMin.Value", Integer.toString(config.enemyLevelMin)).set("#EnemyLevelMax.Value", Integer.toString(config.enemyLevelMax)).set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english)).set("#StatusLabel.Text", this.hordeService.getStatusLine()).set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english)).set("#RewardCommandsHelpLabel.Text", HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english)).set("#StartButton.Visible", !active).set("#StopButton.Visible", active).set("#SkipRoundButton.Visible", active);
-        this.setLocalizedTexts(commandBuilder, english);
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close")).addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here")).addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryPrevButton", this.buildConfigSnapshotEvent("reward_category_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryNextButton", this.buildConfigSnapshotEvent("reward_category_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossPrevButton", this.buildConfigSnapshotEvent("final_boss_prev")).addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossNextButton", this.buildConfigSnapshotEvent("final_boss_next")).addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types")).addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", EventData.of((String)"action", (String)"reload_mod")).addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save")).addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start")).addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop")).addEventBinding(CustomUIEventBindingType.Activating, "#SkipRoundButton", EventData.of((String)"action", (String)"skip_round"));
+        String tab = HordeConfigPage.normalizeTab(this.activeTab);
+        this.activeTab = tab;
+        EntityStore entityStore = (EntityStore)store.getExternalData();
+        World world = entityStore == null ? null : entityStore.getWorld();
+        List<HordeService.AudiencePlayerSnapshot> audienceRows = world == null ? List.of() : this.hordeService.getArenaAudiencePlayers(world);
+        commandBuilder.append(LAYOUT)
+                .set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX))
+                .set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY))
+                .set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ))
+                .set("#MinRadius.Value", HordeConfigPage.formatDouble(config.minSpawnRadius))
+                .set("#MaxRadius.Value", HordeConfigPage.formatDouble(config.maxSpawnRadius))
+                .set("#ArenaJoinRadius.Value", HordeConfigPage.formatDouble(config.arenaJoinRadius))
+                .set("#Rounds.Value", Integer.toString(config.rounds))
+                .set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound))
+                .set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement))
+                .set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds))
+                .set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier))
+                .set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType)
+                .set("#Language.Value", HordeService.getLanguageDisplay(config.language))
+                .set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds))
+                .set("#RewardCategory.Value", rewardCategory)
+                .set("#RewardItemId.Value", config.rewardItemId == null ? "" : config.rewardItemId)
+                .set("#RewardItemQuantity.Value", Integer.toString(config.rewardItemQuantity))
+                .set("#FinalBossEnabled.Value", HordeConfigPage.finalBossDisplay(config.finalBossEnabled, english))
+                .set("#EnemyLevelMin.Value", Integer.toString(config.enemyLevelMin))
+                .set("#EnemyLevelMax.Value", Integer.toString(config.enemyLevelMax))
+                .set("#AudienceInfoLabel.Text", HordeConfigPage.buildAudienceInfo(config.arenaJoinRadius, audienceRows.size(), english))
+                .set("#PlayersCountValue.Text", Integer.toString(audienceRows.size()))
+                .set("#PlayersListHint.Text", HordeConfigPage.buildAudienceRowsHint(audienceRows.size(), english))
+                .set("#AudiencePlayersEmptyLabel.Text", audienceRows.isEmpty() ? (english ? "No players detected in the current arena radius." : "No hay jugadores detectados en el radio actual de arena.") : "")
+                .set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english))
+                .set("#StatusLabel.Text", this.hordeService.getStatusLine())
+                .set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english))
+                .set("#RewardCommandsHelpLabel.Text", HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english))
+                .set("#StartButton.Visible", !active)
+                .set("#StopButton.Visible", active)
+                .set("#SkipRoundButton.Visible", active);
+        this.setLocalizedTexts(commandBuilder, english, tab);
+        this.applyTabVisibility(commandBuilder, tab);
+        this.populateAudienceRows(commandBuilder, eventBuilder, audienceRows, english);
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabGeneralButton", EventData.of((String)"action", (String)"tab_general"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabHordeButton", EventData.of((String)"action", (String)"tab_horde"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabPlayersButton", EventData.of((String)"action", (String)"tab_players"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabRewardsButton", EventData.of((String)"action", (String)"tab_rewards"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryPrevButton", this.buildConfigSnapshotEvent("reward_category_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryNextButton", this.buildConfigSnapshotEvent("reward_category_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemPrevButton", this.buildConfigSnapshotEvent("reward_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RewardItemNextButton", this.buildConfigSnapshotEvent("reward_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossPrevButton", this.buildConfigSnapshotEvent("final_boss_prev"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#FinalBossNextButton", this.buildConfigSnapshotEvent("final_boss_next"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#RewardTypesButton", EventData.of((String)"action", (String)"reward_types"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersRefreshButton", EventData.of((String)"action", (String)"refresh_players"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", EventData.of((String)"action", (String)"reload_config"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#StopButton", EventData.of((String)"action", (String)"stop"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#SkipRoundButton", EventData.of((String)"action", (String)"skip_round"));
     }
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
@@ -73,6 +142,22 @@ extends CustomUIPage {
                 case "close": {
                     this.close();
                     return;
+                }
+                case "tab_general": {
+                    this.activeTab = TAB_GENERAL;
+                    break;
+                }
+                case "tab_horde": {
+                    this.activeTab = TAB_HORDE;
+                    break;
+                }
+                case "tab_players": {
+                    this.activeTab = TAB_PLAYERS;
+                    break;
+                }
+                case "tab_rewards": {
+                    this.activeTab = TAB_REWARDS;
+                    break;
                 }
                 case "set_spawn_here": {
                     result = this.hordeService.setSpawnFromPlayer(this.playerRef, world);
@@ -127,16 +212,12 @@ extends CustomUIPage {
                     this.sendRewardTypesPreview();
                     break;
                 }
+                case "refresh_players": {
+                    break;
+                }
+                case "reload_config":
                 case "reload_mod": {
-                    result = this.hordeService.reloadPlugin();
-                    if (result != null) {
-                        this.playerRef.sendMessage(Message.raw((String)result.getMessage()));
-                        if (result.isSuccess()) {
-                            this.close();
-                            return;
-                        }
-                        result = null;
-                    }
+                    result = this.hordeService.reloadConfigFromDisk();
                     break;
                 }
                 case "save": {
@@ -158,7 +239,7 @@ extends CustomUIPage {
                     break;
                 }
                 default: {
-                    result = HordeService.OperationResult.fail(english ? "Unknown UI action: " + action : "Accion de UI desconocida: " + action);
+                    result = this.handleAudienceAction(action, world, english);
                 }
             }
             if (result != null) {
@@ -174,6 +255,9 @@ extends CustomUIPage {
     private static boolean requiresWorld(String action) {
         if (action == null || action.isBlank()) {
             return false;
+        }
+        if (action.startsWith("audience_set:")) {
+            return true;
         }
         switch (action) {
             case "set_spawn_here":
@@ -196,6 +280,26 @@ extends CustomUIPage {
         return false;
     }
 
+    private HordeService.OperationResult handleAudienceAction(String action, World world, boolean english) {
+        if (action == null || !action.startsWith("audience_set:")) {
+            return HordeService.OperationResult.fail(english ? "Unknown UI action: " + action : "Accion de UI desconocida: " + action);
+        }
+        String[] parts = action.split(":", 3);
+        if (parts.length != 3) {
+            return HordeService.OperationResult.fail(english ? "Invalid audience action payload." : "Accion de audiencia invalida.");
+        }
+        String mode = parts[1];
+        String rawPlayerId = parts[2];
+        UUID playerId;
+        try {
+            playerId = UUID.fromString(rawPlayerId);
+        }
+        catch (Exception ignored) {
+            return HordeService.OperationResult.fail(english ? "Could not parse selected player UUID." : "No se pudo interpretar el UUID del jugador seleccionado.");
+        }
+        return this.hordeService.setArenaAudienceMode(playerId, mode, world);
+    }
+
     private void safeRebuild() {
         try {
             this.rebuild();
@@ -206,7 +310,39 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@EnemyLevelMin", "#EnemyLevelMin.Value").append("@EnemyLevelMax", "#EnemyLevelMax.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@ArenaJoinRadius", "#ArenaJoinRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@EnemyLevelMin", "#EnemyLevelMin.Value").append("@EnemyLevelMax", "#EnemyLevelMax.Value");
+    }
+
+    private void populateAudienceRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.AudiencePlayerSnapshot> rows, boolean english) {
+        if (rows == null || rows.isEmpty()) {
+            return;
+        }
+        int rowIndex = 0;
+        for (HordeService.AudiencePlayerSnapshot row : rows) {
+            if (row == null || row.playerId == null || rowIndex >= MAX_AUDIENCE_ROWS) continue;
+            commandBuilder.append("#AudiencePlayersRows", "Pages/HordeAudiencePlayerRow.ui");
+            String mode = HordeConfigPage.normalizeAudienceMode(row.mode);
+            boolean playerMode = "player".equals(mode);
+            boolean spectatorMode = "spectator".equals(mode);
+            boolean exitMode = "exit".equals(mode);
+            commandBuilder.set("#AudiencePlayersRows[" + rowIndex + "] #RowName.Text", HordeConfigPage.compactName(row.username, 30))
+                    .set("#AudiencePlayersRows[" + rowIndex + "] #RowMode.Text", HordeConfigPage.audienceModeDisplay(mode, english))
+                    .set("#AudiencePlayersRows[" + rowIndex + "] #SetPlayerButton.Text", playerMode ? (english ? "Player *" : "Jugador *") : (english ? "Player" : "Jugador"))
+                    .set("#AudiencePlayersRows[" + rowIndex + "] #SetSpectatorButton.Text", spectatorMode ? (english ? "Spectator *" : "Espectador *") : (english ? "Spectator" : "Espectador"))
+                    .set("#AudiencePlayersRows[" + rowIndex + "] #SetExitButton.Text", exitMode ? (english ? "Exit *" : "Salir *") : (english ? "Exit" : "Salir"));
+            eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#AudiencePlayersRows[" + rowIndex + "] #SetPlayerButton", EventData.of((String)"action", (String)HordeConfigPage.buildAudienceAction("player", row.playerId)))
+                    .addEventBinding(CustomUIEventBindingType.Activating, "#AudiencePlayersRows[" + rowIndex + "] #SetSpectatorButton", EventData.of((String)"action", (String)HordeConfigPage.buildAudienceAction("spectator", row.playerId)))
+                    .addEventBinding(CustomUIEventBindingType.Activating, "#AudiencePlayersRows[" + rowIndex + "] #SetExitButton", EventData.of((String)"action", (String)HordeConfigPage.buildAudienceAction("exit", row.playerId)));
+            ++rowIndex;
+        }
+        int hiddenRows = Math.max(0, rows.size() - MAX_AUDIENCE_ROWS);
+        if (hiddenRows > 0) {
+            commandBuilder.set("#PlayersListHint.Text", english ? "Showing first " + MAX_AUDIENCE_ROWS + " players (" + hiddenRows + " more not shown)." : "Mostrando primeros " + MAX_AUDIENCE_ROWS + " jugadores (" + hiddenRows + " mas sin mostrar).");
+        }
+    }
+
+    private static String buildAudienceAction(String mode, UUID playerId) {
+        return "audience_set:" + mode + ":" + playerId;
     }
 
     private void sendEnemyTypesPreview() {
@@ -339,6 +475,7 @@ extends CustomUIPage {
         values.put("spawnZ", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "spawnZ"), HordeConfigPage.read(payload, "@SpawnZ"), HordeConfigPage.read(payload, "SpawnZ")));
         values.put("minRadius", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "minRadius"), HordeConfigPage.read(payload, "@MinRadius"), HordeConfigPage.read(payload, "MinRadius")));
         values.put("maxRadius", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "maxRadius"), HordeConfigPage.read(payload, "@MaxRadius"), HordeConfigPage.read(payload, "MaxRadius")));
+        values.put("arenaJoinRadius", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "arenaJoinRadius"), HordeConfigPage.read(payload, "@ArenaJoinRadius"), HordeConfigPage.read(payload, "ArenaJoinRadius")));
         values.put("rounds", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rounds"), HordeConfigPage.read(payload, "@Rounds"), HordeConfigPage.read(payload, "Rounds")));
         values.put("baseEnemies", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "baseEnemies"), HordeConfigPage.read(payload, "@BaseEnemies"), HordeConfigPage.read(payload, "BaseEnemies")));
         values.put("enemiesPerRound", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemiesPerRound"), HordeConfigPage.read(payload, "@EnemiesPerRound"), HordeConfigPage.read(payload, "EnemiesPerRound")));
@@ -499,12 +636,28 @@ extends CustomUIPage {
         return HordeService.isEnglishLanguage(this.hordeService.getLanguage());
     }
 
-    private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english) {
+    private void setLocalizedTexts(UICommandBuilder commandBuilder, boolean english, String tab) {
+        boolean generalTab = TAB_GENERAL.equals(tab);
+        boolean hordeTab = TAB_HORDE.equals(tab);
+        boolean playersTab = TAB_PLAYERS.equals(tab);
+        boolean rewardsTab = TAB_REWARDS.equals(tab);
         commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config")
-                .set("#SubTitleLabel.Text", english ? "Minimal setup: center, waves, enemies, rewards and language" : "Config minima: centro, oleadas, enemigos, recompensas e idioma")
+                .set("#SubTitleLabel.Text", english ? "Split setup by tabs: general, horde, players and rewards" : "Configuracion en pestanas: general, horda, jugadores y recompensas")
+                .set("#TabGeneralButton.Text", english ? (generalTab ? "General *" : "General") : (generalTab ? "General *" : "General"))
+                .set("#TabHordeButton.Text", english ? (hordeTab ? "Horde *" : "Horde") : (hordeTab ? "Horda *" : "Horda"))
+                .set("#TabPlayersButton.Text", english ? (playersTab ? "Players *" : "Players") : (playersTab ? "Jugadores *" : "Jugadores"))
+                .set("#TabRewardsButton.Text", english ? (rewardsTab ? "Rewards *" : "Rewards") : (rewardsTab ? "Recompensas *" : "Recompensas"))
+                .set("#TabHintLabel.Text", english ? "Tabs only change the editor view. Save applies the full config." : "Las pestanas solo cambian la vista. Guardar aplica toda la configuracion.")
                 .set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)")
                 .set("#SetSpawnButton.Text", english ? "Use my current position" : "Usar mi posicion actual")
                 .set("#RadiusLabel.Text", english ? "Min / max radius" : "Radio min / max")
+                .set("#ArenaJoinRadiusLabel.Text", english ? "Players area radius" : "Radio de jugadores")
+                .set("#PlayersListTitle.Text", english ? "Players inside current area" : "Jugadores dentro del area actual")
+                .set("#PlayersCountLabel.Text", english ? "Detected" : "Detectados")
+                .set("#PlayersHeaderName.Text", english ? "Player" : "Jugador")
+                .set("#PlayersHeaderMode.Text", english ? "Mode" : "Modo")
+                .set("#PlayersRefreshButton.Text", english ? "Refresh list" : "Actualizar lista")
+                .set("#AudienceHelpLabel.Text", english ? "Changes apply to next start. If horde is active, they are applied to current lock immediately." : "Cambios aplican al siguiente inicio. Si la horda esta activa, se aplican al bloqueo actual.")
                 .set("#RoundLabel.Text", english ? "Rounds" : "Rondas")
                 .set("#BaseEnemiesLabel.Text", english ? "Base / round" : "Base ronda")
                 .set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda")
@@ -522,12 +675,91 @@ extends CustomUIPage {
                 .set("#EnemyLevelRangeLabel.Text", english ? "Enemy level range" : "Rango nivel enemigos")
                 .set("#EnemyLevelRangeSeparator.Text", "-")
                 .set("#StatusTitleLabel.Text", english ? "Current status" : "Estado actual")
-                .set("#ReloadModButton.Text", english ? "Reload mod" : "Recargar mod")
+                .set("#ReloadModButton.Text", english ? "Reload config" : "Recargar config")
                 .set("#SaveButton.Text", english ? "Save config" : "Guardar config")
                 .set("#StartButton.Text", english ? "Start horde" : "Iniciar horda")
                 .set("#StopButton.Text", english ? "Stop horde" : "Detener horda")
                 .set("#SkipRoundButton.Text", english ? "Skip round" : "Pasar ronda")
                 .set("#CloseButton.Text", english ? "Close" : "Cerrar");
+    }
+
+    private void applyTabVisibility(UICommandBuilder commandBuilder, String tab) {
+        boolean generalTab = TAB_GENERAL.equals(tab);
+        boolean hordeTab = TAB_HORDE.equals(tab);
+        boolean playersTab = TAB_PLAYERS.equals(tab);
+        boolean rewardsTab = TAB_REWARDS.equals(tab);
+
+        this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RadiusLabel", "#MinRadius", "#MaxRadius", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#ReloadModButton");
+        this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#LanguageLabel", "#LanguagePrevButton", "#Language", "#LanguageNextButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossPrevButton", "#FinalBossEnabled", "#FinalBossNextButton", "#EnemyLevelRangeLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax");
+        this.setVisible(commandBuilder, playersTab, "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
+        this.setVisible(commandBuilder, rewardsTab, "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategoryPrevButton", "#RewardCategory", "#RewardCategoryNextButton", "#RewardTypesButton", "#RewardCommandsLabel", "#RewardItemPrevButton", "#RewardItemId", "#RewardItemNextButton", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#RewardCommandsHelpLabel");
+    }
+
+    private void setVisible(UICommandBuilder commandBuilder, boolean visible, String ... elementIds) {
+        if (elementIds == null) {
+            return;
+        }
+        for (String elementId : elementIds) {
+            if (elementId == null || elementId.isBlank()) continue;
+            commandBuilder.set(elementId + ".Visible", visible);
+        }
+    }
+
+    private static String normalizeTab(String tab) {
+        if (tab == null || tab.isBlank()) {
+            return TAB_GENERAL;
+        }
+        String normalized = tab.trim().toLowerCase(Locale.ROOT);
+        switch (normalized) {
+            case TAB_GENERAL:
+            case TAB_HORDE:
+            case TAB_PLAYERS:
+            case TAB_REWARDS: {
+                return normalized;
+            }
+        }
+        return TAB_GENERAL;
+    }
+
+    private static String audienceModeDisplay(String mode, boolean english) {
+        String normalized = HordeConfigPage.normalizeAudienceMode(mode);
+        if ("spectator".equals(normalized)) {
+            return english ? "Spectator" : "Espectador";
+        }
+        if ("exit".equals(normalized)) {
+            return english ? "Exit area" : "Salir del area";
+        }
+        return english ? "Player" : "Jugador";
+    }
+
+    private static String normalizeAudienceMode(String mode) {
+        if (mode == null || mode.isBlank()) {
+            return "player";
+        }
+        String normalized = mode.trim().toLowerCase(Locale.ROOT);
+        normalized = normalized.replace('\u00e1', 'a').replace('\u00e9', 'e').replace('\u00ed', 'i').replace('\u00f3', 'o').replace('\u00fa', 'u');
+        normalized = normalized.replace('_', '-').replace(' ', '-');
+        if ("spectator".equals(normalized) || "espectador".equals(normalized) || "observer".equals(normalized) || "observador".equals(normalized)) {
+            return "spectator";
+        }
+        if ("exit".equals(normalized) || "salir".equals(normalized) || "out".equals(normalized) || "leave".equals(normalized)) {
+            return "exit";
+        }
+        return "player";
+    }
+
+    private static String buildAudienceInfo(double arenaJoinRadius, int playersInArea, boolean english) {
+        if (english) {
+            return String.format(Locale.ROOT, "Current arena radius: %.2f blocks | Players inside area: %d", arenaJoinRadius, playersInArea);
+        }
+        return String.format(Locale.ROOT, "Radio actual de arena: %.2f bloques | Jugadores dentro del area: %d", arenaJoinRadius, playersInArea);
+    }
+
+    private static String buildAudienceRowsHint(int playersInArea, boolean english) {
+        if (english) {
+            return playersInArea > 0 ? "Use each row to set Player, Spectator or Exit mode." : "Move players inside the arena radius to manage them here.";
+        }
+        return playersInArea > 0 ? "Usa cada fila para poner modo Jugador, Espectador o Salir." : "Mueve jugadores dentro del radio de arena para gestionarlos aqui.";
     }
 
     private static String finalBossDisplay(boolean enabled, boolean english) {
@@ -698,6 +930,17 @@ extends CustomUIPage {
             return value;
         }
         return "";
+    }
+
+    private static String compactName(String value, int maxLength) {
+        if (value == null || value.isBlank()) {
+            return "Jugador";
+        }
+        String safe = value.trim();
+        if (safe.length() <= maxLength) {
+            return safe;
+        }
+        return safe.substring(0, Math.max(0, maxLength - 1)) + ".";
     }
 
     private static String extractLanguage(String value) {

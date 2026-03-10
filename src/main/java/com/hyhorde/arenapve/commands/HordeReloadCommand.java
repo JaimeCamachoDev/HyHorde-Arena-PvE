@@ -40,13 +40,13 @@ extends AbstractPlayerCommand {
             case "mod": 
             case "jar": 
             case "plugin": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.reloadPlugin().getMessage()));
+                playerRef.sendMessage(Message.raw((String)(english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.")));
                 return;
             }
         }
-        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordareload [config|mod]" : "Uso: /hordareload [config|mod]")));
+        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordareload [config]" : "Uso: /hordareload [config]")));
         playerRef.sendMessage(Message.raw((String)(english ? "config: reload horde-config.json" : "config: recarga horde-config.json")));
-        playerRef.sendMessage(Message.raw((String)(english ? "mod: tries to reload plugin and .jar assets" : "mod: intenta recargar el plugin y assets del .jar")));
+        playerRef.sendMessage(Message.raw((String)(english ? "mod/jar/plugin: requires server restart after replacing the .jar" : "mod/jar/plugin: requiere reiniciar el servidor tras reemplazar el .jar")));
     }
 }
 
