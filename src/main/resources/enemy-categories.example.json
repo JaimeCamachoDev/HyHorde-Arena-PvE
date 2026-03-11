@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "finalBossRoles": [
+    "Dragon_Fire",
+    "Dragon_Frost"
+  ],
+  "blockedRoleHints": [
+    "feran",
+    "civilian",
+    "merchant",
+    "dummy"
+  ],
+  "categories": {
+    "undead": [
+      "Aberrant_Zombie",
+      "Burnt_Zombie",
+      "Burnt_Skeleton_Soldier",
+      "Burnt_Skeleton_Archer"
+    ],
+    "goblins": [
+      "Goblin_Scavenger",
+      "Goblin_Thief",
+      "Goblin_Scrapper",
+      "Goblin_Ogre"
+    ],
+    "scarak": [
+      "Dungeon_Scarak_Fighter",
+      "Dungeon_Scarak_Defender",
+      "Dungeon_Scarak_Seeker"
+    ],
+    "void": [
+      "Crawler_Void",
+      "Eye_Void",
+      "Larva_Void",
+      "Spawn_Void",
+      "Spectre_Void"
+    ],
+    "wild": [
+      "Crocodile",
+      "Black_Wolf",
+      "Cave_Raptor",
+      "Cave_Rex",
+      "Cave_Spider",
+      "Spider"
+    ],
+    "elementals": [
+      "Golem_Crystal_Earth",
+      "Golem_Crystal_Flame",
+      "Golem_Crystal_Frost",
+      "Golem_Crystal_Sand",
+      "Golem_Crystal_Thunder",
+      "Golem_Firesteel",
+      "Golem_Guardian_Void",
+      "Spirit_Ember",
+      "Spirit_Frost",
+      "Spirit_Root",
+      "Spirit_Thunder"
+    ]
+  }
+}

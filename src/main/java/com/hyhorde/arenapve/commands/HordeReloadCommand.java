@@ -45,7 +45,7 @@ extends AbstractPlayerCommand {
             }
         }
         playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordareload [config]" : "Uso: /hordareload [config]")));
-        playerRef.sendMessage(Message.raw((String)(english ? "config: reload horde-config.json" : "config: recarga horde-config.json")));
+        playerRef.sendMessage(Message.raw((String)(english ? "config: reload horde-config.json + enemy-categories.json" : "config: recarga horde-config.json + enemy-categories.json")));
         playerRef.sendMessage(Message.raw((String)(english ? "mod/jar/plugin: requires server restart after replacing the .jar" : "mod/jar/plugin: requiere reiniciar el servidor tras reemplazar el .jar")));
     }
 }

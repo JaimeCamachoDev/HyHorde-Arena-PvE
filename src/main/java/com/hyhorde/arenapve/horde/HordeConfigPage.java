@@ -56,6 +56,7 @@ extends CustomUIPage {
         String rewardCategory = HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory());
         List<String> rewardItemSuggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
         String rewardHint = HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english);
+        String enemyTypesHint = this.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english);
         String tab = HordeConfigPage.normalizeTab(this.activeTab);
         this.activeTab = tab;
         EntityStore entityStore = (EntityStore)store.getExternalData();
@@ -90,7 +91,7 @@ extends CustomUIPage {
                 .set("#AudiencePlayersEmptyLabel.Text", audienceRows.isEmpty() ? (english ? "No players detected in the current arena radius." : "No hay jugadores detectados en el radio actual de arena.") : "")
                 .set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, english))
                 .set("#StatusLabel.Text", this.hordeService.getStatusLine())
-                .set("#RoleHelpLabel.Text", HordeConfigPage.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english))
+                .set("#RoleHelpLabel.Text", enemyTypesHint)
                 .set("#RoundSoundHelpLabel.Text", HordeConfigPage.buildRoundSoundHint(roundStartSoundOptions, this.hordeService.getRoundStartSoundSelection(), roundVictorySoundOptions, this.hordeService.getRoundVictorySoundSelection(), english))
                 .set("#RewardCommandsHelpLabel.Text", rewardHint)
                 .set("#ReloadModButton.Visible", true)
@@ -587,13 +588,13 @@ extends CustomUIPage {
         return String.format(Locale.ROOT, "Centro actual: %.2f %.2f %.2f | Mundo: %s", config.spawnX, config.spawnY, config.spawnZ, config.worldName);
     }
 
-    private static String buildEnemyTypesHint(List<String> enemyTypeOptions, String selectedEnemyType, boolean english) {
+    private String buildEnemyTypesHint(List<String> enemyTypeOptions, String selectedEnemyType, boolean english) {
         if (enemyTypeOptions == null || enemyTypeOptions.isEmpty()) {
             return english ? "No horde categories available in this modpack." : "No hay categorias de horda disponibles en este modpack.";
         }
         String current = HordeConfigPage.normalizeEnemyTypeInput(HordeConfigPage.firstNonEmpty(selectedEnemyType, enemyTypeOptions.get(0)));
         String currentLabel = HordeConfigPage.enemyTypeLabel(current, english);
-        String currentIds = HordeConfigPage.enemyTypePreviewIds(current);
+        String currentIds = this.hordeService.getEnemyTypePreviewIds(current);
         int maxPreview = 6;
         int total = enemyTypeOptions.size();
         List<String> preview = total > maxPreview ? enemyTypeOptions.subList(0, maxPreview) : enemyTypeOptions;
@@ -712,13 +713,13 @@ extends CustomUIPage {
                 return "Dungeon_Scarak_Fighter, Dungeon_Scarak_Seeker, Dungeon_Scarak_Broodmother_Young";
             }
             case "void": {
-                return "Crawler_Void, VoidSpawn, VoidTaken";
+                return "Crawler_Void, Eye_Void, Larva_Void, Spawn_Void, Spectre_Void";
             }
             case "wild": {
-                return "Crocodile, Cave_Raptor, Feran_Longtooth...";
+                return "Crocodile, Black_Wolf, Cave_Raptor, Cave_Rex...";
             }
             case "elementals": {
-                return "Earthen_Golem, Ember_Golem, Frost_Elemental, Fire_Elemental";
+                return "Golem_Crystal_Earth, Golem_Firesteel, Spirit_Ember...";
             }
         }
         return "-";
