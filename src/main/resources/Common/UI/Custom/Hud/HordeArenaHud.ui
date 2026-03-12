@@ -1,5 +1,5 @@
 Group #Panel {
-  Anchor: (Right: 20, Top: 410, Height: 176, Width: 350);
+  Anchor: (Right: 20, Top: 220, Height: 176, Width: 350);
   Background: #12203478;
   Padding: (Horizontal: 10, Vertical: 8);
   LayoutMode: Top;

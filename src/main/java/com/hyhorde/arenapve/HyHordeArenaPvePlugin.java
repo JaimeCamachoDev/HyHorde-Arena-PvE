@@ -27,8 +27,8 @@ extends JavaPlugin {
         this.getEntityStoreRegistry().registerSystem(new HordeDamageTrackerSystem(this.hordeService));
         // HUD lifecycle is managed on world tick through HordeHudSystem.
         // Compatibility note:
-        // if another mod already owns CustomUIHud (e.g. EconomySystem), HordeHudSystem
-        // will skip takeover for that player to avoid "Failed to apply CustomUI HUD commands".
+        // - With MHUD installed, Horde HUD is multiplexed with other CustomUI HUDs (Economy, etc).
+        // - Without MHUD, HordeHudSystem runs in safe direct mode and avoids unsafe takeovers.
         this.getEntityStoreRegistry().registerSystem(new HordeHudSystem(this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordeCommand("horda", "crea una horda de enemigos alrededor de ti", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordeHelpCommand("hordahelp", "muestra ayuda de comandos en chat", this.hordeService));

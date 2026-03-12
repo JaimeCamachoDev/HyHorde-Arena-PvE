@@ -12,6 +12,7 @@ import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -23,14 +24,28 @@ extends EntityTickingSystem<EntityStore> {
     private static final Logger LOGGER = Logger.getLogger(HordeHudSystem.class.getName());
     private static final Query<EntityStore> QUERY = Archetype.of(Player.getComponentType(), PlayerRef.getComponentType());
     private static final int UPDATE_INTERVAL = 20;
+    private static final String MHUD_CLASS = "com.buuz135.mhud.MultipleHUD";
+    private static final String MHUD_IDENTIFIER = "HyHordeArenaPVE_HordeHUD";
     private final HordeService hordeService;
     private final Map<UUID, HordeRuntimeHud> huds;
+    private final Map<UUID, HudAttachMode> attachModes;
     private final Map<UUID, Integer> tickCounters;
+    private boolean mhudResolved;
+    private boolean mhudAvailable;
+    private Method mhudGetInstanceMethod;
+    private Method mhudSetCustomHudMethod;
+    private Method mhudHideCustomHudMethod;
 
     public HordeHudSystem(HordeService hordeService) {
         this.hordeService = hordeService;
         this.huds = new ConcurrentHashMap<UUID, HordeRuntimeHud>();
+        this.attachModes = new ConcurrentHashMap<UUID, HudAttachMode>();
         this.tickCounters = new ConcurrentHashMap<UUID, Integer>();
+        this.mhudResolved = false;
+        this.mhudAvailable = false;
+        this.mhudGetInstanceMethod = null;
+        this.mhudSetCustomHudMethod = null;
+        this.mhudHideCustomHudMethod = null;
     }
 
     public void tick(float deltaTime, int tickCounter, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
@@ -38,12 +53,12 @@ extends EntityTickingSystem<EntityStore> {
         World world = entityStore == null ? null : entityStore.getWorld();
         // Known issue history (important for future maintenance):
         // - Client disconnect: "Failed to apply CustomUI HUD commands".
-        // - Most frequent trigger: two plugins sending CustomUIHud commands to the same player
-        //   at the same time (ownership conflict), especially with EconomySystem.
-        // Mitigation strategy in this system:
-        // 1) Keep updates in world tick only.
-        // 2) Never force ownership if another mod already owns CustomUIHud.
-        // 3) Never clear with setCustomHud(null) directly (use empty HUD payload instead).
+        // - Root cause: two mods writing CustomUIHud packets for the same player.
+        // Mitigation in this system:
+        // 1) HUD updates only from world tick thread.
+        // 2) Direct mode never steals ownership from foreign CustomUIHud.
+        // 3) If MHUD is installed, use it as multiplexer (Economy + Horde at once).
+        // 4) Never clear with setCustomHud(null) directly (use an empty HUD payload).
         boolean hordeActiveInWorld = world != null && this.hordeService.isTrackingWorld(world);
         for (int entityIndex = 0; entityIndex < chunk.size(); ++entityIndex) {
             Player player = (Player)chunk.getComponent(entityIndex, Player.getComponentType());
@@ -54,9 +69,10 @@ extends EntityTickingSystem<EntityStore> {
             UUID playerId = playerRef.getUuid();
             boolean shouldShowHud = hordeActiveInWorld && this.hordeService.isArenaAudience(playerRef);
             HordeRuntimeHud trackedHud = this.huds.get(playerId);
+            HudAttachMode attachMode = this.attachModes.getOrDefault(playerId, HudAttachMode.DIRECT);
             if (!shouldShowHud) {
                 if (trackedHud != null || this.tickCounters.containsKey(playerId)) {
-                    this.removeHudForPlayer(player, playerRef, playerId, trackedHud);
+                    this.removeHudForPlayer(player, playerRef, playerId, trackedHud, attachMode);
                 } else {
                     this.tickCounters.remove(playerId);
                 }
@@ -67,10 +83,15 @@ extends EntityTickingSystem<EntityStore> {
                 if (trackedHud == null) {
                     continue;
                 }
+                attachMode = this.attachModes.getOrDefault(playerId, HudAttachMode.DIRECT);
             }
-            if (player.getHudManager().getCustomHud() != trackedHud) {
-                // Another plugin took ownership of the custom HUD slot.
-                // Stop updating ours to avoid conflicting command streams.
+            if (attachMode == HudAttachMode.DIRECT && player.getHudManager().getCustomHud() != trackedHud) {
+                // Another plugin took direct ownership while horde was active.
+                this.removeTrackingOnly(playerId);
+                continue;
+            }
+            if (attachMode == HudAttachMode.MHUD && !this.isMhudAvailable()) {
+                // MHUD disappeared or became unavailable; avoid sending stale updates.
                 this.removeTrackingOnly(playerId);
                 continue;
             }
@@ -82,7 +103,13 @@ extends EntityTickingSystem<EntityStore> {
             this.tickCounters.put(playerId, 0);
             try {
                 trackedHud.setSnapshot(this.hordeService.getStatusSnapshot());
-                trackedHud.updateHud();
+                if (attachMode == HudAttachMode.MHUD) {
+                    if (!this.pushHudUpdateThroughMhud(player, playerRef, trackedHud)) {
+                        this.removeTrackingOnly(playerId);
+                    }
+                } else {
+                    trackedHud.updateHud();
+                }
             }
             catch (Exception ex) {
                 LOGGER.log(Level.WARNING, "Failed to update Horde HUD for player: " + playerRef.getUsername(), ex);
@@ -101,25 +128,37 @@ extends EntityTickingSystem<EntityStore> {
             if (currentHud instanceof HordeRuntimeHud) {
                 HordeRuntimeHud existing = (HordeRuntimeHud)currentHud;
                 this.huds.put(playerId, existing);
+                this.attachModes.put(playerId, HudAttachMode.DIRECT);
                 this.tickCounters.put(playerId, 0);
                 return existing;
             }
             if (currentHud instanceof EmptyRuntimeHud) {
-                // Internal clear marker from previous horde end. Safe to replace with runtime HUD.
+                // Internal clear marker from previous horde end. Safe to replace.
                 currentHud = null;
             }
+            HordeRuntimeHud hud = new HordeRuntimeHud(playerRef, this.hordeService);
+            if (this.isMhudAvailable()) {
+                // Preferred coexistence path:
+                // MHUD can multiplex Economy + Horde without conflicting packet streams.
+                if (this.pushHudUpdateThroughMhud(player, playerRef, hud)) {
+                    hud.setSnapshot(this.hordeService.getStatusSnapshot());
+                    this.pushHudUpdateThroughMhud(player, playerRef, hud);
+                    this.huds.put(playerId, hud);
+                    this.attachModes.put(playerId, HudAttachMode.MHUD);
+                    this.tickCounters.put(playerId, 0);
+                    return hud;
+                }
+            }
             if (currentHud != null) {
-                // Compatibility guard:
-                // another plugin already owns CustomUIHud for this player (EconomySystem, etc).
-                // Forcing takeover can cause conflicting command streams and client disconnects.
-                // In that case we skip Horde HUD for this player to preserve server stability.
+                // No MHUD available and another mod already owns CustomUIHud.
+                // Do not force takeover: this used to cause client disconnects.
                 return null;
             }
-            HordeRuntimeHud hud = new HordeRuntimeHud(playerRef, this.hordeService);
             player.getHudManager().setCustomHud(playerRef, (CustomUIHud)hud);
             hud.setSnapshot(this.hordeService.getStatusSnapshot());
             hud.updateHud();
             this.huds.put(playerId, hud);
+            this.attachModes.put(playerId, HudAttachMode.DIRECT);
             this.tickCounters.put(playerId, 0);
             return hud;
         }
@@ -129,19 +168,23 @@ extends EntityTickingSystem<EntityStore> {
         }
     }
 
-    private void removeHudForPlayer(Player player, PlayerRef playerRef, UUID playerId, HordeRuntimeHud trackedHud) {
+    private void removeHudForPlayer(Player player, PlayerRef playerRef, UUID playerId, HordeRuntimeHud trackedHud, HudAttachMode attachMode) {
         this.huds.remove(playerId);
+        this.attachModes.remove(playerId);
         this.tickCounters.remove(playerId);
         if (trackedHud == null) {
             return;
         }
         try {
+            if (attachMode == HudAttachMode.MHUD && this.isMhudAvailable()) {
+                this.hideHudThroughMhud(player, playerRef);
+                return;
+            }
             CustomUIHud currentHud = player.getHudManager().getCustomHud();
             if (currentHud != trackedHud) {
                 return;
             }
-            // Avoid setCustomHud(null): some client builds can crash applying null custom HUD payloads.
-            // We clear safely by attaching an empty HUD instead.
+            // Avoid setCustomHud(null): some client builds can crash applying null payloads.
             player.getHudManager().setCustomHud(playerRef, (CustomUIHud)new EmptyRuntimeHud(playerRef));
         }
         catch (Exception ex) {
@@ -151,7 +194,92 @@ extends EntityTickingSystem<EntityStore> {
 
     private void removeTrackingOnly(UUID playerId) {
         this.huds.remove(playerId);
+        this.attachModes.remove(playerId);
         this.tickCounters.remove(playerId);
+    }
+
+    private synchronized boolean isMhudAvailable() {
+        if (!this.mhudResolved) {
+            this.resolveMhudSupport();
+        }
+        return this.mhudAvailable;
+    }
+
+    private void resolveMhudSupport() {
+        this.mhudResolved = true;
+        this.mhudAvailable = false;
+        this.mhudGetInstanceMethod = null;
+        this.mhudSetCustomHudMethod = null;
+        this.mhudHideCustomHudMethod = null;
+        try {
+            Class<?> mhudClass = Class.forName(MHUD_CLASS);
+            this.mhudGetInstanceMethod = mhudClass.getMethod("getInstance");
+            this.mhudSetCustomHudMethod = mhudClass.getMethod("setCustomHud", Player.class, PlayerRef.class, String.class, CustomUIHud.class);
+            try {
+                this.mhudHideCustomHudMethod = mhudClass.getMethod("hideCustomHud", Player.class, String.class);
+            }
+            catch (NoSuchMethodException ignored) {
+                this.mhudHideCustomHudMethod = mhudClass.getMethod("hideCustomHud", Player.class, PlayerRef.class, String.class);
+            }
+            Object instance = this.mhudGetInstanceMethod.invoke(null);
+            this.mhudAvailable = instance != null;
+            if (this.mhudAvailable) {
+                LOGGER.log(Level.INFO, "MHUD detected: Horde HUD will run in multiplexed mode.");
+            }
+        }
+        catch (Exception ignored) {
+            // MHUD not installed or API mismatch. Direct mode only.
+            this.mhudAvailable = false;
+        }
+    }
+
+    private boolean pushHudUpdateThroughMhud(Player player, PlayerRef playerRef, HordeRuntimeHud hud) {
+        try {
+            Object instance = this.getMhudInstance();
+            if (instance == null || this.mhudSetCustomHudMethod == null) {
+                return false;
+            }
+            this.mhudSetCustomHudMethod.invoke(instance, player, playerRef, MHUD_IDENTIFIER, hud);
+            return true;
+        }
+        catch (Exception ex) {
+            LOGGER.log(Level.FINE, "Failed to push Horde HUD through MHUD.", ex);
+            return false;
+        }
+    }
+
+    private void hideHudThroughMhud(Player player, PlayerRef playerRef) {
+        try {
+            Object instance = this.getMhudInstance();
+            if (instance == null || this.mhudHideCustomHudMethod == null) {
+                return;
+            }
+            if (this.mhudHideCustomHudMethod.getParameterCount() == 2) {
+                this.mhudHideCustomHudMethod.invoke(instance, player, MHUD_IDENTIFIER);
+            } else {
+                this.mhudHideCustomHudMethod.invoke(instance, player, playerRef, MHUD_IDENTIFIER);
+            }
+        }
+        catch (Exception ex) {
+            LOGGER.log(Level.FINE, "Failed to remove Horde HUD from MHUD.", ex);
+        }
+    }
+
+    private Object getMhudInstance() {
+        try {
+            if (!this.isMhudAvailable() || this.mhudGetInstanceMethod == null) {
+                return null;
+            }
+            return this.mhudGetInstanceMethod.invoke(null);
+        }
+        catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private enum HudAttachMode {
+        DIRECT,
+        MHUD
     }
 
     private static final class EmptyRuntimeHud
