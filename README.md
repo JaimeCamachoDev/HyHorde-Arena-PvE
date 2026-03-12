@@ -1,32 +1,34 @@
 # HyHorde Arena PVE
 
-Mod de hordas PVE por rondas para Hytale.
-Version actual: `1.1.0`.
+Mod de hordas PVE por rondas para Hytale.  
+Version actual: `1.1.1`.
 
-## Comando de ayuda
+## Novedades 1.1.1
 
-- `/hordahelp` -> muestra ayuda de comandos en chat.
+- Nueva pestana `Ayuda` dentro de la UI `Horde PVE Config`.
+- En la pestana `Ayuda` se documentan comandos, claves de `horde-config.json` y JSON externos.
+- README actualizado con flujo, comandos y configuracion extendida.
 
-## Comandos disponibles
+## Comandos
 
-- `/hordapve` -> abre la UI de configuracion.
-- `/hordepve` -> alias de `/hordapve`.
+- `/hordahelp` -> ayuda rapida en chat.
+- `/hordapve` -> abre la UI de configuracion (tambien `/hordepve`, `/spawnve`, `/spawnpve`).
 - `/hordapve start` -> inicia la horda.
-- `/hordapve stop` -> detiene la horda y limpia enemigos spawneados por la sesion.
+- `/hordapve stop` -> detiene la horda y limpia enemigos de la sesion.
 - `/hordapve status` -> muestra estado actual.
-- `/hordapve logs` -> muestra la ruta de logs.
-- `/hordapve setspawn` -> guarda el centro de horda en tu posicion.
-- `/hordapve enemy <tipo>` -> cambia el tipo de enemigo.
-- `/hordapve tipos` -> muestra diagnostico tipo -> rol detectado.
-- `/hordapve role <rolNpc|auto>` -> fuerza un rol NPC o vuelve a auto.
+- `/hordapve logs` -> muestra ruta de logs.
+- `/hordapve setspawn` -> guarda el centro de la horda en tu posicion.
+- `/hordapve enemy <tipo>` -> cambia categoria de enemigos.
+- `/hordapve tipos` -> diagnostico de categorias y roles detectados.
+- `/hordapve role <rolNpc|auto>` -> fuerza rol NPC o vuelve a auto.
 - `/hordapve roles` -> lista roles NPC disponibles.
-- `/hordapve reward <rondas>` -> configura cada cuantas rondas hay recompensa.
-- `/hordapve spectator <on|off>` -> te marca como espectador/jugador para el siguiente inicio de horda.
-- `/hordapve player` -> atajo para volver a modo jugador.
-- `/hordapve arearadius <bloques>` -> radio de la arena para bloquear jugadores/espectadores al inicio.
-- `/hordareload config` -> recarga `horde-config.json`.
+- `/hordapve reward <rondas>` -> cada cuantas rondas se entrega recompensa.
+- `/hordapve spectator <on|off>` -> marca preferencia espectador/jugador para el bloqueo al inicio.
+- `/hordapve player` -> vuelve a modo jugador.
+- `/hordapve arearadius <bloques>` -> radio de captura de participantes de arena.
+- `/hordareload config` -> recarga configuraciones JSON del mod sin reiniciar.
 
-## Tipos de enemigo soportados
+## Tipos de enemigo
 
 - `random`
 - `random-all`
@@ -37,34 +39,57 @@ Version actual: `1.1.0`.
 - `wild`
 - `elementals`
 
-Nota: los roles reales dependen de tu modpack. Verificalo con `/hordapve tipos`.
-
-## Recompensas
-
-- La UI permite configurar `RewardCategory`, `RewardItemId` y `RewardItemQuantity`.
-- Usa `< >` en categoria e item para recorrer rapidamente el pool de recompensas.
-- `random`: item aleatorio dentro de la categoria elegida.
-- `random_all`: item aleatorio del pool completo.
-
-## HUD de horda
-
-- En `1.1.0` el HUD emergente automatico de horda queda desactivado temporalmente por estabilidad.
+Nota: la disponibilidad real depende de los roles NPC de tu modpack. Usa `/hordapve tipos`.
 
 ## Flujo rapido
 
 1. Ejecuta `/hordapve`.
-2. Pulsa `Usar mi posicion actual` (o usa `/hordapve setspawn`).
-3. Configura por pestanas: `General`, `Jugadores`, `Recompensas`.
-4. En `Jugadores`, ajusta `arearadius` y tu modo `jugador/espectador` para el bloqueo al inicio.
-5. Configura rondas, enemigos, idioma y recompensas.
-6. Guarda configuracion.
-7. Inicia con `/hordapve start`.
-8. Deten y limpia con `/hordapve stop`.
+2. Pulsa `Usar mi posicion actual` o ejecuta `/hordapve setspawn`.
+3. Ajusta parametros por pestanas (`General`, `Horda`, `Jugadores`, `Sonidos`, `Recompensas`).
+4. En `Jugadores`, define `arearadius` y el modo de cada jugador (jugador/espectador/salir).
+5. Guarda con `Guardar config`.
+6. Inicia con `/hordapve start`.
+7. Deten con `/hordapve stop`.
 
-## Archivo de configuracion
+## Configuracion del mod (JSON)
 
-- `horde-config.json` en la carpeta de datos del plugin.
-- `arenaJoinRadius` define el radio alrededor del centro para bloquear participantes al iniciar (jugadores/espectadores).
+Todos los archivos viven en la carpeta de datos del plugin.
+
+### 1) `horde-config.json`
+
+Claves principales soportadas:
+
+- Spawn y arena: `spawnConfigured`, `worldName`, `spawnX`, `spawnY`, `spawnZ`, `minSpawnRadius`, `maxSpawnRadius`, `arenaJoinRadius`.
+- Rondas y dificultad: `rounds`, `baseEnemiesPerRound`, `enemiesPerRoundIncrement`, `waveDelaySeconds`, `playerMultiplier`.
+- Enemigos: `enemyType`, `npcRole`, `finalBossEnabled`, `enemyLevelMin`, `enemyLevelMax` (sistema de niveles WIP/desactivado).
+- Idioma/UI: `language` (`es` o `en`).
+- Recompensas: `rewardEveryRounds`, `rewardCategory`, `rewardItemId`, `rewardItemQuantity`.
+- Sonidos: `roundStartSoundId`, `roundVictorySoundId`.
+
+### 2) `enemy-categories.json`
+
+- Define categorias de horda y sus roles NPC.
+- Permite configurar `finalBossRoles`.
+- Permite excluir coincidencias por texto con `blockedRoleHints`.
+- Plantilla base en `src/main/resources/enemy-categories.example.json`.
+
+### 3) `reward-items.json`
+
+- Define pool de items por categoria de recompensa.
+- Alimenta el selector de recompensas de la UI.
+- Compatible con `random` y `random_all`.
+- Plantilla base en `src/main/resources/reward-items.example.json`.
+
+### 4) `horde-sounds.json`
+
+- Ajusta sugerencias y filtros para detectar sonidos de inicio/victoria.
+- Campos: `roundStartHints`, `roundVictoryHints`, `roundStartBlockedKeywords`, `roundVictoryBlockedKeywords`, `weakKeywords`.
+- Plantilla base en `src/main/resources/horde-sounds.example.json`.
+
+## Recarga de configuracion
+
+- `Recargar config` en la UI o `/hordareload config` recarga `horde-config.json` y JSON externos.
+- La recarga en caliente del `.jar` no esta soportada: para actualizar binario del mod hay que reiniciar servidor.
 
 ## Build
 
@@ -72,6 +97,6 @@ Nota: los roles reales dependen de tu modpack. Verificalo con `/hordapve tipos`.
 .\gradlew.bat clean jar
 ```
 
-Genera:
+Salida esperada:
 
 - `build/libs/HyHorde-Arena-PVE-<version>.jar`

@@ -29,7 +29,7 @@ Group {
   }
 
   TextButton #TabGeneralButton {
-    Anchor: (Left: 1006, Top: 94, Width: 88, Height: 32);
+    Anchor: (Left: 954, Top: 94, Width: 80, Height: 32);
     Text: "General";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -39,7 +39,7 @@ Group {
   }
 
   TextButton #TabHordeButton {
-    Anchor: (Left: 1100, Top: 94, Width: 88, Height: 32);
+    Anchor: (Left: 1038, Top: 94, Width: 80, Height: 32);
     Text: "Horda";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -49,7 +49,7 @@ Group {
   }
 
   TextButton #TabPlayersButton {
-    Anchor: (Left: 1194, Top: 94, Width: 88, Height: 32);
+    Anchor: (Left: 1122, Top: 94, Width: 86, Height: 32);
     Text: "Jugadores";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -59,7 +59,7 @@ Group {
   }
 
   TextButton #TabSoundsButton {
-    Anchor: (Left: 1288, Top: 94, Width: 88, Height: 32);
+    Anchor: (Left: 1212, Top: 94, Width: 80, Height: 32);
     Text: "Sonidos";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -69,7 +69,7 @@ Group {
   }
 
   TextButton #TabRewardsButton {
-    Anchor: (Left: 1382, Top: 94, Width: 108, Height: 32);
+    Anchor: (Left: 1296, Top: 94, Width: 110, Height: 32);
     Text: "Recompensas";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -78,8 +78,18 @@ Group {
     );
   }
 
+  TextButton #TabHelpButton {
+    Anchor: (Left: 1410, Top: 94, Width: 80, Height: 32);
+    Text: "Ayuda";
+    Style: TextButtonStyle(
+      Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #38567b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+    );
+  }
+
   Label #TabHintLabel {
-    Anchor: (Left: 1006, Top: 132, Width: 458, Height: 22);
+    Anchor: (Left: 954, Top: 132, Width: 536, Height: 22);
     Text: "";
     Style: (FontSize: 11, TextColor: #a8bdd8, VerticalAlignment: Center);
   }
@@ -651,6 +661,118 @@ Group {
     Anchor: (Left: 662, Top: 362, Width: 802, Height: 24);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
+  }
+
+  Label #HelpIntroLabel {
+    Anchor: (Left: 456, Top: 232, Width: 1008, Height: 28);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 18, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #HelpCommandsLabel {
+    Anchor: (Left: 456, Top: 268, Width: 1008, Height: 24);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #HelpCommandsLine1 {
+    Anchor: (Left: 456, Top: 294, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpCommandsLine2 {
+    Anchor: (Left: 456, Top: 318, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpCommandsLine3 {
+    Anchor: (Left: 456, Top: 342, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpConfigLabel {
+    Anchor: (Left: 456, Top: 378, Width: 1008, Height: 24);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #HelpConfigLine1 {
+    Anchor: (Left: 456, Top: 404, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpConfigLine2 {
+    Anchor: (Left: 456, Top: 428, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpConfigLine3 {
+    Anchor: (Left: 456, Top: 452, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpExternalLabel {
+    Anchor: (Left: 456, Top: 488, Width: 1008, Height: 24);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #HelpExternalLine1 {
+    Anchor: (Left: 456, Top: 514, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpExternalLine2 {
+    Anchor: (Left: 456, Top: 538, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpExternalLine3 {
+    Anchor: (Left: 456, Top: 562, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpReloadLabel {
+    Anchor: (Left: 456, Top: 598, Width: 1008, Height: 24);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #HelpReloadLine1 {
+    Anchor: (Left: 456, Top: 624, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Label #HelpReloadLine2 {
+    Anchor: (Left: 456, Top: 648, Width: 1008, Height: 22);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
   }
 
   Label #StatusTitleLabel {

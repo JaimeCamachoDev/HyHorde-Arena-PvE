@@ -30,6 +30,7 @@ extends CustomUIPage {
     private static final String TAB_PLAYERS = "players";
     private static final String TAB_SOUNDS = "sounds";
     private static final String TAB_REWARDS = "rewards";
+    private static final String TAB_HELP = "help";
     private static final int MAX_AUDIENCE_ROWS = 10;
     private final HordeService hordeService;
     private String activeTab;
@@ -107,6 +108,7 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabPlayersButton", EventData.of((String)"action", (String)"tab_players"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabSoundsButton", EventData.of((String)"action", (String)"tab_sounds"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabRewardsButton", EventData.of((String)"action", (String)"tab_rewards"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#TabHelpButton", EventData.of((String)"action", (String)"tab_help"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev"))
@@ -175,6 +177,10 @@ extends CustomUIPage {
                 }
                 case "tab_rewards": {
                     this.activeTab = TAB_REWARDS;
+                    break;
+                }
+                case "tab_help": {
+                    this.activeTab = TAB_HELP;
                     break;
                 }
                 case "set_spawn_here": {
@@ -735,14 +741,16 @@ extends CustomUIPage {
         boolean playersTab = TAB_PLAYERS.equals(tab);
         boolean soundsTab = TAB_SOUNDS.equals(tab);
         boolean rewardsTab = TAB_REWARDS.equals(tab);
+        boolean helpTab = TAB_HELP.equals(tab);
         commandBuilder.set("#TitleLabel.Text", english ? "Horde PVE Config" : "Horda PVE Config")
-                .set("#SubTitleLabel.Text", english ? "Split setup by tabs: general, horde, players, sounds and rewards" : "Configuracion en pestanas: general, horda, jugadores, sonidos y recompensas")
+                .set("#SubTitleLabel.Text", english ? "Split setup by tabs: general, horde, players, sounds, rewards and help" : "Configuracion por pestanas: general, horda, jugadores, sonidos, recompensas y ayuda")
                 .set("#TabGeneralButton.Text", english ? (generalTab ? "General *" : "General") : (generalTab ? "General *" : "General"))
                 .set("#TabHordeButton.Text", english ? (hordeTab ? "Horde *" : "Horde") : (hordeTab ? "Horda *" : "Horda"))
                 .set("#TabPlayersButton.Text", english ? (playersTab ? "Players *" : "Players") : (playersTab ? "Jugadores *" : "Jugadores"))
                 .set("#TabSoundsButton.Text", english ? (soundsTab ? "Sounds *" : "Sounds") : (soundsTab ? "Sonidos *" : "Sonidos"))
                 .set("#TabRewardsButton.Text", english ? (rewardsTab ? "Rewards *" : "Rewards") : (rewardsTab ? "Recompensas *" : "Recompensas"))
-                .set("#TabHintLabel.Text", english ? "Tabs only change the editor view. Save applies the full config." : "Las pestanas solo cambian la vista. Guardar aplica toda la configuracion.")
+                .set("#TabHelpButton.Text", english ? (helpTab ? "Help *" : "Help") : (helpTab ? "Ayuda *" : "Ayuda"))
+                .set("#TabHintLabel.Text", english ? "Tabs only change the view. Save applies full config. Help tab is reference-only." : "Las pestanas solo cambian la vista. Guardar aplica toda la config. Ayuda es solo referencia.")
                 .set("#SpawnLabel.Text", english ? "Center (X Y Z)" : "Centro (X Y Z)")
                 .set("#SetSpawnButton.Text", english ? "Use my current position" : "Usar mi posicion actual")
                 .set("#RadiusLabel.Text", english ? "Min / max radius" : "Radio min / max")
@@ -777,6 +785,22 @@ extends CustomUIPage {
                 .set("#StartButton.Text", english ? "Start horde" : "Iniciar horda")
                 .set("#StopButton.Text", english ? "Stop horde" : "Detener horda")
                 .set("#SkipRoundButton.Text", english ? "Skip round" : "Pasar ronda")
+                .set("#HelpIntroLabel.Text", english ? "Quick guide for Horde PVE usage" : "Guia rapida para usar Horde PVE")
+                .set("#HelpCommandsLabel.Text", english ? "Main commands" : "Comandos principales")
+                .set("#HelpCommandsLine1.Text", english ? "/hordapve (aliases: /hordepve /spawnve /spawnpve): open config UI." : "/hordapve (alias: /hordepve /spawnve /spawnpve): abre la UI.")
+                .set("#HelpCommandsLine2.Text", english ? "/hordapve start | stop | status | logs | setspawn | reload." : "/hordapve start | stop | status | logs | setspawn | reload.")
+                .set("#HelpCommandsLine3.Text", english ? "/hordapve enemy <type> | enemytypes | role <npcRole|auto> | roles | reward <rounds> | spectator <on|off> | player | arearadius <blocks>." : "/hordapve enemy <tipo> | tipos | role <rolNpc|auto> | roles | reward <rondas> | spectator <on|off> | player | arearadius <bloques>.")
+                .set("#HelpConfigLabel.Text", english ? "horde-config.json (persistent settings)" : "horde-config.json (config persistente)")
+                .set("#HelpConfigLine1.Text", english ? "spawnConfigured, worldName, spawnX/Y/Z, minSpawnRadius, maxSpawnRadius, arenaJoinRadius." : "spawnConfigured, worldName, spawnX/Y/Z, minSpawnRadius, maxSpawnRadius, arenaJoinRadius.")
+                .set("#HelpConfigLine2.Text", english ? "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds, playerMultiplier." : "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds, playerMultiplier.")
+                .set("#HelpConfigLine3.Text", english ? "enemyType, npcRole, language, rewardEveryRounds, rewardCategory, rewardItemId, rewardItemQuantity, roundStartSoundId, roundVictorySoundId, finalBossEnabled." : "enemyType, npcRole, language, rewardEveryRounds, rewardCategory, rewardItemId, rewardItemQuantity, roundStartSoundId, roundVictorySoundId, finalBossEnabled.")
+                .set("#HelpExternalLabel.Text", english ? "External JSON files (plugin data folder)" : "JSON externos (carpeta de datos del plugin)")
+                .set("#HelpExternalLine1.Text", english ? "enemy-categories.json: categories, finalBossRoles, blockedRoleHints." : "enemy-categories.json: categorias, finalBossRoles, blockedRoleHints.")
+                .set("#HelpExternalLine2.Text", english ? "reward-items.json: reward pools by category for UI selector and random modes." : "reward-items.json: pools por categoria para selector UI y modos random.")
+                .set("#HelpExternalLine3.Text", english ? "horde-sounds.json: hints and filters for round start/victory auto sounds." : "horde-sounds.json: hints y filtros para sonidos auto de inicio/victoria.")
+                .set("#HelpReloadLabel.Text", english ? "Reload and deployment notes" : "Recarga y despliegue")
+                .set("#HelpReloadLine1.Text", english ? "/hordareload config or 'Reload config' applies horde-config.json plus external JSON without restart." : "/hordareload config o 'Recargar config' aplica horde-config.json y JSON externos sin reinicio.")
+                .set("#HelpReloadLine2.Text", english ? "Replacing the .jar mod still requires server restart." : "Reemplazar el .jar del mod sigue requiriendo reinicio del servidor.")
                 .set("#CloseButton.Text", english ? "Close" : "Cerrar");
     }
 
@@ -786,12 +810,14 @@ extends CustomUIPage {
         boolean playersTab = TAB_PLAYERS.equals(tab);
         boolean soundsTab = TAB_SOUNDS.equals(tab);
         boolean rewardsTab = TAB_REWARDS.equals(tab);
+        boolean helpTab = TAB_HELP.equals(tab);
 
         this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RadiusLabel", "#MinRadius", "#MaxRadius", "#LanguageLabel", "#LanguagePrevButton", "#Language", "#LanguageNextButton");
         this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossPrevButton", "#FinalBossEnabled", "#FinalBossNextButton", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundPrevButton", "#RoundStartSoundId", "#RoundStartSoundNextButton", "#RoundVictorySoundLabel", "#RoundVictorySoundPrevButton", "#RoundVictorySoundId", "#RoundVictorySoundNextButton", "#RoundSoundHelpLabel");
         this.setVisible(commandBuilder, rewardsTab, "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategoryPrevButton", "#RewardCategory", "#RewardCategoryNextButton", "#RewardTypesButton", "#RewardCommandsLabel", "#RewardItemPrevButton", "#RewardItemId", "#RewardItemNextButton", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#RewardCommandsHelpLabel");
+        this.setVisible(commandBuilder, helpTab, "#HelpIntroLabel", "#HelpCommandsLabel", "#HelpCommandsLine1", "#HelpCommandsLine2", "#HelpCommandsLine3", "#HelpConfigLabel", "#HelpConfigLine1", "#HelpConfigLine2", "#HelpConfigLine3", "#HelpExternalLabel", "#HelpExternalLine1", "#HelpExternalLine2", "#HelpExternalLine3", "#HelpReloadLabel", "#HelpReloadLine1", "#HelpReloadLine2");
         this.setVisible(commandBuilder, false, "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax");
     }
 
@@ -815,7 +841,8 @@ extends CustomUIPage {
             case TAB_HORDE:
             case TAB_PLAYERS:
             case TAB_SOUNDS:
-            case TAB_REWARDS: {
+            case TAB_REWARDS:
+            case TAB_HELP: {
                 return normalized;
             }
         }
