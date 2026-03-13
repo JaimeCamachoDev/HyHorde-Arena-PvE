@@ -8,10 +8,13 @@ import com.hypixel.hytale.component.query.Query;
 import com.hypixel.hytale.component.system.tick.EntityTickingSystem;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.hud.CustomUIHud;
+import com.hypixel.hytale.server.core.plugin.PluginBase;
+import com.hypixel.hytale.server.core.plugin.PluginManager;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
+import com.hypixel.hytale.common.plugin.PluginIdentifier;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.UUID;
@@ -25,27 +28,34 @@ extends EntityTickingSystem<EntityStore> {
     private static final Query<EntityStore> QUERY = Archetype.of(Player.getComponentType(), PlayerRef.getComponentType());
     private static final int UPDATE_INTERVAL = 20;
     private static final String MHUD_CLASS = "com.buuz135.mhud.MultipleHUD";
+    private static final String MHUD_CLASS_LEGACY = "com.buuz135.multiplehud.MultipleHUD";
+    private static final PluginIdentifier MHUD_PLUGIN_ID = new PluginIdentifier("Buuz135", "MultipleHUD");
+    private static final long MHUD_RESOLVE_RETRY_MILLIS = 3000L;
     private static final String MHUD_IDENTIFIER = "HyHordeArenaPVE_HordeHUD";
     private final HordeService hordeService;
     private final Map<UUID, HordeRuntimeHud> huds;
     private final Map<UUID, HudAttachMode> attachModes;
     private final Map<UUID, Integer> tickCounters;
-    private boolean mhudResolved;
     private boolean mhudAvailable;
+    private long nextMhudResolveAttemptAtMs;
+    private Object mhudInstance;
     private Method mhudGetInstanceMethod;
     private Method mhudSetCustomHudMethod;
     private Method mhudHideCustomHudMethod;
+    private String mhudResolvedClassName;
 
     public HordeHudSystem(HordeService hordeService) {
         this.hordeService = hordeService;
         this.huds = new ConcurrentHashMap<UUID, HordeRuntimeHud>();
         this.attachModes = new ConcurrentHashMap<UUID, HudAttachMode>();
         this.tickCounters = new ConcurrentHashMap<UUID, Integer>();
-        this.mhudResolved = false;
         this.mhudAvailable = false;
+        this.nextMhudResolveAttemptAtMs = 0L;
+        this.mhudInstance = null;
         this.mhudGetInstanceMethod = null;
         this.mhudSetCustomHudMethod = null;
         this.mhudHideCustomHudMethod = null;
+        this.mhudResolvedClassName = null;
     }
 
     public void tick(float deltaTime, int tickCounter, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
@@ -199,21 +209,126 @@ extends EntityTickingSystem<EntityStore> {
     }
 
     private synchronized boolean isMhudAvailable() {
-        if (!this.mhudResolved) {
-            this.resolveMhudSupport();
+        // Compatibility note:
+        // ArenaPVE can be enabled before MultipleHUD/Economy in plugin load order.
+        // If we cache "MHUD unavailable" forever, Horde HUD never appears with Economy.
+        // Retry resolution with backoff so late plugin initialization is handled safely.
+        if (this.mhudAvailable && this.resolveMhudInstance() != null) {
+            return true;
         }
-        return this.mhudAvailable;
+        long now = System.currentTimeMillis();
+        if (now < this.nextMhudResolveAttemptAtMs) {
+            return false;
+        }
+        if (this.resolveMhudSupport()) {
+            this.nextMhudResolveAttemptAtMs = 0L;
+            return true;
+        }
+        this.nextMhudResolveAttemptAtMs = now + MHUD_RESOLVE_RETRY_MILLIS;
+        return false;
     }
 
-    private void resolveMhudSupport() {
-        this.mhudResolved = true;
-        this.mhudAvailable = false;
-        this.mhudGetInstanceMethod = null;
-        this.mhudSetCustomHudMethod = null;
-        this.mhudHideCustomHudMethod = null;
+    private synchronized boolean resolveMhudSupport() {
+        if (this.resolveMhudInstance() != null && this.mhudSetCustomHudMethod != null && this.mhudHideCustomHudMethod != null) {
+            this.mhudAvailable = true;
+            return true;
+        }
+        this.clearMhudBindings();
+        if (this.tryResolveMhudFromPluginManager()) {
+            return true;
+        }
+        if (this.tryResolveMhudByClassName(MHUD_CLASS)) {
+            return true;
+        }
+        if (this.tryResolveMhudByClassName(MHUD_CLASS_LEGACY)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean tryResolveMhudFromPluginManager() {
         try {
-            Class<?> mhudClass = Class.forName(MHUD_CLASS);
-            this.mhudGetInstanceMethod = mhudClass.getMethod("getInstance");
+            PluginManager pluginManager = PluginManager.get();
+            if (pluginManager == null) {
+                return false;
+            }
+            PluginBase plugin = pluginManager.getPlugin(MHUD_PLUGIN_ID);
+            if (plugin == null) {
+                for (PluginBase candidate : pluginManager.getPlugins()) {
+                    String className = candidate.getClass().getName();
+                    if (!MHUD_CLASS.equals(className) && !MHUD_CLASS_LEGACY.equals(className)) continue;
+                    plugin = candidate;
+                    break;
+                }
+            }
+            if (plugin == null || !plugin.isEnabled()) {
+                return false;
+            }
+            // Resolve API from the real plugin instance to avoid cross-classloader Class.forName failures.
+            if (!this.bindMhudApi(plugin.getClass())) {
+                return false;
+            }
+            this.mhudInstance = plugin;
+            this.mhudAvailable = true;
+            this.logMhudDetected(plugin.getClass().getName(), "PluginManager");
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private boolean tryResolveMhudByClassName(String className) {
+        try {
+            Class<?> mhudClass = this.loadMhudClass(className);
+            if (mhudClass == null || !this.bindMhudApi(mhudClass)) {
+                return false;
+            }
+            Object instance = this.resolveMhudInstance();
+            if (instance == null) {
+                return false;
+            }
+            this.mhudAvailable = true;
+            this.logMhudDetected(mhudClass.getName(), "reflection");
+            return true;
+        }
+        catch (Exception ex) {
+            return false;
+        }
+    }
+
+    private Class<?> loadMhudClass(String className) {
+        try {
+            PluginManager pluginManager = PluginManager.get();
+            if (pluginManager != null && pluginManager.getBridgeClassLoader() != null) {
+                try {
+                    return Class.forName(className, false, pluginManager.getBridgeClassLoader());
+                }
+                catch (ClassNotFoundException ignored) {
+                    // Fallbacks below.
+                }
+            }
+        }
+        catch (Exception ignored) {
+            // Fallbacks below.
+        }
+        try {
+            return Class.forName(className);
+        }
+        catch (ClassNotFoundException ignored) {
+            // Final fallback below.
+        }
+        try {
+            ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
+            return contextClassLoader == null ? null : contextClassLoader.loadClass(className);
+        }
+        catch (ClassNotFoundException ignored) {
+            return null;
+        }
+    }
+
+    private boolean bindMhudApi(Class<?> mhudClass) {
+        try {
             this.mhudSetCustomHudMethod = mhudClass.getMethod("setCustomHud", Player.class, PlayerRef.class, String.class, CustomUIHud.class);
             try {
                 this.mhudHideCustomHudMethod = mhudClass.getMethod("hideCustomHud", Player.class, String.class);
@@ -221,15 +336,41 @@ extends EntityTickingSystem<EntityStore> {
             catch (NoSuchMethodException ignored) {
                 this.mhudHideCustomHudMethod = mhudClass.getMethod("hideCustomHud", Player.class, PlayerRef.class, String.class);
             }
-            Object instance = this.mhudGetInstanceMethod.invoke(null);
-            this.mhudAvailable = instance != null;
-            if (this.mhudAvailable) {
-                LOGGER.log(Level.INFO, "MHUD detected: Horde HUD will run in multiplexed mode.");
+            try {
+                this.mhudGetInstanceMethod = mhudClass.getMethod("getInstance");
             }
+            catch (NoSuchMethodException ignored) {
+                this.mhudGetInstanceMethod = null;
+            }
+            return true;
         }
         catch (Exception ignored) {
-            // MHUD not installed or API mismatch. Direct mode only.
-            this.mhudAvailable = false;
+            this.clearMhudBindings();
+            return false;
+        }
+    }
+
+    private void clearMhudBindings() {
+        this.mhudAvailable = false;
+        this.mhudInstance = null;
+        this.mhudGetInstanceMethod = null;
+        this.mhudSetCustomHudMethod = null;
+        this.mhudHideCustomHudMethod = null;
+        this.mhudResolvedClassName = null;
+    }
+
+    private void invalidateMhudBindings() {
+        this.clearMhudBindings();
+        this.nextMhudResolveAttemptAtMs = System.currentTimeMillis() + MHUD_RESOLVE_RETRY_MILLIS;
+    }
+
+    private void logMhudDetected(String className, String source) {
+        if (className == null) {
+            return;
+        }
+        if (!className.equals(this.mhudResolvedClassName)) {
+            this.mhudResolvedClassName = className;
+            LOGGER.log(Level.INFO, "MHUD detected via " + source + " (" + className + "). Horde HUD will run in multiplexed mode.");
         }
     }
 
@@ -244,6 +385,7 @@ extends EntityTickingSystem<EntityStore> {
         }
         catch (Exception ex) {
             LOGGER.log(Level.FINE, "Failed to push Horde HUD through MHUD.", ex);
+            this.invalidateMhudBindings();
             return false;
         }
     }
@@ -262,15 +404,38 @@ extends EntityTickingSystem<EntityStore> {
         }
         catch (Exception ex) {
             LOGGER.log(Level.FINE, "Failed to remove Horde HUD from MHUD.", ex);
+            this.invalidateMhudBindings();
         }
     }
 
     private Object getMhudInstance() {
+        Object instance = this.resolveMhudInstance();
+        if (instance != null) {
+            return instance;
+        }
+        this.invalidateMhudBindings();
+        return null;
+    }
+
+    private Object resolveMhudInstance() {
         try {
-            if (!this.isMhudAvailable() || this.mhudGetInstanceMethod == null) {
+            if (this.mhudInstance instanceof PluginBase plugin) {
+                if (!plugin.isEnabled()) {
+                    return null;
+                }
+                return this.mhudInstance;
+            }
+            if (this.mhudInstance != null) {
+                return this.mhudInstance;
+            }
+            if (this.mhudGetInstanceMethod == null) {
                 return null;
             }
-            return this.mhudGetInstanceMethod.invoke(null);
+            Object instance = this.mhudGetInstanceMethod.invoke(null);
+            if (instance != null) {
+                this.mhudInstance = instance;
+            }
+            return instance;
         }
         catch (Exception ignored) {
             return null;
