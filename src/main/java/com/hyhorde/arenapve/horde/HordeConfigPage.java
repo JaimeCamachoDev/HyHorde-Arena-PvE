@@ -74,7 +74,6 @@ extends CustomUIPage {
                 .set("#BaseEnemies.Value", Integer.toString(config.baseEnemiesPerRound))
                 .set("#EnemiesPerRound.Value", Integer.toString(config.enemiesPerRoundIncrement))
                 .set("#WaveDelay.Value", Integer.toString(config.waveDelaySeconds))
-                .set("#PlayerMultiplier.Value", Integer.toString(config.playerMultiplier))
                 .set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType)
                 .set("#Language.Value", HordeService.getLanguageDisplay(config.language))
                 .set("#RewardEveryRounds.Value", Integer.toString(config.rewardEveryRounds))
@@ -354,7 +353,7 @@ extends CustomUIPage {
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
-        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@ArenaJoinRadius", "#ArenaJoinRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@PlayerMultiplier", "#PlayerMultiplier.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@RoundStartSoundId", "#RoundStartSoundId.Value").append("@RoundVictorySoundId", "#RoundVictorySoundId.Value");
+        return EventData.of((String)"action", (String)action).append("@SpawnX", "#SpawnX.Value").append("@SpawnY", "#SpawnY.Value").append("@SpawnZ", "#SpawnZ.Value").append("@MinRadius", "#MinRadius.Value").append("@MaxRadius", "#MaxRadius.Value").append("@ArenaJoinRadius", "#ArenaJoinRadius.Value").append("@Rounds", "#Rounds.Value").append("@BaseEnemies", "#BaseEnemies.Value").append("@EnemiesPerRound", "#EnemiesPerRound.Value").append("@WaveDelay", "#WaveDelay.Value").append("@EnemyType", "#EnemyType.Value").append("@Language", "#Language.Value").append("@RewardEveryRounds", "#RewardEveryRounds.Value").append("@RewardCategory", "#RewardCategory.Value").append("@RewardItemId", "#RewardItemId.Value").append("@RewardItemQuantity", "#RewardItemQuantity.Value").append("@FinalBossEnabled", "#FinalBossEnabled.Value").append("@RoundStartSoundId", "#RoundStartSoundId.Value").append("@RoundVictorySoundId", "#RoundVictorySoundId.Value");
     }
 
     private void populateAudienceRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.AudiencePlayerSnapshot> rows, boolean english) {
@@ -566,7 +565,6 @@ extends CustomUIPage {
         values.put("baseEnemies", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "baseEnemies"), HordeConfigPage.read(payload, "@BaseEnemies"), HordeConfigPage.read(payload, "BaseEnemies")));
         values.put("enemiesPerRound", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemiesPerRound"), HordeConfigPage.read(payload, "@EnemiesPerRound"), HordeConfigPage.read(payload, "EnemiesPerRound")));
         values.put("waveDelay", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "waveDelay"), HordeConfigPage.read(payload, "@WaveDelay"), HordeConfigPage.read(payload, "WaveDelay")));
-        values.put("playerMultiplier", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "playerMultiplier"), HordeConfigPage.read(payload, "@PlayerMultiplier"), HordeConfigPage.read(payload, "PlayerMultiplier")));
         values.put("enemyType", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyType"), HordeConfigPage.read(payload, "@EnemyType"), HordeConfigPage.read(payload, "EnemyType"), HordeConfigPage.read(payload, "role"), HordeConfigPage.read(payload, "@Role"), HordeConfigPage.read(payload, "Role")));
         values.put("language", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "language"), HordeConfigPage.read(payload, "@Language"), HordeConfigPage.read(payload, "Language")));
         values.put("rewardEveryRounds", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "rewardEveryRounds"), HordeConfigPage.read(payload, "@RewardEveryRounds"), HordeConfigPage.read(payload, "RewardEveryRounds")));
@@ -765,7 +763,6 @@ extends CustomUIPage {
                 .set("#BaseEnemiesLabel.Text", english ? "Base / round" : "Base ronda")
                 .set("#EnemiesPerRoundLabel.Text", english ? "Inc. per round" : "Inc. por ronda")
                 .set("#WaveDelayLabel.Text", english ? "Delay (s)" : "Espera (s)")
-                .set("#PlayerMultiplierLabel.Text", english ? "Players (x)" : "Jugadores (x)")
                 .set("#RoleLabel.Text", english ? "Horde category" : "Categoria de horda")
                 .set("#RolesButton.Text", english ? "View categories" : "Ver categorias")
                 .set("#LanguageLabel.Text", english ? "Interface language" : "Idioma interfaz")
@@ -792,7 +789,7 @@ extends CustomUIPage {
                 .set("#HelpCommandsLine3.Text", english ? "/hordeconfig enemy <type> | enemytypes | role <npcRole|auto> | roles | reward <rounds> | spectator <on|off> | player | arearadius <blocks>." : "/hordeconfig enemy <tipo> | tipos | role <rolNpc|auto> | roles | reward <rondas> | spectator <on|off> | player | arearadius <bloques>.")
                 .set("#HelpConfigLabel.Text", english ? "horde-config.json (persistent settings)" : "horde-config.json (config persistente)")
                 .set("#HelpConfigLine1.Text", english ? "spawnConfigured, worldName, spawnX/Y/Z, minSpawnRadius, maxSpawnRadius, arenaJoinRadius." : "spawnConfigured, worldName, spawnX/Y/Z, minSpawnRadius, maxSpawnRadius, arenaJoinRadius.")
-                .set("#HelpConfigLine2.Text", english ? "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds, playerMultiplier." : "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds, playerMultiplier.")
+                .set("#HelpConfigLine2.Text", english ? "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds." : "rounds, baseEnemiesPerRound, enemiesPerRoundIncrement, waveDelaySeconds.")
                 .set("#HelpConfigLine3.Text", english ? "enemyType, npcRole, language, rewardEveryRounds, rewardCategory, rewardItemId, rewardItemQuantity, roundStartSoundId, roundVictorySoundId, finalBossEnabled." : "enemyType, npcRole, language, rewardEveryRounds, rewardCategory, rewardItemId, rewardItemQuantity, roundStartSoundId, roundVictorySoundId, finalBossEnabled.")
                 .set("#HelpExternalLabel.Text", english ? "External JSON files (plugin data folder)" : "JSON externos (carpeta de datos del plugin)")
                 .set("#HelpExternalLine1.Text", english ? "enemy-categories.json: categories, finalBossRoles, blockedRoleHints." : "enemy-categories.json: categorias, finalBossRoles, blockedRoleHints.")
@@ -813,12 +810,12 @@ extends CustomUIPage {
         boolean helpTab = TAB_HELP.equals(tab);
 
         this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RadiusLabel", "#MinRadius", "#MaxRadius", "#LanguageLabel", "#LanguagePrevButton", "#Language", "#LanguageNextButton");
-        this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossPrevButton", "#FinalBossEnabled", "#FinalBossNextButton", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
+        this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossPrevButton", "#FinalBossEnabled", "#FinalBossNextButton", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundPrevButton", "#RoundStartSoundId", "#RoundStartSoundNextButton", "#RoundVictorySoundLabel", "#RoundVictorySoundPrevButton", "#RoundVictorySoundId", "#RoundVictorySoundNextButton", "#RoundSoundHelpLabel");
         this.setVisible(commandBuilder, rewardsTab, "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategoryPrevButton", "#RewardCategory", "#RewardCategoryNextButton", "#RewardTypesButton", "#RewardCommandsLabel", "#RewardItemPrevButton", "#RewardItemId", "#RewardItemNextButton", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#RewardCommandsHelpLabel");
         this.setVisible(commandBuilder, helpTab, "#HelpIntroLabel", "#HelpCommandsLabel", "#HelpCommandsLine1", "#HelpCommandsLine2", "#HelpCommandsLine3", "#HelpConfigLabel", "#HelpConfigLine1", "#HelpConfigLine2", "#HelpConfigLine3", "#HelpExternalLabel", "#HelpExternalLine1", "#HelpExternalLine2", "#HelpExternalLine3", "#HelpReloadLabel", "#HelpReloadLine1", "#HelpReloadLine2");
-        this.setVisible(commandBuilder, false, "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax");
+        this.setVisible(commandBuilder, false, "#PlayerMultiplierLabel", "#PlayerMultiplier", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax");
     }
 
     private void setVisible(UICommandBuilder commandBuilder, boolean visible, String ... elementIds) {
