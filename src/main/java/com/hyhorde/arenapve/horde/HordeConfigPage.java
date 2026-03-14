@@ -61,6 +61,8 @@ extends CustomUIPage {
         List<String> rewardItemSuggestions = this.hordeService.getRewardItemSuggestions(rewardCategory);
         String rewardHint = HordeConfigPage.buildRewardItemsHint(rewardCategoryOptions, rewardCategory, rewardItemSuggestions, config.rewardItemId, english);
         String enemyTypesHint = this.buildEnemyTypesHint(enemyTypeOptions, config.enemyType, english);
+        String enemyTypeValue = config.enemyType == null ? "undead" : config.enemyType;
+        List<DropdownEntryInfo> enemyTypeEntries = HordeConfigPage.buildDropdownEntries(enemyTypeOptions, enemyTypeValue);
         List<DropdownEntryInfo> rewardCategoryEntries = HordeConfigPage.buildDropdownEntries(rewardCategoryOptions, rewardCategory);
         List<DropdownEntryInfo> rewardItemEntries = HordeConfigPage.buildDropdownEntries(rewardItemSuggestions, config.rewardItemId);
         List<DropdownEntryInfo> roundStartSoundEntries = HordeConfigPage.buildDropdownEntries(roundStartSoundOptions, this.hordeService.getRoundStartSoundSelection());
@@ -74,7 +76,8 @@ extends CustomUIPage {
                 .set("#SpawnX.Value", HordeConfigPage.formatDouble(config.spawnX))
                 .set("#SpawnY.Value", HordeConfigPage.formatDouble(config.spawnY))
                 .set("#SpawnZ.Value", HordeConfigPage.formatDouble(config.spawnZ))
-                .set("#EnemyType.Value", config.enemyType == null ? "undead" : config.enemyType)
+                .set("#EnemyType.Value", enemyTypeValue)
+                .set("#EnemyType.Entries", enemyTypeEntries)
                 .set("#Language.Value", HordeService.normalizeLanguage(config.language))
                 .set("#RewardCategory.Value", rewardCategory)
                 .set("#RewardCategory.Entries", rewardCategoryEntries)
@@ -112,8 +115,6 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabHelpButton", EventData.of((String)"action", (String)"tab_help"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", EventData.of((String)"action", (String)"set_spawn_here"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RolesButton", EventData.of((String)"action", (String)"enemy_types"))
-                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypePrevButton", this.buildConfigSnapshotEvent("enemy_prev"))
-                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyTypeNextButton", this.buildConfigSnapshotEvent("enemy_next"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#LanguagePrevButton", this.buildConfigSnapshotEvent("language_prev"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#LanguageNextButton", this.buildConfigSnapshotEvent("language_next"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RewardCategoryPrevButton", this.buildConfigSnapshotEvent("reward_category_prev"))
@@ -421,7 +422,7 @@ extends CustomUIPage {
         this.playerRef.sendMessage(Message.raw((String)((english ? "Recommended safe test item: " : "Item de test recomendado (seguro): ") + safeTestItem)));
         this.playerRef.sendMessage(Message.raw((String)("Preview (" + previewCount + "): " + String.join(", ", preview))));
         if (total > previewCount) {
-            this.playerRef.sendMessage(Message.raw((String)(english ? "There are +" + (total - previewCount) + " IDs. Use < > buttons to browse more options." : "Hay +" + (total - previewCount) + " IDs. Usa los botones < > para recorrer mas opciones.")));
+            this.playerRef.sendMessage(Message.raw((String)(english ? "There are +" + (total - previewCount) + " IDs. Use the reward dropdown to browse more options." : "Hay +" + (total - previewCount) + " IDs. Usa el desplegable de recompensas para ver mas opciones.")));
         }
         this.playerRef.sendMessage(Message.raw((String)(english ? "Tip: use 'random' (current category) or 'random_all' (all categories)." : "Tip extra: usa 'random' (categoria actual) o 'random_all' (todas las categorias).")));
         this.playerRef.sendMessage(Message.raw((String)(english ? "You can also paste a full ItemDumper line and the ID will be auto-extracted." : "Tambien puedes pegar una linea completa de ItemDumper y se intentara extraer el ID automaticamente.")));
@@ -607,9 +608,9 @@ extends CustomUIPage {
         String available = String.join(", ", preview);
         String availableSuffix = total > maxPreview ? (english ? " ... (+" + (total - maxPreview) + " more)" : " ... (+" + (total - maxPreview) + " mas)") : "";
         if (english) {
-            return "Use < > to change category | Current: " + currentLabel + " | IDs: " + currentIds + " | Available: " + available + availableSuffix;
+            return "Use the category dropdown | Current: " + currentLabel + " | IDs: " + currentIds + " | Available: " + available + availableSuffix;
         }
-        return "Usa < > para cambiar categoria | Actual: " + currentLabel + " | IDs: " + currentIds + " | Disponibles: " + available + availableSuffix;
+        return "Usa el desplegable de categoria | Actual: " + currentLabel + " | IDs: " + currentIds + " | Disponibles: " + available + availableSuffix;
     }
 
     private static String buildRoundSoundHint(List<String> roundStartOptions, String selectedRoundStart, List<String> roundVictoryOptions, String selectedRoundVictory, boolean english) {
@@ -845,7 +846,7 @@ extends CustomUIPage {
         boolean helpTab = TAB_HELP.equals(tab);
 
         this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RadiusLabel", "#MinRadius", "#MaxRadius", "#LanguageLabel", "#Language", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius");
-        this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#RoleLabel", "#EnemyTypePrevButton", "#EnemyType", "#EnemyTypeNextButton", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossEnabled", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
+        this.setVisible(commandBuilder, hordeTab, "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#RoleLabel", "#EnemyType", "#RolesButton", "#RoleHelpLabel", "#FinalBossLabel", "#FinalBossEnabled", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundId", "#RoundVictorySoundLabel", "#RoundVictorySoundId", "#RoundSoundHelpLabel");
         this.setVisible(commandBuilder, rewardsTab, "#RewardCategoryLabel", "#RewardCategory", "#RewardTypesButton", "#RewardCommandsLabel", "#RewardItemId", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#RewardCommandsHelpLabel");

@@ -111,13 +111,13 @@ Group {
   }
 
   Label #RadiusLabel {
-    Anchor: (Left: 456, Top: 276, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 320, Width: 180, Height: 28);
     Text: "Radio min / max";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #MinRadius {
-    @Anchor = (Left: 642, Top: 274, Width: 188);
+    @Anchor = (Left: 642, Top: 318, Width: 188);
     Value: 5.0;
     Min: 1.0;
     Max: 128.0;
@@ -126,7 +126,7 @@ Group {
   }
 
   $C.@SliderNumberField #MaxRadius {
-    @Anchor = (Left: 836, Top: 274, Width: 190);
+    @Anchor = (Left: 836, Top: 318, Width: 190);
     Value: 12.0;
     Min: 1.0;
     Max: 128.0;
@@ -135,13 +135,13 @@ Group {
   }
 
   Label #ArenaJoinRadiusLabel {
-    Anchor: (Left: 456, Top: 262, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 274, Width: 180, Height: 28);
     Text: "Radio jugadores";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #ArenaJoinRadius {
-    @Anchor = (Left: 642, Top: 260, Width: 188);
+    @Anchor = (Left: 642, Top: 272, Width: 188);
     Value: 32.0;
     Min: 4.0;
     Max: 512.0;
@@ -235,29 +235,9 @@ Group {
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextButton #EnemyTypePrevButton {
-    Anchor: (Left: 642, Top: 382, Width: 46, Height: 34);
-    Text: "<";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
-  }
-
-  $C.@TextField #EnemyType {
-    @Anchor = (Left: 694, Top: 382, Width: 278);
+  $C.@DropdownBox #EnemyType {
+    @Anchor = (Left: 642, Top: 382, Width: 382);
     Value: "undead";
-  }
-
-  TextButton #EnemyTypeNextButton {
-    Anchor: (Left: 978, Top: 382, Width: 46, Height: 34);
-    Text: ">";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
   }
 
   TextButton #RolesButton {
@@ -273,13 +253,13 @@ Group {
   }
 
   Label #LanguageLabel {
-    Anchor: (Left: 456, Top: 320, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 366, Width: 180, Height: 28);
     Text: "Idioma de interfaz";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #LanguagePrevButton {
-    Anchor: (Left: 642, Top: 320, Width: 38, Height: 34);
+    Anchor: (Left: 642, Top: 364, Width: 38, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -289,7 +269,7 @@ Group {
   }
 
   $C.@DropdownBox #Language {
-    @Anchor = (Left: 686, Top: 320, Width: 286);
+    @Anchor = (Left: 686, Top: 364, Width: 286);
     Value: "es";
 
     DropdownEntry {
@@ -304,7 +284,7 @@ Group {
   }
 
   TextButton #LanguageNextButton {
-    Anchor: (Left: 978, Top: 320, Width: 46, Height: 34);
+    Anchor: (Left: 978, Top: 364, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -345,13 +325,13 @@ Group {
   }
 
   Label #RoundStartSoundLabel {
-    Anchor: (Left: 456, Top: 436, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 232, Width: 180, Height: 28);
     Text: "Sonido inicio ronda";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #RoundStartSoundPrevButton {
-    Anchor: (Left: 642, Top: 436, Width: 46, Height: 34);
+    Anchor: (Left: 642, Top: 230, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -361,12 +341,12 @@ Group {
   }
 
   $C.@DropdownBox #RoundStartSoundId {
-    @Anchor = (Left: 642, Top: 436, Width: 636);
+    @Anchor = (Left: 642, Top: 230, Width: 636);
     Value: "auto";
   }
 
   TextButton #RoundStartSoundNextButton {
-    Anchor: (Left: 1232, Top: 436, Width: 46, Height: 34);
+    Anchor: (Left: 1232, Top: 230, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -376,13 +356,13 @@ Group {
   }
 
   Label #RoundVictorySoundLabel {
-    Anchor: (Left: 456, Top: 478, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 286, Width: 180, Height: 28);
     Text: "Sonido victoria ronda";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #RoundVictorySoundPrevButton {
-    Anchor: (Left: 642, Top: 478, Width: 46, Height: 34);
+    Anchor: (Left: 642, Top: 284, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -392,12 +372,12 @@ Group {
   }
 
   $C.@DropdownBox #RoundVictorySoundId {
-    @Anchor = (Left: 642, Top: 478, Width: 636);
+    @Anchor = (Left: 642, Top: 284, Width: 636);
     Value: "auto";
   }
 
   TextButton #RoundVictorySoundNextButton {
-    Anchor: (Left: 1232, Top: 478, Width: 46, Height: 34);
+    Anchor: (Left: 1232, Top: 284, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -407,7 +387,7 @@ Group {
   }
 
   Label #RoundSoundHelpLabel {
-    Anchor: (Left: 642, Top: 518, Width: 822, Height: 24);
+    Anchor: (Left: 642, Top: 328, Width: 822, Height: 24);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
@@ -498,6 +478,7 @@ Group {
   Group #AudiencePlayersRows {
     Anchor: (Left: 456, Top: 382, Width: 1008, Height: 244);
     LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
   }
 
   Label #AudiencePlayersEmptyLabel {
@@ -577,7 +558,7 @@ Group {
   }
 
   $C.@DropdownBox #RewardItemId {
-    @Anchor = (Left: 662, Top: 320, Width: 560);
+    @Anchor = (Left: 662, Top: 320, Width: 802);
     Value: "";
   }
 
@@ -592,13 +573,13 @@ Group {
   }
 
   Label #RewardItemQuantityLabel {
-    Anchor: (Left: 1236, Top: 320, Width: 228, Height: 22);
+    Anchor: (Left: 662, Top: 366, Width: 200, Height: 22);
     Text: "Cantidad";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #RewardItemQuantity {
-    @Anchor = (Left: 1236, Top: 344, Width: 228);
+    @Anchor = (Left: 662, Top: 390, Width: 420);
     Value: 1;
     Min: 1;
     Max: 9999;
@@ -607,7 +588,7 @@ Group {
   }
 
   Label #RewardCommandsHelpLabel {
-    Anchor: (Left: 662, Top: 390, Width: 802, Height: 24);
+    Anchor: (Left: 662, Top: 438, Width: 802, Height: 24);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
