@@ -18,7 +18,7 @@ Group {
   }
 
   Panel #CategoryBar {
-    Anchor: (Left: 944, Top: 84, Width: 536, Height: 52);
+    Anchor: (Left: 858, Top: 84, Width: 624, Height: 52);
     Background: #122239;
   }
 
@@ -41,7 +41,7 @@ Group {
   }
 
   TextButton #TabGeneralButton {
-    Anchor: (Left: 950, Top: 92, Width: 82, Height: 36);
+    Anchor: (Left: 862, Top: 92, Width: 100, Height: 36);
     Text: "General";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -52,7 +52,7 @@ Group {
   }
 
   TextButton #TabHordeButton {
-    Anchor: (Left: 1034, Top: 92, Width: 82, Height: 36);
+    Anchor: (Left: 966, Top: 92, Width: 100, Height: 36);
     Text: "Horda";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -63,7 +63,7 @@ Group {
   }
 
   TextButton #TabPlayersButton {
-    Anchor: (Left: 1118, Top: 92, Width: 86, Height: 36);
+    Anchor: (Left: 1070, Top: 92, Width: 100, Height: 36);
     Text: "Jugadores";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -74,7 +74,7 @@ Group {
   }
 
   TextButton #TabSoundsButton {
-    Anchor: (Left: 1208, Top: 92, Width: 82, Height: 36);
+    Anchor: (Left: 1174, Top: 92, Width: 100, Height: 36);
     Text: "Sonidos";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -85,7 +85,7 @@ Group {
   }
 
   TextButton #TabRewardsButton {
-    Anchor: (Left: 1292, Top: 92, Width: 108, Height: 36);
+    Anchor: (Left: 1278, Top: 92, Width: 100, Height: 36);
     Text: "Recompensas";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -96,7 +96,7 @@ Group {
   }
 
   TextButton #TabHelpButton {
-    Anchor: (Left: 1404, Top: 92, Width: 72, Height: 36);
+    Anchor: (Left: 1382, Top: 92, Width: 100, Height: 36);
     Text: "Ayuda";
     Style: TextButtonStyle(
       Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -120,46 +120,52 @@ Group {
   }
 
   Label #SpawnLabel {
-    Anchor: (Left: 456, Top: 232, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 234, Width: 180, Height: 28);
     Text: "Centro (X Y Z)";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@TextField #SpawnX {
-    @Anchor = (Left: 642, Top: 230, Width: 124);
+    @Anchor = (Left: 642, Top: 232, Width: 124);
     Value: "0.00";
   }
 
   $C.@TextField #SpawnY {
-    @Anchor = (Left: 772, Top: 230, Width: 124);
+    @Anchor = (Left: 772, Top: 232, Width: 124);
     Value: "64.00";
   }
 
   $C.@TextField #SpawnZ {
-    @Anchor = (Left: 902, Top: 230, Width: 124);
+    @Anchor = (Left: 902, Top: 232, Width: 124);
     Value: "0.00";
   }
 
   TextButton #SetSpawnButton {
-    Anchor: (Left: 1034, Top: 230, Width: 430, Height: 34);
+    Anchor: (Left: 1080, Top: 232, Width: 384, Height: 34);
     Text: "Usar mi posicion actual";
     Style: $C.@SecondaryTextButtonStyle;
   }
 
   Label #RadiusLabel {
-    Anchor: (Left: 456, Top: 338, Width: 300, Height: 28);
-    Text: "Radio min / max";
+    Anchor: (Left: 456, Top: 286, Width: 360, Height: 28);
+    Text: "Configuracion del radio de aparicion de enemigos";
+    Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #RoundConfigLabel {
+    Anchor: (Left: 456, Top: 398, Width: 360, Height: 28);
+    Text: "Configuracion de ronda";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #MinRadiusLabel {
-    Anchor: (Left: 456, Top: 372, Width: 492, Height: 22);
+    Anchor: (Left: 456, Top: 318, Width: 492, Height: 22);
     Text: "Radio minimo";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #MinRadius {
-    @Anchor = (Left: 456, Top: 398, Width: 492);
+    @Anchor = (Left: 456, Top: 342, Width: 492);
     Value: 5.0;
     Min: 1.0;
     Max: 128.0;
@@ -168,13 +174,13 @@ Group {
   }
 
   Label #MaxRadiusLabel {
-    Anchor: (Left: 972, Top: 372, Width: 492, Height: 22);
+    Anchor: (Left: 972, Top: 318, Width: 492, Height: 22);
     Text: "Radio maximo";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #MaxRadius {
-    @Anchor = (Left: 972, Top: 398, Width: 492);
+    @Anchor = (Left: 972, Top: 342, Width: 492);
     Value: 12.0;
     Min: 1.0;
     Max: 128.0;
@@ -183,13 +189,13 @@ Group {
   }
 
   Label #ArenaJoinRadiusLabel {
-    Anchor: (Left: 456, Top: 274, Width: 300, Height: 28);
+    Anchor: (Left: 1080, Top: 286, Width: 384, Height: 24);
     Text: "Radio jugadores";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #ArenaJoinRadius {
-    @Anchor = (Left: 456, Top: 300, Width: 1008);
+    @Anchor = (Left: 1080, Top: 314, Width: 384);
     Value: 32.0;
     Min: 4.0;
     Max: 512.0;
@@ -198,19 +204,19 @@ Group {
   }
 
   TextButton #ReloadModButton {
-    Anchor: (Left: 706, Top: 936, Width: 170, Height: 46);
+    Anchor: (Left: 660, Top: 936, Width: 192, Height: 46);
     Text: "Recargar config";
     Style: $C.@TertiaryTextButtonStyle;
   }
 
   Label #RoundLabel {
-    Anchor: (Left: 456, Top: 232, Width: 320, Height: 24);
-    Text: "Rondas";
+    Anchor: (Left: 456, Top: 430, Width: 492, Height: 24);
+    Text: "Cantidad de rondas";
     Style: (FontSize: 14, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #Rounds {
-    @Anchor = (Left: 456, Top: 258, Width: 320);
+    @Anchor = (Left: 456, Top: 454, Width: 492);
     Value: 5;
     Min: 1;
     Max: 200;
@@ -219,13 +225,13 @@ Group {
   }
 
   Label #BaseEnemiesLabel {
-    Anchor: (Left: 806, Top: 232, Width: 320, Height: 24);
-    Text: "Base ronda";
+    Anchor: (Left: 456, Top: 498, Width: 492, Height: 24);
+    Text: "Cantidad base de enemigos por ronda";
     Style: (FontSize: 14, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #BaseEnemies {
-    @Anchor = (Left: 806, Top: 258, Width: 320);
+    @Anchor = (Left: 456, Top: 522, Width: 492);
     Value: 8;
     Min: 1;
     Max: 400;
@@ -234,13 +240,13 @@ Group {
   }
 
   Label #EnemiesPerRoundLabel {
-    Anchor: (Left: 456, Top: 302, Width: 320, Height: 24);
-    Text: "Inc. por ronda";
+    Anchor: (Left: 972, Top: 498, Width: 492, Height: 24);
+    Text: "Incremento de enemigos por ronda";
     Style: (FontSize: 14, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #EnemiesPerRound {
-    @Anchor = (Left: 456, Top: 328, Width: 320);
+    @Anchor = (Left: 972, Top: 522, Width: 492);
     Value: 2;
     Min: 0;
     Max: 400;
@@ -249,13 +255,13 @@ Group {
   }
 
   Label #WaveDelayLabel {
-    Anchor: (Left: 806, Top: 302, Width: 320, Height: 24);
-    Text: "Delay (s)";
+    Anchor: (Left: 972, Top: 430, Width: 492, Height: 24);
+    Text: "Tiempo de espera entre rondas (s)";
     Style: (FontSize: 14, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #WaveDelay {
-    @Anchor = (Left: 806, Top: 328, Width: 320);
+    @Anchor = (Left: 972, Top: 454, Width: 492);
     Value: 8;
     Min: 0;
     Max: 300;
@@ -278,13 +284,13 @@ Group {
   }
 
   Label #RoleLabel {
-    Anchor: (Left: 456, Top: 382, Width: 200, Height: 28);
+    Anchor: (Left: 456, Top: 232, Width: 180, Height: 28);
     Text: "Categoria de horda";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@DropdownBox #EnemyType {
-    @Anchor = (Left: 642, Top: 382, Width: 822);
+    @Anchor = (Left: 642, Top: 232, Width: 620);
     Value: "undead";
   }
 
@@ -296,7 +302,7 @@ Group {
   }
 
   Label #LanguageLabel {
-    Anchor: (Left: 456, Top: 456, Width: 200, Height: 28);
+    Anchor: (Left: 642, Top: 286, Width: 384, Height: 24);
     Text: "Idioma de interfaz";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
@@ -312,7 +318,7 @@ Group {
   }
 
   $C.@DropdownBox #Language {
-    @Anchor = (Left: 456, Top: 484, Width: 360);
+    @Anchor = (Left: 642, Top: 314, Width: 384);
     Value: "es";
 
     DropdownEntry {
@@ -323,6 +329,21 @@ Group {
     DropdownEntry {
       Value: "en";
       Text: "English";
+    }
+
+    DropdownEntry {
+      Value: "pt";
+      Text: "Portugues";
+    }
+
+    DropdownEntry {
+      Value: "fr";
+      Text: "Francais";
+    }
+
+    DropdownEntry {
+      Value: "de";
+      Text: "Deutsch";
     }
   }
 
@@ -337,7 +358,7 @@ Group {
   }
 
   Label #FinalBossLabel {
-    Anchor: (Left: 456, Top: 456, Width: 180, Height: 28);
+    Anchor: (Left: 1276, Top: 232, Width: 120, Height: 28);
     Text: "Boss final";
     Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
@@ -353,7 +374,7 @@ Group {
   }
 
   $C.@CheckBox #FinalBossEnabled {
-    Anchor: (Left: 704, Top: 462, Width: 22, Height: 22);
+    Anchor: (Left: 1408, Top: 236, Width: 22, Height: 22);
     Value: false;
   }
 
@@ -384,7 +405,7 @@ Group {
   }
 
   $C.@DropdownBox #RoundStartSoundId {
-    @Anchor = (Left: 642, Top: 230, Width: 636);
+    @Anchor = (Left: 642, Top: 230, Width: 500);
     Value: "auto";
   }
 
@@ -398,14 +419,29 @@ Group {
     );
   }
 
+  Label #RoundStartVolumeLabel {
+    Anchor: (Left: 1158, Top: 232, Width: 306, Height: 22);
+    Text: "Volumen inicio (%)";
+    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@SliderNumberField #RoundStartVolume {
+    @Anchor = (Left: 1158, Top: 254, Width: 306);
+    Value: 100;
+    Min: 0.0;
+    Max: 100.0;
+    Step: 1.0;
+    NumberFieldStyle: $C.@DefaultInputFieldStyle;
+  }
+
   Label #RoundVictorySoundLabel {
-    Anchor: (Left: 456, Top: 286, Width: 180, Height: 28);
+    Anchor: (Left: 456, Top: 332, Width: 180, Height: 28);
     Text: "Sonido victoria ronda";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #RoundVictorySoundPrevButton {
-    Anchor: (Left: 642, Top: 284, Width: 46, Height: 34);
+    Anchor: (Left: 642, Top: 330, Width: 46, Height: 34);
     Text: "<";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -415,12 +451,12 @@ Group {
   }
 
   $C.@DropdownBox #RoundVictorySoundId {
-    @Anchor = (Left: 642, Top: 284, Width: 636);
+    @Anchor = (Left: 642, Top: 330, Width: 500);
     Value: "auto";
   }
 
   TextButton #RoundVictorySoundNextButton {
-    Anchor: (Left: 1232, Top: 284, Width: 46, Height: 34);
+    Anchor: (Left: 1232, Top: 330, Width: 46, Height: 34);
     Text: ">";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -429,21 +465,36 @@ Group {
     );
   }
 
+  Label #RoundVictoryVolumeLabel {
+    Anchor: (Left: 1158, Top: 332, Width: 306, Height: 22);
+    Text: "Volumen victoria (%)";
+    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@SliderNumberField #RoundVictoryVolume {
+    @Anchor = (Left: 1158, Top: 354, Width: 306);
+    Value: 100;
+    Min: 0.0;
+    Max: 100.0;
+    Step: 1.0;
+    NumberFieldStyle: $C.@DefaultInputFieldStyle;
+  }
+
   Label #RoundSoundHelpLabel {
-    Anchor: (Left: 642, Top: 328, Width: 822, Height: 24);
+    Anchor: (Left: 642, Top: 388, Width: 822, Height: 24);
     Text: "";
     Visible: false;
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #EnemyLevelRangeLabel {
-    Anchor: (Left: 1030, Top: 458, Width: 188, Height: 24);
+    Anchor: (Left: 1030, Top: 560, Width: 188, Height: 24);
     Text: "Nivel enemigos";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #EnemyLevelWipLabel {
-    Anchor: (Left: 1220, Top: 458, Width: 244, Height: 24);
+    Anchor: (Left: 1220, Top: 560, Width: 244, Height: 24);
     Text: "WIP";
     Style: (FontSize: 12, TextColor: #f2c48b, RenderBold: true, VerticalAlignment: Center);
   }
@@ -471,68 +522,68 @@ Group {
   }
 
   Label #AudienceInfoLabel {
-    Anchor: (Left: 456, Top: 232, Width: 790, Height: 24);
+    Anchor: (Left: 456, Top: 232, Width: 1008, Height: 24);
     Text: "";
     Style: (FontSize: 13, TextColor: #d6e3f2, VerticalAlignment: Center);
   }
 
   Label #PlayersListTitle {
-    Anchor: (Left: 456, Top: 300, Width: 420, Height: 30);
+    Anchor: (Left: 456, Top: 264, Width: 560, Height: 30);
     Text: "Jugadores en area";
     Style: (FontSize: 18, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersCountLabel {
-    Anchor: (Left: 882, Top: 304, Width: 94, Height: 22);
+    Anchor: (Left: 1048, Top: 268, Width: 94, Height: 22);
     Text: "Detectados";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersCountValue {
-    Anchor: (Left: 978, Top: 304, Width: 58, Height: 22);
+    Anchor: (Left: 1146, Top: 268, Width: 64, Height: 22);
     Text: "0";
     Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #PlayersRefreshButton {
-    Anchor: (Left: 1264, Top: 262, Width: 200, Height: 30);
+    Anchor: (Left: 1218, Top: 262, Width: 246, Height: 32);
     Text: "Actualizar lista";
     Style: $C.@SmallSecondaryTextButtonStyle;
     Padding: (Horizontal: 8);
   }
 
   Label #PlayersListHint {
-    Anchor: (Left: 456, Top: 332, Width: 1008, Height: 22);
+    Anchor: (Left: 456, Top: 302, Width: 1008, Height: 22);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #PlayersHeaderName {
-    Anchor: (Left: 478, Top: 356, Width: 430, Height: 22);
+    Anchor: (Left: 478, Top: 332, Width: 350, Height: 24);
     Text: "Jugador";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersHeaderMode {
-    Anchor: (Left: 912, Top: 356, Width: 180, Height: 22);
+    Anchor: (Left: 842, Top: 332, Width: 130, Height: 24);
     Text: "Modo";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Group #AudiencePlayersRows {
-    Anchor: (Left: 456, Top: 382, Width: 1008, Height: 244);
+    Anchor: (Left: 456, Top: 360, Width: 1008, Height: 492);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
   }
 
   Label #AudiencePlayersEmptyLabel {
-    Anchor: (Left: 478, Top: 386, Width: 964, Height: 24);
+    Anchor: (Left: 478, Top: 364, Width: 964, Height: 24);
     Text: "";
     Style: (FontSize: 13, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #AudienceHelpLabel {
-    Anchor: (Left: 456, Top: 636, Width: 1008, Height: 36);
+    Anchor: (Left: 456, Top: 860, Width: 1008, Height: 26);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
@@ -744,6 +795,20 @@ Group {
     Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
   }
 
+  TextButton #HelpDiscordButton {
+    Anchor: (Left: 456, Top: 590, Width: 490, Height: 34);
+    Text: "Abrir Discord";
+    Visible: false;
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
+  TextButton #HelpCurseForgeButton {
+    Anchor: (Left: 974, Top: 590, Width: 490, Height: 34);
+    Text: "Abrir CurseForge";
+    Visible: false;
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
   Label #StatusTitleLabel {
     Anchor: (Left: 456, Top: 698, Width: 240, Height: 26);
     Text: "Estado actual";
@@ -765,34 +830,34 @@ Group {
   }
 
   TextButton #SaveButton {
-    Anchor: (Left: 456, Top: 936, Width: 236, Height: 46);
+    Anchor: (Left: 456, Top: 936, Width: 192, Height: 46);
     Text: "Guardar config";
     Style: $C.@DefaultTextButtonStyle;
   }
 
   TextButton #StartButton {
-    Anchor: (Left: 890, Top: 936, Width: 176, Height: 46);
+    Anchor: (Left: 864, Top: 936, Width: 192, Height: 46);
     Text: "Iniciar horda";
     Style: $C.@DefaultTextButtonStyle;
   }
 
   TextButton #StopButton {
-    Anchor: (Left: 890, Top: 936, Width: 176, Height: 46);
+    Anchor: (Left: 864, Top: 936, Width: 192, Height: 46);
     Text: "Detener horda";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   TextButton #SkipRoundButton {
-    Anchor: (Left: 1080, Top: 936, Width: 190, Height: 46);
+    Anchor: (Left: 1068, Top: 936, Width: 192, Height: 46);
     Text: "Pasar ronda";
     Visible: false;
     Style: $C.@TertiaryTextButtonStyle;
   }
 
   TextButton #CloseButton {
-    Anchor: (Left: 1286, Top: 936, Width: 178, Height: 46);
+    Anchor: (Left: 1272, Top: 936, Width: 192, Height: 46);
     Text: "Cerrar";
-    Style: $C.@SecondaryTextButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 }

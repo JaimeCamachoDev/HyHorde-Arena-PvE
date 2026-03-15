@@ -4,7 +4,7 @@ Group #HordeAudiencePlayerRow {
   Anchor: (Bottom: 6);
 
   Label #RowName {
-    Anchor: (Width: 400, Height: 32);
+    Anchor: (Width: 350, Height: 34);
     Text: "Jugador";
     Style: (
       FontSize: 14,
@@ -14,7 +14,7 @@ Group #HordeAudiencePlayerRow {
   }
 
   Label #RowMode {
-    Anchor: (Width: 170, Height: 32);
+    Anchor: (Width: 130, Height: 34);
     Text: "Jugador";
     Style: (
       FontSize: 13,
@@ -25,7 +25,7 @@ Group #HordeAudiencePlayerRow {
   }
 
   TextButton #SetPlayerButton {
-    Anchor: (Width: 120, Height: 32);
+    Anchor: (Width: 150, Height: 34);
     Text: "Jugador";
     Style: TextButtonStyle(
       Default: (Background: #24553a, LabelStyle: (FontSize: 12, TextColor: #e8fff4, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -35,7 +35,7 @@ Group #HordeAudiencePlayerRow {
   }
 
   TextButton #SetSpectatorButton {
-    Anchor: (Width: 130, Height: 32);
+    Anchor: (Width: 170, Height: 34);
     Text: "Espectador";
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
@@ -45,7 +45,7 @@ Group #HordeAudiencePlayerRow {
   }
 
   TextButton #SetExitButton {
-    Anchor: (Width: 100, Height: 32);
+    Anchor: (Width: 150, Height: 34);
     Text: "Salir";
     Style: TextButtonStyle(
       Default: (Background: #6b3122, LabelStyle: (FontSize: 12, TextColor: #ffece8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),

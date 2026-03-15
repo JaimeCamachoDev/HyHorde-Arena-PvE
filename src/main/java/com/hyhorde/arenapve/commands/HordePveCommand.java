@@ -37,7 +37,7 @@ extends AbstractPlayerCommand {
         String action = actionAndValue[0];
         String value = actionAndValue[1];
         if (this.hordeService.isPluginReloadInProgress() && !"status".equals(action) && !"logs".equals(action) && !"log".equals(action)) {
-            playerRef.sendMessage(Message.raw((String)(english ? "Plugin reload in progress. Try again in a few seconds." : "Recarga del plugin en progreso. Prueba de nuevo en unos segundos.")));
+            this.sendLocalized(playerRef, english ? "Plugin reload in progress. Try again in a few seconds." : "Recarga del plugin en progreso. Prueba de nuevo en unos segundos.");
             return;
         }
         switch (action) {
@@ -47,35 +47,35 @@ extends AbstractPlayerCommand {
                 return;
             }
             case "start": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.start(store, playerRef, world).getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.start(store, playerRef, world).getMessage());
                 return;
             }
             case "stop": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.stop(true).getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.stop(true).getMessage());
                 return;
             }
             case "status": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.getStatusLine()));
+                this.sendLocalized(playerRef, this.hordeService.getStatusLine());
                 return;
             }
             case "logs":
             case "log": {
-                playerRef.sendMessage(Message.raw((String)((english ? "Logs path: " : "Ruta de logs: ") + this.hordeService.getLogsPathHint())));
+                this.sendLocalized(playerRef, (english ? "Logs path: " : "Ruta de logs: ") + this.hordeService.getLogsPathHint());
                 return;
             }
             case "setspawn":
             case "spawn": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.setSpawnFromPlayer(playerRef, world).getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.setSpawnFromPlayer(playerRef, world).getMessage());
                 return;
             }
             case "reload":
             case "reloadconfig": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.reloadConfigFromDisk().getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.reloadConfigFromDisk().getMessage());
                 return;
             }
             case "reloadmod":
             case "reloadplugin": {
-                playerRef.sendMessage(Message.raw((String)(english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.")));
+                this.sendLocalized(playerRef, english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.");
                 return;
             }
             case "enemy":
@@ -114,7 +114,7 @@ extends AbstractPlayerCommand {
             }
             case "player":
             case "jugador": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, false).getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.setSpectatorPreference(playerRef, false).getMessage());
                 return;
             }
             case "arearadius":
@@ -124,7 +124,7 @@ extends AbstractPlayerCommand {
                 return;
             }
             default: {
-                playerRef.sendMessage(Message.raw((String)(english ? "Invalid subcommand: " + action + ". Use /hordahelp." : "Subcomando no valido: " + action + ". Usa /hordahelp.")));
+                this.sendLocalized(playerRef, english ? "Invalid subcommand: " + action + ". Use /hordahelp." : "Subcomando no valido: " + action + ". Usa /hordahelp.");
             }
         }
     }
@@ -133,14 +133,14 @@ extends AbstractPlayerCommand {
         boolean english = this.isEnglish();
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
-            playerRef.sendMessage(Message.raw((String)(english ? "Could not open the interface right now. Use /hordahelp." : "No se pudo abrir la interfaz ahora mismo. Usa /hordahelp.")));
+            this.sendLocalized(playerRef, english ? "Could not open the interface right now. Use /hordahelp." : "No se pudo abrir la interfaz ahora mismo. Usa /hordahelp.");
             return;
         }
         try {
             HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);
         }
         catch (Exception ex) {
-            playerRef.sendMessage(Message.raw((String)(english ? "The interface failed to open. Check server logs." : "La interfaz fallo al abrirse. Revisa logs del servidor.")));
+            this.sendLocalized(playerRef, english ? "The interface failed to open. Check server logs." : "La interfaz fallo al abrirse. Revisa logs del servidor.");
         }
     }
 
@@ -150,18 +150,18 @@ extends AbstractPlayerCommand {
         if (enemyType.isBlank()) {
             List<String> options = this.hordeService.getEnemyTypeOptionsForCurrentRoles();
             String usage = options.isEmpty() ? "undead|goblins|scarak|void|wild|elementals" : String.join("|", options);
-            playerRef.sendMessage(Message.raw((String)((english ? "Usage: /hordeconfig enemy <" : "Uso: /hordeconfig enemy <") + usage + ">")));
+            this.sendLocalized(playerRef, (english ? "Usage: /hordeconfig enemy <" : "Uso: /hordeconfig enemy <") + usage + ">");
             return;
         }
-        playerRef.sendMessage(Message.raw((String)this.hordeService.setEnemyType(enemyType).getMessage()));
+        this.sendLocalized(playerRef, this.hordeService.setEnemyType(enemyType).getMessage());
     }
 
     private void handleEnemyTypes(PlayerRef playerRef) {
         boolean english = this.isEnglish();
         List<String> diagnostics = this.hordeService.getEnemyTypeDiagnostics();
-        playerRef.sendMessage(Message.raw((String)(english ? "Detected horde categories and roles:" : "Categorias de horda y roles detectados:")));
+        this.sendLocalized(playerRef, english ? "Detected horde categories and roles:" : "Categorias de horda y roles detectados:");
         for (String entry : diagnostics) {
-            playerRef.sendMessage(Message.raw((String)(" - " + entry)));
+            this.sendLocalized(playerRef, " - " + entry);
         }
     }
 
@@ -171,22 +171,22 @@ extends AbstractPlayerCommand {
         if (requestedRole.isBlank()) {
             String currentRole = this.hordeService.getConfiguredNpcRole();
             String roleState = currentRole == null || currentRole.isBlank() ? (english ? "no override (using enemyType category)" : "sin override (por categoria enemyType)") : currentRole;
-            playerRef.sendMessage(Message.raw((String)((english ? "Current NPC role: " : "Rol NPC actual: ") + roleState)));
-            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordeconfig role <npcRole|auto>" : "Uso: /hordeconfig role <rolNpc|auto>")));
+            this.sendLocalized(playerRef, (english ? "Current NPC role: " : "Rol NPC actual: ") + roleState);
+            this.sendLocalized(playerRef, english ? "Usage: /hordeconfig role <npcRole|auto>" : "Uso: /hordeconfig role <rolNpc|auto>");
             return;
         }
-        playerRef.sendMessage(Message.raw((String)this.hordeService.setNpcRole(requestedRole).getMessage()));
+        this.sendLocalized(playerRef, this.hordeService.setNpcRole(requestedRole).getMessage());
     }
 
     private void handleRoles(PlayerRef playerRef) {
         boolean english = this.isEnglish();
         List<String> roles = this.hordeService.getAvailableRoles();
         if (roles.isEmpty()) {
-            playerRef.sendMessage(Message.raw((String)(english ? "No NPC roles available." : "No hay roles NPC disponibles.")));
+            this.sendLocalized(playerRef, english ? "No NPC roles available." : "No hay roles NPC disponibles.");
             return;
         }
-        playerRef.sendMessage(Message.raw((String)((english ? "Available NPC roles (" : "Roles NPC disponibles (") + roles.size() + "):")));
-        playerRef.sendMessage(Message.raw((String)String.join(", ", roles)));
+        this.sendLocalized(playerRef, (english ? "Available NPC roles (" : "Roles NPC disponibles (") + roles.size() + "):");
+        this.sendLocalized(playerRef, String.join(", ", roles));
     }
 
     private void handleReward(String value, PlayerRef playerRef) {
@@ -194,17 +194,17 @@ extends AbstractPlayerCommand {
         int everyRounds;
         String raw = value == null ? "" : value.trim();
         if (raw.isBlank()) {
-            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordeconfig reward <rounds>" : "Uso: /hordeconfig reward <rondas>")));
+            this.sendLocalized(playerRef, english ? "Usage: /hordeconfig reward <rounds>" : "Uso: /hordeconfig reward <rondas>");
             return;
         }
         try {
             everyRounds = Integer.parseInt(raw);
         }
         catch (Exception ex) {
-            playerRef.sendMessage(Message.raw((String)(english ? "Reward value must be a positive integer." : "El valor de reward debe ser un numero entero positivo.")));
+            this.sendLocalized(playerRef, english ? "Reward value must be a positive integer." : "El valor de reward debe ser un numero entero positivo.");
             return;
         }
-        playerRef.sendMessage(Message.raw((String)this.hordeService.setRewardEveryRounds(everyRounds).getMessage()));
+        this.sendLocalized(playerRef, this.hordeService.setRewardEveryRounds(everyRounds).getMessage());
     }
 
     private void handleSpectatorPreference(String value, PlayerRef playerRef) {
@@ -213,26 +213,26 @@ extends AbstractPlayerCommand {
         if (raw.isBlank()) {
             boolean spectator = this.hordeService.isSpectatorPreferenceEnabled(playerRef);
             String current = spectator ? (english ? "SPECTATOR" : "ESPECTADOR") : (english ? "PLAYER" : "JUGADOR");
-            playerRef.sendMessage(Message.raw((String)((english ? "Current pre-start role: " : "Rol previo al inicio: ") + current)));
-            playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordeconfig spectator <on|off>" : "Uso: /hordeconfig spectator <on|off>")));
+            this.sendLocalized(playerRef, (english ? "Current pre-start role: " : "Rol previo al inicio: ") + current);
+            this.sendLocalized(playerRef, english ? "Usage: /hordeconfig spectator <on|off>" : "Uso: /hordeconfig spectator <on|off>");
             return;
         }
         if ("on".equals(raw) || "true".equals(raw) || "1".equals(raw) || "yes".equals(raw) || "si".equals(raw) || "espectador".equals(raw) || "spectator".equals(raw)) {
-            playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, true).getMessage()));
+            this.sendLocalized(playerRef, this.hordeService.setSpectatorPreference(playerRef, true).getMessage());
             return;
         }
         if ("off".equals(raw) || "false".equals(raw) || "0".equals(raw) || "no".equals(raw) || "jugador".equals(raw) || "player".equals(raw)) {
-            playerRef.sendMessage(Message.raw((String)this.hordeService.setSpectatorPreference(playerRef, false).getMessage()));
+            this.sendLocalized(playerRef, this.hordeService.setSpectatorPreference(playerRef, false).getMessage());
             return;
         }
-        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordeconfig spectator <on|off>" : "Uso: /hordeconfig spectator <on|off>")));
+        this.sendLocalized(playerRef, english ? "Usage: /hordeconfig spectator <on|off>" : "Uso: /hordeconfig spectator <on|off>");
     }
 
     private void handleArenaRadius(String value, PlayerRef playerRef) {
         boolean english = this.isEnglish();
         String raw = value == null ? "" : value.trim();
         if (raw.isBlank()) {
-            playerRef.sendMessage(Message.raw((String)String.format(Locale.ROOT, english ? "Current arena radius: %.2f blocks. Usage: /hordeconfig arearadius <value>" : "Radio de arena actual: %.2f bloques. Uso: /hordeconfig arearadius <valor>", this.hordeService.getArenaJoinRadius())));
+            this.sendLocalized(playerRef, String.format(Locale.ROOT, english ? "Current arena radius: %.2f blocks. Usage: /hordeconfig arearadius <value>" : "Radio de arena actual: %.2f bloques. Uso: /hordeconfig arearadius <valor>", this.hordeService.getArenaJoinRadius()));
             return;
         }
         double radius;
@@ -240,14 +240,21 @@ extends AbstractPlayerCommand {
             radius = Double.parseDouble(raw);
         }
         catch (Exception ex) {
-            playerRef.sendMessage(Message.raw((String)(english ? "Arena radius must be a valid number." : "El radio de arena debe ser un numero valido.")));
+            this.sendLocalized(playerRef, english ? "Arena radius must be a valid number." : "El radio de arena debe ser un numero valido.");
             return;
         }
-        playerRef.sendMessage(Message.raw((String)this.hordeService.setArenaJoinRadius(radius).getMessage()));
+        this.sendLocalized(playerRef, this.hordeService.setArenaJoinRadius(radius).getMessage());
     }
 
     private boolean isEnglish() {
         return HordeService.isEnglishLanguage(this.hordeService.getLanguage());
+    }
+
+    private void sendLocalized(PlayerRef playerRef, String text) {
+        if (playerRef == null) {
+            return;
+        }
+        playerRef.sendMessage(Message.raw((String)com.hyhorde.arenapve.horde.HordeI18n.translateLegacy(this.hordeService.getLanguage(), text)));
     }
 
     private String[] resolveActionAndValue(CommandContext commandContext) {

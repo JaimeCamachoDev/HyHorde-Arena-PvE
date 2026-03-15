@@ -34,19 +34,26 @@ extends AbstractPlayerCommand {
         String mode;
         switch (mode = commandContext.provided(this.modeArg) ? ((String)commandContext.get(this.modeArg)).toLowerCase(Locale.ROOT) : "config") {
             case "config": {
-                playerRef.sendMessage(Message.raw((String)this.hordeService.reloadConfigFromDisk().getMessage()));
+                this.sendLocalized(playerRef, this.hordeService.reloadConfigFromDisk().getMessage());
                 return;
             }
             case "mod": 
             case "jar": 
             case "plugin": {
-                playerRef.sendMessage(Message.raw((String)(english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.")));
+                this.sendLocalized(playerRef, english ? "Hot-reload of .jar mods is not supported. Replace the file and restart the server." : "No se soporta recarga en caliente de mods .jar. Reemplaza el archivo y reinicia el servidor.");
                 return;
             }
         }
-        playerRef.sendMessage(Message.raw((String)(english ? "Usage: /hordareload [config]" : "Uso: /hordareload [config]")));
-        playerRef.sendMessage(Message.raw((String)(english ? "config: reload horde-config.json + enemy-categories.json + reward-items.json + horde-sounds.json" : "config: recarga horde-config.json + enemy-categories.json + reward-items.json + horde-sounds.json")));
-        playerRef.sendMessage(Message.raw((String)(english ? "mod/jar/plugin: requires server restart after replacing the .jar" : "mod/jar/plugin: requiere reiniciar el servidor tras reemplazar el .jar")));
+        this.sendLocalized(playerRef, english ? "Usage: /hordareload [config]" : "Uso: /hordareload [config]");
+        this.sendLocalized(playerRef, english ? "config: reload horde-config.json + enemy-categories.json + reward-items.json + horde-sounds.json" : "config: recarga horde-config.json + enemy-categories.json + reward-items.json + horde-sounds.json");
+        this.sendLocalized(playerRef, english ? "mod/jar/plugin: requires server restart after replacing the .jar" : "mod/jar/plugin: requiere reiniciar el servidor tras reemplazar el .jar");
+    }
+
+    private void sendLocalized(PlayerRef playerRef, String text) {
+        if (playerRef == null) {
+            return;
+        }
+        playerRef.sendMessage(Message.raw((String)com.hyhorde.arenapve.horde.HordeI18n.translateLegacy(this.hordeService.getLanguage(), text)));
     }
 }
 
