@@ -284,7 +284,10 @@ extends CustomUIPage {
                 this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, result.getMessage())));
             }
             if ("save".equals(action)) {
-                this.safeSendUpdate();
+                return;
+            }
+            if ("start".equals(action) || "stop".equals(action) || "skip_round".equals(action)) {
+                this.updateRuntimeControlsOnly(language);
                 return;
             }
         }
@@ -347,15 +350,6 @@ extends CustomUIPage {
         this.safeSendUpdate(commandBuilder);
     }
 
-    private void safeSendUpdate() {
-        try {
-            this.sendUpdate();
-        }
-        catch (Exception ignored) {
-            this.safeRebuild();
-        }
-    }
-
     private void safeSendUpdate(UICommandBuilder commandBuilder) {
         if (commandBuilder == null) {
             return;
@@ -366,6 +360,18 @@ extends CustomUIPage {
         catch (Exception ignored) {
             this.safeRebuild();
         }
+    }
+
+    private void updateRuntimeControlsOnly(String language) {
+        HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
+        boolean active = this.hordeService.isActive();
+        UICommandBuilder commandBuilder = new UICommandBuilder();
+        commandBuilder
+                .set("#StartButton.Visible", !active)
+                .set("#StopButton.Visible", active)
+                .set("#SkipRoundButton.Visible", active)
+                .set("#SpawnStateLabel.Text", HordeConfigPage.buildSpawnLabel(config, language));
+        this.safeSendUpdate(commandBuilder);
     }
 
     private EventData buildConfigSnapshotEvent(String action) {
