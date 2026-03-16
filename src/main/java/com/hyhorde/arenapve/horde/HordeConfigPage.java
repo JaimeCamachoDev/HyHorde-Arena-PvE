@@ -725,7 +725,7 @@ extends CustomUIPage {
                 .set("#RoundConfigLabel.Text", HordeConfigPage.t(language, english, "Round setup", "Configuracion de ronda"))
                 .set("#MinRadiusLabel.Text", HordeConfigPage.t(language, english, "Minimum radius", "Radio minimo"))
                 .set("#MaxRadiusLabel.Text", HordeConfigPage.t(language, english, "Maximum radius", "Radio maximo"))
-                .set("#ArenaJoinRadiusLabel.Text", HordeConfigPage.t(language, english, "Players area radius", "Radio de jugadores"))
+                .set("#ArenaJoinRadiusLabel.Text", HordeConfigPage.t(language, english, "Arena players radius", "Radio de jugadores de arena"))
                 .set("#PlayersListTitle.Text", HordeConfigPage.t(language, english, "Players inside current area", "Jugadores dentro del area actual"))
                 .set("#PlayersCountLabel.Text", HordeConfigPage.t(language, english, "Detected", "Detectados"))
                 .set("#PlayersHeaderName.Text", HordeConfigPage.t(language, english, "Player", "Jugador"))
@@ -782,12 +782,18 @@ extends CustomUIPage {
         boolean rewardsTab = TAB_REWARDS.equals(tab);
         boolean helpTab = TAB_HELP.equals(tab);
 
-        this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#LanguageLabel", "#Language", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius");
+        this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#LanguageLabel", "#Language");
         this.setVisible(commandBuilder, hordeTab, "#RoleLabel", "#EnemyType", "#FinalBossLabel", "#FinalBossEnabled", "#RadiusLabel", "#MinRadiusLabel", "#MinRadius", "#MaxRadiusLabel", "#MaxRadius", "#RoundConfigLabel", "#RoundLabel", "#Rounds", "#WaveDelayLabel", "#WaveDelay", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound");
-        this.setVisible(commandBuilder, playersTab, "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel");
+        this.setVisible(commandBuilder, playersTab, "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundId", "#RoundStartVolumeLabel", "#RoundStartVolume", "#RoundVictorySoundLabel", "#RoundVictorySoundId", "#RoundVictoryVolumeLabel", "#RoundVictoryVolume");
         this.setVisible(commandBuilder, rewardsTab, "#RewardCategoryLabel", "#RewardCategory", "#RewardCommandsLabel", "#RewardItemId", "#RewardItemQuantityLabel", "#RewardItemQuantity");
         this.setVisible(commandBuilder, helpTab, "#HelpIntroLabel", "#HelpCommandsLabel", "#HelpCommandsLine1", "#HelpCommandsLine2", "#HelpCommandsLine3", "#HelpConfigLabel", "#HelpConfigLine1", "#HelpConfigLine2", "#HelpConfigLine3", "#HelpExternalLabel", "#HelpExternalLine1", "#HelpExternalLine2", "#HelpExternalLine3", "#HelpReloadLabel", "#HelpReloadLine1", "#HelpReloadLine2");
+        this.setVisible(commandBuilder, generalTab, "#TabGeneralActiveBack", "#TabGeneralActiveTop", "#TabGeneralActiveNotch");
+        this.setVisible(commandBuilder, hordeTab, "#TabHordeActiveBack", "#TabHordeActiveTop", "#TabHordeActiveNotch");
+        this.setVisible(commandBuilder, playersTab, "#TabPlayersActiveBack", "#TabPlayersActiveTop", "#TabPlayersActiveNotch");
+        this.setVisible(commandBuilder, soundsTab, "#TabSoundsActiveBack", "#TabSoundsActiveTop", "#TabSoundsActiveNotch");
+        this.setVisible(commandBuilder, rewardsTab, "#TabRewardsActiveBack", "#TabRewardsActiveTop", "#TabRewardsActiveNotch");
+        this.setVisible(commandBuilder, helpTab, "#TabHelpActiveBack", "#TabHelpActiveTop", "#TabHelpActiveNotch");
         this.setVisible(commandBuilder, false, "#SubTitleLabel", "#TabHintLabel", "#StatusTitleLabel", "#StatusPanel", "#StatusLabel", "#RoleHelpLabel", "#RoundSoundHelpLabel", "#RewardCommandsHelpLabel", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax", "#LanguagePrevButton", "#LanguageNextButton", "#FinalBossPrevButton", "#FinalBossNextButton", "#RoundStartSoundPrevButton", "#RoundStartSoundNextButton", "#RoundVictorySoundPrevButton", "#RoundVictorySoundNextButton", "#RewardCategoryPrevButton", "#RewardCategoryNextButton", "#RewardItemPrevButton", "#RewardItemNextButton", "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#HelpDiscordButton", "#HelpCurseForgeButton");
     }
 
@@ -849,16 +855,13 @@ extends CustomUIPage {
 
     private static String buildAudienceInfo(double arenaJoinRadius, int playersInArea, String language) {
         boolean english = HordeService.isEnglishLanguage(language);
-        String englishText = String.format(Locale.ROOT, "Current arena radius: %.2f blocks | Players inside area: %d", arenaJoinRadius, playersInArea);
-        String spanishText = String.format(Locale.ROOT, "Radio actual de arena: %.2f bloques | Jugadores dentro del area: %d", arenaJoinRadius, playersInArea);
+        String englishText = String.format(Locale.ROOT, "Arena players radius: %.2f blocks", arenaJoinRadius);
+        String spanishText = String.format(Locale.ROOT, "Radio de jugadores de arena: %.2f bloques", arenaJoinRadius);
         return HordeConfigPage.t(language, english, englishText, spanishText);
     }
 
     private static String buildAudienceRowsHint(int playersInArea, String language) {
-        boolean english = HordeService.isEnglishLanguage(language);
-        String englishText = playersInArea > 0 ? "Use each row to set Player, Spectator or Exit mode." : "Move players inside the arena radius to manage them here.";
-        String spanishText = playersInArea > 0 ? "Usa cada fila para poner modo Jugador, Espectador o Salir." : "Mueve jugadores dentro del radio de arena para gestionarlos aqui.";
-        return HordeConfigPage.t(language, english, englishText, spanishText);
+        return "";
     }
 
     private static String formatDouble(double value) {

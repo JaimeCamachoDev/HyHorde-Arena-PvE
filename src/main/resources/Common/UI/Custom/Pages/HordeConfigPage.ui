@@ -18,8 +18,121 @@ Group {
   }
 
   Panel #CategoryBar {
-    Anchor: (Left: 858, Top: 84, Width: 624, Height: 52);
-    Background: #122239;
+    Anchor: (Left: 856, Top: 82, Width: 628, Height: 58);
+    Background: #111a2a;
+  }
+
+  Panel #CategoryBarInset {
+    Anchor: (Left: 860, Top: 86, Width: 620, Height: 50);
+    Background: #1a2c44;
+  }
+
+  Panel #TabGeneralActiveBack {
+    Anchor: (Left: 860, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabGeneralActiveTop {
+    Anchor: (Left: 860, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabGeneralActiveNotch {
+    Anchor: (Left: 907, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabHordeActiveBack {
+    Anchor: (Left: 964, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabHordeActiveTop {
+    Anchor: (Left: 964, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabHordeActiveNotch {
+    Anchor: (Left: 1011, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabPlayersActiveBack {
+    Anchor: (Left: 1068, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabPlayersActiveTop {
+    Anchor: (Left: 1068, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabPlayersActiveNotch {
+    Anchor: (Left: 1115, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabSoundsActiveBack {
+    Anchor: (Left: 1172, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabSoundsActiveTop {
+    Anchor: (Left: 1172, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabSoundsActiveNotch {
+    Anchor: (Left: 1219, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabRewardsActiveBack {
+    Anchor: (Left: 1276, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabRewardsActiveTop {
+    Anchor: (Left: 1276, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabRewardsActiveNotch {
+    Anchor: (Left: 1323, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabHelpActiveBack {
+    Anchor: (Left: 1380, Top: 86, Width: 104, Height: 44);
+    Background: #28384f;
+    Visible: false;
+  }
+
+  Panel #TabHelpActiveTop {
+    Anchor: (Left: 1380, Top: 130, Width: 104, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
+  }
+
+  Panel #TabHelpActiveNotch {
+    Anchor: (Left: 1427, Top: 132, Width: 10, Height: 2);
+    Background: #ddb35f;
+    Visible: false;
   }
 
   Panel #CategoryLine {
@@ -44,9 +157,9 @@ Group {
     Anchor: (Left: 862, Top: 92, Width: 100, Height: 36);
     Text: "General";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -55,9 +168,9 @@ Group {
     Anchor: (Left: 966, Top: 92, Width: 100, Height: 36);
     Text: "Horda";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -66,9 +179,9 @@ Group {
     Anchor: (Left: 1070, Top: 92, Width: 100, Height: 36);
     Text: "Jugadores";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -77,9 +190,9 @@ Group {
     Anchor: (Left: 1174, Top: 92, Width: 100, Height: 36);
     Text: "Sonidos";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -88,9 +201,9 @@ Group {
     Anchor: (Left: 1278, Top: 92, Width: 100, Height: 36);
     Text: "Recompensas";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -99,9 +212,9 @@ Group {
     Anchor: (Left: 1382, Top: 92, Width: 100, Height: 36);
     Text: "Ayuda";
     Style: TextButtonStyle(
-      Default: (Background: #1a2f48, LabelStyle: (FontSize: 13, TextColor: #dce8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #284768, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #3c648e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Default: (Background: #1a2638, LabelStyle: (FontSize: 13, TextColor: #aebed2, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Hovered: (Background: #23344a, LabelStyle: (FontSize: 13, TextColor: #e6f0ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Pressed: (Background: #2f435e, LabelStyle: (FontSize: 13, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
     );
     Padding: (Horizontal: 8);
   }
@@ -189,13 +302,13 @@ Group {
   }
 
   Label #ArenaJoinRadiusLabel {
-    Anchor: (Left: 1080, Top: 286, Width: 384, Height: 24);
-    Text: "Radio jugadores";
-    Style: (FontSize: 16, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+    Anchor: (Left: 1048, Top: 302, Width: 416, Height: 22);
+    Text: "Radio de jugadores de arena";
+    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #ArenaJoinRadius {
-    @Anchor = (Left: 1080, Top: 314, Width: 384);
+    @Anchor = (Left: 1048, Top: 326, Width: 416);
     Value: 32.0;
     Min: 4.0;
     Max: 512.0;
@@ -522,9 +635,9 @@ Group {
   }
 
   Label #AudienceInfoLabel {
-    Anchor: (Left: 456, Top: 232, Width: 1008, Height: 24);
+    Anchor: (Left: 1048, Top: 364, Width: 416, Height: 20);
     Text: "";
-    Style: (FontSize: 13, TextColor: #d6e3f2, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: #b5c7df, VerticalAlignment: Center);
   }
 
   Label #PlayersListTitle {
@@ -559,31 +672,31 @@ Group {
   }
 
   Label #PlayersHeaderName {
-    Anchor: (Left: 478, Top: 332, Width: 350, Height: 24);
+    Anchor: (Left: 478, Top: 362, Width: 350, Height: 24);
     Text: "Jugador";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #PlayersHeaderMode {
-    Anchor: (Left: 842, Top: 332, Width: 130, Height: 24);
+    Anchor: (Left: 842, Top: 362, Width: 130, Height: 24);
     Text: "Modo";
     Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   Group #AudiencePlayersRows {
-    Anchor: (Left: 456, Top: 360, Width: 1008, Height: 492);
+    Anchor: (Left: 456, Top: 390, Width: 1008, Height: 462);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
   }
 
   Label #AudiencePlayersEmptyLabel {
-    Anchor: (Left: 478, Top: 364, Width: 964, Height: 24);
+    Anchor: (Left: 478, Top: 394, Width: 964, Height: 24);
     Text: "";
     Style: (FontSize: 13, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   Label #AudienceHelpLabel {
-    Anchor: (Left: 456, Top: 860, Width: 1008, Height: 26);
+    Anchor: (Left: 456, Top: 914, Width: 1008, Height: 20);
     Text: "";
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
