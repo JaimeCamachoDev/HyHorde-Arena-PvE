@@ -17,9 +17,169 @@ Group {
     Background: #213650;
   }
 
+  Panel #CardOuterTop {
+    Anchor: (Left: 427, Top: 69, Width: 1066, Height: 3);
+    Background: #060b14(0.98);
+  }
+
+  Panel #CardOuterBottom {
+    Anchor: (Left: 427, Top: 1002, Width: 1066, Height: 3);
+    Background: #060b14(0.98);
+  }
+
+  Panel #CardOuterLeft {
+    Anchor: (Left: 427, Top: 72, Width: 3, Height: 930);
+    Background: #060b14(0.98);
+  }
+
+  Panel #CardOuterRight {
+    Anchor: (Left: 1490, Top: 72, Width: 3, Height: 930);
+    Background: #060b14(0.98);
+  }
+
+  Panel #CardMidTop {
+    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 1);
+    Background: #2c4b72(0.92);
+  }
+
+  Panel #CardMidBottom {
+    Anchor: (Left: 430, Top: 1000, Width: 1060, Height: 1);
+    Background: #2c4b72(0.68);
+  }
+
+  Panel #CardMidLeft {
+    Anchor: (Left: 430, Top: 72, Width: 1, Height: 930);
+    Background: #2c4b72(0.86);
+  }
+
+  Panel #CardMidRight {
+    Anchor: (Left: 1489, Top: 72, Width: 1, Height: 930);
+    Background: #2c4b72(0.86);
+  }
+
+  Panel #CardInnerTop {
+    Anchor: (Left: 431, Top: 73, Width: 1058, Height: 1);
+    Background: #557ba8(0.64);
+  }
+
+  Panel #CardInnerBottom {
+    Anchor: (Left: 431, Top: 999, Width: 1058, Height: 1);
+    Background: #1a304f(0.74);
+  }
+
+  Panel #CardInnerLeft {
+    Anchor: (Left: 431, Top: 73, Width: 1, Height: 928);
+    Background: #4c7099(0.5);
+  }
+
+  Panel #CardInnerRight {
+    Anchor: (Left: 1488, Top: 73, Width: 1, Height: 928);
+    Background: #4c7099(0.5);
+  }
+
+  Panel #CardCornerTLH {
+    Anchor: (Left: 433, Top: 75, Width: 18, Height: 2);
+    Background: #6f95c0(0.78);
+  }
+
+  Panel #CardCornerTLV {
+    Anchor: (Left: 433, Top: 75, Width: 2, Height: 18);
+    Background: #6f95c0(0.78);
+  }
+
+  Panel #CardCornerTRH {
+    Anchor: (Left: 1470, Top: 75, Width: 18, Height: 2);
+    Background: #6f95c0(0.78);
+  }
+
+  Panel #CardCornerTRV {
+    Anchor: (Left: 1486, Top: 75, Width: 2, Height: 18);
+    Background: #6f95c0(0.78);
+  }
+
+  Panel #CardCornerBLH {
+    Anchor: (Left: 433, Top: 997, Width: 18, Height: 2);
+    Background: #274565(0.75);
+  }
+
+  Panel #CardCornerBLV {
+    Anchor: (Left: 433, Top: 981, Width: 2, Height: 18);
+    Background: #274565(0.75);
+  }
+
+  Panel #CardCornerBRH {
+    Anchor: (Left: 1470, Top: 997, Width: 18, Height: 2);
+    Background: #274565(0.75);
+  }
+
+  Panel #CardCornerBRV {
+    Anchor: (Left: 1486, Top: 981, Width: 2, Height: 18);
+    Background: #274565(0.75);
+  }
+
+  Panel #HeaderTopEdge {
+    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 2);
+    Background: #4a6b93(0.7);
+  }
+
+  Panel #HeaderBottomEdge {
+    Anchor: (Left: 430, Top: 186, Width: 1060, Height: 2);
+    Background: #13243a(0.78);
+  }
+
   Panel #CategoryBar {
     Anchor: (Left: 856, Top: 14, Width: 628, Height: 64);
     Background: #0b1018(0.76);
+  }
+
+  Panel #CategoryOuterTop {
+    Anchor: (Left: 853, Top: 11, Width: 634, Height: 2);
+    Background: #050b14(0.96);
+  }
+
+  Panel #CategoryOuterBottom {
+    Anchor: (Left: 853, Top: 78, Width: 634, Height: 2);
+    Background: #050b14(0.96);
+  }
+
+  Panel #CategoryOuterLeft {
+    Anchor: (Left: 853, Top: 14, Width: 2, Height: 64);
+    Background: #050b14(0.96);
+  }
+
+  Panel #CategoryOuterRight {
+    Anchor: (Left: 1485, Top: 14, Width: 2, Height: 64);
+    Background: #050b14(0.96);
+  }
+
+  Panel #CategoryInnerTop {
+    Anchor: (Left: 856, Top: 14, Width: 628, Height: 1);
+    Background: #4b7099(0.72);
+  }
+
+  Panel #CategoryInnerBottom {
+    Anchor: (Left: 856, Top: 77, Width: 628, Height: 1);
+    Background: #1f3552(0.76);
+  }
+
+  Panel #CategoryCornerTL {
+    Anchor: (Left: 859, Top: 16, Width: 10, Height: 1);
+    Background: #6f95c0(0.76);
+  }
+
+  Panel #CategoryCornerTR {
+    Anchor: (Left: 1471, Top: 16, Width: 10, Height: 1);
+    Background: #6f95c0(0.76);
+  }
+
+  Panel #CategoryCornerBL {
+    Anchor: (Left: 859, Top: 76, Width: 10, Height: 1);
+    Background: #2b4a70(0.74);
+  }
+
+  Panel #CategoryCornerBR {
+    Anchor: (Left: 1471, Top: 76, Width: 10, Height: 1);
+    Background: #2b4a70(0.74);
   }
 
   Panel #CategoryBarInset {

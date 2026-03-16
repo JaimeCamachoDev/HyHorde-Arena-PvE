@@ -179,8 +179,8 @@ extends CustomUIPage {
         }
         try {
             String action = HordeConfigPage.read(payload, "action");
-            this.captureDraftFromPayload(payload);
-            this.applyLanguageFromPayload(payload);
+            this.captureDraftFromPayload(payload, action);
+            this.applyLanguageFromPayload(payload, action);
             language = HordeService.normalizeLanguage(this.hordeService.getLanguage());
             english = HordeService.isEnglishLanguage(language);
             if ("set_language".equals(action)) {
@@ -196,6 +196,7 @@ extends CustomUIPage {
             }
             HordeService.OperationResult result = null;
             boolean refreshDraftFromConfig = false;
+            boolean tabSwitched = false;
             switch (action) {
                 case "close": {
                     this.close();
@@ -203,26 +204,32 @@ extends CustomUIPage {
                 }
                 case "tab_general": {
                     this.activeTab = TAB_GENERAL;
+                    tabSwitched = true;
                     break;
                 }
                 case "tab_horde": {
                     this.activeTab = TAB_HORDE;
+                    tabSwitched = true;
                     break;
                 }
                 case "tab_players": {
                     this.activeTab = TAB_PLAYERS;
+                    tabSwitched = true;
                     break;
                 }
                 case "tab_sounds": {
                     this.activeTab = TAB_SOUNDS;
+                    tabSwitched = true;
                     break;
                 }
                 case "tab_rewards": {
                     this.activeTab = TAB_REWARDS;
+                    tabSwitched = true;
                     break;
                 }
                 case "tab_help": {
                     this.activeTab = TAB_HELP;
+                    tabSwitched = true;
                     break;
                 }
                 case "set_spawn_here": {
@@ -240,12 +247,12 @@ extends CustomUIPage {
                     break;
                 }
                 case "save": {
-                    result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
+                    result = this.hordeService.applyUiConfig(this.extractConfigValuesForApply(), world);
                     refreshDraftFromConfig = result != null && result.isSuccess();
                     break;
                 }
                 case "start": {
-                    result = this.hordeService.applyUiConfig(HordeConfigPage.extractConfigValues(payload), world);
+                    result = this.hordeService.applyUiConfig(this.extractConfigValuesForApply(), world);
                     if (result.isSuccess()) {
                         refreshDraftFromConfig = true;
                     } else {
@@ -266,11 +273,19 @@ extends CustomUIPage {
                     result = this.handleAudienceAction(action, world, english);
                 }
             }
+            if (tabSwitched) {
+                this.updateCurrentTabVisibilityOnly();
+                return;
+            }
             if (refreshDraftFromConfig) {
                 this.resetDraftFromConfig();
             }
             if (result != null) {
                 this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, result.getMessage())));
+            }
+            if ("save".equals(action)) {
+                this.safeSendUpdate();
+                return;
             }
         }
         catch (Exception ex) {
@@ -326,6 +341,33 @@ extends CustomUIPage {
         }
     }
 
+    private void updateCurrentTabVisibilityOnly() {
+        UICommandBuilder commandBuilder = new UICommandBuilder();
+        this.applyTabVisibility(commandBuilder, HordeConfigPage.normalizeTab(this.activeTab));
+        this.safeSendUpdate(commandBuilder);
+    }
+
+    private void safeSendUpdate() {
+        try {
+            this.sendUpdate();
+        }
+        catch (Exception ignored) {
+            this.safeRebuild();
+        }
+    }
+
+    private void safeSendUpdate(UICommandBuilder commandBuilder) {
+        if (commandBuilder == null) {
+            return;
+        }
+        try {
+            this.sendUpdate(commandBuilder, false);
+        }
+        catch (Exception ignored) {
+            this.safeRebuild();
+        }
+    }
+
     private EventData buildConfigSnapshotEvent(String action) {
         EventData eventData = EventData.of((String)"action", (String)action);
         for (UiFieldBinding field : SNAPSHOT_FIELDS) {
@@ -342,7 +384,12 @@ extends CustomUIPage {
         return this.buildConfigSnapshotEvent(action);
     }
 
-    private void applyLanguageFromPayload(JsonObject payload) {
+    private void applyLanguageFromPayload(JsonObject payload, String action) {
+        boolean languageEvent = "set_language".equals(action);
+        boolean generalTab = TAB_GENERAL.equals(HordeConfigPage.normalizeTab(this.activeTab));
+        if (!languageEvent && !generalTab) {
+            return;
+        }
         String requestedLanguage = HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "language"), HordeConfigPage.read(payload, "@Language"), HordeConfigPage.read(payload, "Language"));
         if (requestedLanguage == null || requestedLanguage.isBlank()) {
             return;
@@ -355,15 +402,20 @@ extends CustomUIPage {
         this.hordeService.setLanguage(nextLanguage);
     }
 
-    private void captureDraftFromPayload(JsonObject payload) {
+    private void captureDraftFromPayload(JsonObject payload, String action) {
         if (payload == null) {
             return;
         }
         for (UiFieldBinding field : SNAPSHOT_FIELDS) {
+            if (!this.shouldCaptureFieldFromPayload(field, action)) {
+                continue;
+            }
             HordeConfigPage.putIfNotBlank(this.draftValues, field.configKey, HordeConfigPage.extractFieldValue(payload, field));
         }
-        HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMin", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMin"), HordeConfigPage.read(payload, "@EnemyLevelMin"), HordeConfigPage.read(payload, "EnemyLevelMin")));
-        HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMax", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMax"), HordeConfigPage.read(payload, "@EnemyLevelMax"), HordeConfigPage.read(payload, "EnemyLevelMax")));
+        if (TAB_HORDE.equals(HordeConfigPage.normalizeTab(this.activeTab))) {
+            HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMin", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMin"), HordeConfigPage.read(payload, "@EnemyLevelMin"), HordeConfigPage.read(payload, "EnemyLevelMin")));
+            HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMax", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMax"), HordeConfigPage.read(payload, "@EnemyLevelMax"), HordeConfigPage.read(payload, "EnemyLevelMax")));
+        }
     }
 
     private void ensureDraftDefaults(HordeService.HordeConfig config) {
@@ -490,14 +542,54 @@ extends CustomUIPage {
         return "audience_set:" + mode + ":" + playerId;
     }
 
-    private static Map<String, String> extractConfigValues(JsonObject payload) {
+    private Map<String, String> extractConfigValuesForApply() {
+        this.ensureDraftDefaults(this.hordeService.getConfigSnapshot());
         HashMap<String, String> values = new HashMap<String, String>();
         for (UiFieldBinding field : SNAPSHOT_FIELDS) {
-            HordeConfigPage.putIfNotBlank(values, field.configKey, HordeConfigPage.extractFieldValue(payload, field));
+            HordeConfigPage.putIfNotBlank(values, field.configKey, this.draftValues.get(field.configKey));
         }
-        HordeConfigPage.putIfNotBlank(values, "enemyLevelMin", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMin"), HordeConfigPage.read(payload, "@EnemyLevelMin"), HordeConfigPage.read(payload, "EnemyLevelMin")));
-        HordeConfigPage.putIfNotBlank(values, "enemyLevelMax", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMax"), HordeConfigPage.read(payload, "@EnemyLevelMax"), HordeConfigPage.read(payload, "EnemyLevelMax")));
+        HordeConfigPage.putIfNotBlank(values, "enemyLevelMin", this.draftValues.get("enemyLevelMin"));
+        HordeConfigPage.putIfNotBlank(values, "enemyLevelMax", this.draftValues.get("enemyLevelMax"));
         return values;
+    }
+
+    private boolean shouldCaptureFieldFromPayload(UiFieldBinding field, String action) {
+        if (field == null || field.configKey == null || field.configKey.isBlank()) {
+            return false;
+        }
+        if ("set_language".equals(action)) {
+            return "language".equals(field.configKey);
+        }
+        String tab = HordeConfigPage.normalizeTab(this.activeTab);
+        switch (tab) {
+            case TAB_GENERAL:
+                return "spawnX".equals(field.configKey)
+                        || "spawnY".equals(field.configKey)
+                        || "spawnZ".equals(field.configKey)
+                        || "language".equals(field.configKey);
+            case TAB_HORDE:
+                return "minRadius".equals(field.configKey)
+                        || "maxRadius".equals(field.configKey)
+                        || "rounds".equals(field.configKey)
+                        || "baseEnemies".equals(field.configKey)
+                        || "enemiesPerRound".equals(field.configKey)
+                        || "waveDelay".equals(field.configKey)
+                        || "enemyType".equals(field.configKey)
+                        || "finalBossEnabled".equals(field.configKey);
+            case TAB_PLAYERS:
+                return "arenaJoinRadius".equals(field.configKey);
+            case TAB_SOUNDS:
+                return "roundStartSoundId".equals(field.configKey)
+                        || "roundStartVolume".equals(field.configKey)
+                        || "roundVictorySoundId".equals(field.configKey)
+                        || "roundVictoryVolume".equals(field.configKey);
+            case TAB_REWARDS:
+                return "rewardCategory".equals(field.configKey)
+                        || "rewardItemId".equals(field.configKey)
+                        || "rewardItemQuantity".equals(field.configKey);
+            default:
+                return false;
+        }
     }
 
     private static void putIfNotBlank(Map<String, String> values, String key, String value) {
