@@ -454,6 +454,34 @@ Group {
     Style: $C.@SecondaryTextButtonStyle;
   }
 
+  Label #AutoStartEnabledLabel {
+    Anchor: (Left: 1080, Top: 286, Width: 270, Height: 24);
+    Text: "Modo horda automatica";
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@CheckBox #AutoStartEnabled {
+    Anchor: (Left: 1360, Top: 288, Width: 22, Height: 22);
+    Value: false;
+  }
+
+  Label #AutoStartIntervalLabel {
+    Anchor: (Left: 1080, Top: 318, Width: 384, Height: 22);
+    Text: "Iniciar cada (minutos)";
+    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@TextField #AutoStartInterval {
+    @Anchor = (Left: 1080, Top: 342, Width: 120);
+    Value: "10";
+  }
+
+  TextButton #AutoStartApplyButton {
+    Anchor: (Left: 1210, Top: 342, Width: 254, Height: 34);
+    Text: "Aplicar modo auto";
+    Style: $C.@SecondaryTextButtonStyle;
+  }
+
   Label #RadiusLabel {
     Anchor: (Left: 456, Top: 286, Width: 360, Height: 28);
     Text: "Configuracion del radio de aparicion de enemigos";

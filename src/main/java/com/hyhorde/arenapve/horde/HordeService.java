@@ -138,6 +138,11 @@ public final class HordeService {
     private static final int MAX_PLAYER_MULTIPLIER = HordeConfigRules.MAX_PLAYER_MULTIPLIER;
     private static final int MIN_WAVE_DELAY_SECONDS = HordeConfigRules.MIN_WAVE_DELAY_SECONDS;
     private static final int MAX_WAVE_DELAY_SECONDS = HordeConfigRules.MAX_WAVE_DELAY_SECONDS;
+    private static final int MIN_AUTO_START_INTERVAL_MINUTES = 0;
+    private static final int MAX_AUTO_START_INTERVAL_MINUTES = 1440;
+    private static final int DEFAULT_AUTO_START_INTERVAL_MINUTES = 0;
+    private static final long AUTO_START_POLL_INTERVAL_MILLIS = 1000L;
+    private static final long AUTO_START_RETRY_NO_AUDIENCE_MILLIS = 5000L;
     private static final int MIN_REWARD_ITEM_QUANTITY = HordeConfigRules.MIN_REWARD_ITEM_QUANTITY;
     private static final int MAX_REWARD_ITEM_QUANTITY = HordeConfigRules.MAX_REWARD_ITEM_QUANTITY;
     private static final int MIN_ENEMY_LEVEL = HordeConfigRules.MIN_ENEMY_LEVEL;
@@ -180,6 +185,8 @@ public final class HordeService {
     private boolean pluginReloadInProgress;
     private HordeConfig config;
     private HordeSession session;
+    private long nextAutoStartPollAtMillis;
+    private long nextAutoStartAtMillis;
 
     public HordeService(PluginBase plugin) {
         this.plugin = plugin;
@@ -198,10 +205,13 @@ public final class HordeService {
         this.cachedRoundVictorySoundEventId = "";
         this.cachedRoundVictorySoundSelection = "";
         this.config = HordeConfig.defaults();
+        this.nextAutoStartPollAtMillis = 0L;
+        this.nextAutoStartAtMillis = 0L;
         this.loadEnemyCategoriesFromDisk(true);
         this.loadRewardItemsFromDisk(true);
         this.loadRoundSoundsFromDisk(true);
         this.loadConfig();
+        this.resetAutoStartSchedule(false);
     }
 
     public synchronized HordeConfig getConfigSnapshot() {
@@ -210,6 +220,84 @@ public final class HordeService {
 
     public synchronized boolean isActive() {
         return this.session != null;
+    }
+
+    public synchronized void tickAutoStart(Store<EntityStore> store, World world) {
+        if (store == null || world == null || !world.isAlive()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now < this.nextAutoStartPollAtMillis) {
+            return;
+        }
+        this.nextAutoStartPollAtMillis = now + AUTO_START_POLL_INTERVAL_MILLIS;
+        if (this.pluginReloadInProgress || this.session != null) {
+            return;
+        }
+        if (!this.config.spawnConfigured || !Objects.equals(this.config.worldName, world.getName())) {
+            return;
+        }
+        if (this.config.autoStartIntervalMinutes <= 0) {
+            return;
+        }
+        if (this.nextAutoStartAtMillis <= 0L) {
+            this.nextAutoStartAtMillis = now + this.autoStartIntervalMillis();
+        }
+        if (now < this.nextAutoStartAtMillis) {
+            return;
+        }
+        PlayerRef starter = this.findAutoStartStarter(world);
+        if (starter == null) {
+            return;
+        }
+        OperationResult result = this.start(store, starter, world);
+        if (result.isSuccess()) {
+            return;
+        }
+        String message = result.getMessage() == null ? "" : result.getMessage().toLowerCase(Locale.ROOT);
+        if (message.contains("no arena players found") || message.contains("no hay jugadores de arena")) {
+            this.nextAutoStartAtMillis = now + AUTO_START_RETRY_NO_AUDIENCE_MILLIS;
+            return;
+        }
+        this.nextAutoStartAtMillis = now + this.autoStartIntervalMillis();
+        this.plugin.getLogger().at(Level.FINE).log("Auto-start horde skipped: %s", (Object)result.getMessage());
+    }
+
+    private PlayerRef findAutoStartStarter(World world) {
+        if (world == null) {
+            return null;
+        }
+        for (PlayerRef playerRef : world.getPlayerRefs()) {
+            if (playerRef == null || playerRef.getUuid() == null) continue;
+            return playerRef;
+        }
+        return null;
+    }
+
+    private long autoStartIntervalMillis() {
+        int intervalMinutes = Math.max(MIN_AUTO_START_INTERVAL_MINUTES, Math.min(this.config.autoStartIntervalMinutes, MAX_AUTO_START_INTERVAL_MINUTES));
+        if (intervalMinutes <= 0) {
+            return 0L;
+        }
+        return TimeUnit.MINUTES.toMillis(intervalMinutes);
+    }
+
+    private void resetAutoStartSchedule(boolean immediate) {
+        long now = System.currentTimeMillis();
+        this.nextAutoStartPollAtMillis = now;
+        if (this.config.autoStartIntervalMinutes <= 0) {
+            this.nextAutoStartAtMillis = 0L;
+            return;
+        }
+        this.nextAutoStartAtMillis = immediate ? now : now + this.autoStartIntervalMillis();
+    }
+
+    private void scheduleNextAutoStartFromNow() {
+        if (this.config.autoStartIntervalMinutes <= 0) {
+            this.nextAutoStartAtMillis = 0L;
+            return;
+        }
+        this.nextAutoStartAtMillis = System.currentTimeMillis() + this.autoStartIntervalMillis();
     }
 
     public synchronized String getStatusLine() {
@@ -631,6 +719,7 @@ public final class HordeService {
         RewardCatalogLoadReport rewardCatalogReport = this.loadRewardItemsFromDisk(true);
         RoundSoundCatalogLoadReport soundCatalogReport = this.loadRoundSoundsFromDisk(true);
         this.loadConfig();
+        this.resetAutoStartSchedule(false);
         this.refreshStatusHud(this.session);
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         String enemyCatalogInfo = enemyCatalogReport.toUserMessage(english);
@@ -879,6 +968,9 @@ public final class HordeService {
         if (updated.waveDelaySeconds < MIN_WAVE_DELAY_SECONDS || updated.waveDelaySeconds > MAX_WAVE_DELAY_SECONDS) {
             return OperationResult.fail(english ? "waveDelay must be between " + MIN_WAVE_DELAY_SECONDS + " and " + MAX_WAVE_DELAY_SECONDS + " seconds." : "waveDelay debe estar entre " + MIN_WAVE_DELAY_SECONDS + " y " + MAX_WAVE_DELAY_SECONDS + " segundos.");
         }
+        if (updated.autoStartIntervalMinutes < MIN_AUTO_START_INTERVAL_MINUTES || updated.autoStartIntervalMinutes > MAX_AUTO_START_INTERVAL_MINUTES) {
+            return OperationResult.fail(english ? "autoStartIntervalMinutes must be between " + MIN_AUTO_START_INTERVAL_MINUTES + " and " + MAX_AUTO_START_INTERVAL_MINUTES + "." : "autoStartIntervalMinutes debe estar entre " + MIN_AUTO_START_INTERVAL_MINUTES + " y " + MAX_AUTO_START_INTERVAL_MINUTES + ".");
+        }
         if (updated.roundStartVolume < MIN_SOUND_VOLUME || updated.roundStartVolume > MAX_SOUND_VOLUME) {
             return OperationResult.fail(english ? "roundStartVolume must be between 0 and 100 (%)." : "roundStartVolume debe estar entre 0 y 100 (%).");
         }
@@ -903,6 +995,7 @@ public final class HordeService {
         this.config = updated;
         this.invalidateCachedRoundSoundIndexes();
         this.saveConfig();
+        this.resetAutoStartSchedule(false);
         return OperationResult.ok(english ? "Horde configuration saved." : "Configuracion de hordas guardada.");
     }
 
@@ -983,6 +1076,7 @@ public final class HordeService {
             this.sendAudienceMessage(newSession, String.format(Locale.ROOT, "Horda PVE preparada en %.2f %.2f %.2f | %d rondas | tipo: %s | rol: %s | jugadores x%d | niveles: %s | boss final: %s | inicio en %ds | jugadores bloqueados: %d | espectadores: %d", this.config.spawnX, this.config.spawnY, this.config.spawnZ, this.config.rounds, selectedEnemyType, roleSuffix, playerMultiplier, levelInfo, finalBossState, START_COUNTDOWN_TOTAL_SECONDS, lockedPlayers.size(), lockedSpectators.size()));
         }
         this.broadcastHordeStartAnnouncement(newSession, selectedEnemyType, selectedRole, playerMultiplier);
+        this.scheduleNextAutoStartFromNow();
         return OperationResult.ok(english ? "Horde started. Countdown: 3..2..1." : "Horda iniciada. Cuenta atras: 3..2..1.");
     }
 
@@ -4097,6 +4191,7 @@ public final class HordeService {
         updated.baseEnemiesPerRound = HordeService.parseInt(values.get("baseEnemies"), updated.baseEnemiesPerRound, "baseEnemies", english);
         updated.enemiesPerRoundIncrement = HordeService.parseInt(values.get("enemiesPerRound"), updated.enemiesPerRoundIncrement, "enemiesPerRound", english);
         updated.waveDelaySeconds = HordeService.parseInt(values.get("waveDelay"), updated.waveDelaySeconds, "waveDelay", english);
+        updated.autoStartIntervalMinutes = HordeService.parseInt(values.get("autoStartIntervalMinutes"), updated.autoStartIntervalMinutes, "autoStartIntervalMinutes", english);
         updated.rewardEveryRounds = HordeService.parseInt(values.get("rewardEveryRounds"), updated.rewardEveryRounds, "rewardEveryRounds", english);
         updated.enemyLevelMin = HordeService.parseInt(values.get("enemyLevelMin"), updated.enemyLevelMin, "enemyLevelMin", english);
         updated.enemyLevelMax = HordeService.parseInt(values.get("enemyLevelMax"), updated.enemyLevelMax, "enemyLevelMax", english);
@@ -4266,6 +4361,7 @@ public final class HordeService {
         if (!Files.exists(this.configPath, new LinkOption[0])) {
             this.saveConfig();
             this.invalidateCachedRoundSoundIndexes();
+            this.resetAutoStartSchedule(false);
             return;
         }
         try (BufferedReader reader = Files.newBufferedReader(this.configPath, StandardCharsets.UTF_8);){
@@ -4274,12 +4370,14 @@ public final class HordeService {
                 this.config = HordeService.sanitize(loaded);
             }
             this.invalidateCachedRoundSoundIndexes();
+            this.resetAutoStartSchedule(false);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo leer horde-config.json, se usaran valores por defecto: %s", (Object)ex.getMessage());
             this.config = HordeConfig.defaults();
             this.invalidateCachedRoundSoundIndexes();
             this.saveConfig();
+            this.resetAutoStartSchedule(false);
         }
     }
 
@@ -4316,6 +4414,11 @@ public final class HordeService {
             sanitized.waveDelaySeconds = HordeConfig.defaults().waveDelaySeconds;
         } else if (sanitized.waveDelaySeconds > MAX_WAVE_DELAY_SECONDS) {
             sanitized.waveDelaySeconds = MAX_WAVE_DELAY_SECONDS;
+        }
+        if (sanitized.autoStartIntervalMinutes < MIN_AUTO_START_INTERVAL_MINUTES) {
+            sanitized.autoStartIntervalMinutes = HordeConfig.defaults().autoStartIntervalMinutes;
+        } else if (sanitized.autoStartIntervalMinutes > MAX_AUTO_START_INTERVAL_MINUTES) {
+            sanitized.autoStartIntervalMinutes = MAX_AUTO_START_INTERVAL_MINUTES;
         }
         if (sanitized.playerMultiplier < MIN_PLAYER_MULTIPLIER) {
             sanitized.playerMultiplier = HordeConfig.defaults().playerMultiplier;
@@ -4557,6 +4660,7 @@ public final class HordeService {
         public int baseEnemiesPerRound;
         public int enemiesPerRoundIncrement;
         public int waveDelaySeconds;
+        public int autoStartIntervalMinutes;
         public int playerMultiplier;
         public String enemyType;
         public String npcRole;
@@ -4587,6 +4691,7 @@ public final class HordeService {
             defaults.baseEnemiesPerRound = HordeConfigRules.DEFAULT_BASE_ENEMIES;
             defaults.enemiesPerRoundIncrement = HordeConfigRules.DEFAULT_ENEMIES_INCREMENT;
             defaults.waveDelaySeconds = HordeConfigRules.DEFAULT_WAVE_DELAY_SECONDS;
+            defaults.autoStartIntervalMinutes = DEFAULT_AUTO_START_INTERVAL_MINUTES;
             defaults.playerMultiplier = HordeConfigRules.DEFAULT_PLAYER_MULTIPLIER;
             defaults.enemyType = DEFAULT_ENEMY_TYPE;
             defaults.npcRole = "";
@@ -4619,6 +4724,7 @@ public final class HordeService {
             copy.baseEnemiesPerRound = this.baseEnemiesPerRound;
             copy.enemiesPerRoundIncrement = this.enemiesPerRoundIncrement;
             copy.waveDelaySeconds = this.waveDelaySeconds;
+            copy.autoStartIntervalMinutes = this.autoStartIntervalMinutes;
             copy.playerMultiplier = this.playerMultiplier;
             copy.enemyType = this.enemyType;
             copy.npcRole = this.npcRole;

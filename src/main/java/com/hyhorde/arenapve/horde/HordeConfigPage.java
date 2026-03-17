@@ -45,6 +45,12 @@ extends CustomUIPage {
             new UiFieldBinding("baseEnemies", "BaseEnemies", "#BaseEnemies.Value"),
             new UiFieldBinding("enemiesPerRound", "EnemiesPerRound", "#EnemiesPerRound.Value"),
             new UiFieldBinding("waveDelay", "WaveDelay", "#WaveDelay.Value"),
+            // Known CustomUI runtime bug:
+            // setting #RewardEveryRounds.Value from Java can crash with
+            // "CustomUI Set command couldn't set value" (see server logs, 2026-03-17).
+            // Keep auto-start on dedicated stable controls in General tab.
+            new UiFieldBinding("autoStartEnabled", "AutoStartEnabled", "#AutoStartEnabled.Value"),
+            new UiFieldBinding("autoStartIntervalMinutes", "AutoStartIntervalMinutes", "#AutoStartInterval.Value"),
             new UiFieldBinding("enemyType", "EnemyType", "#EnemyType.Value", "role", "@Role", "Role"),
             new UiFieldBinding("language", "Language", "#Language.Value"),
             new UiFieldBinding("rewardCategory", "RewardCategory", "#RewardCategory.Value"),
@@ -96,6 +102,9 @@ extends CustomUIPage {
         int baseEnemiesValue = HordeConfigPage.clamp(this.getDraftInt("baseEnemies", config.baseEnemiesPerRound), 1, 400);
         int enemiesPerRoundValue = HordeConfigPage.clamp(this.getDraftInt("enemiesPerRound", config.enemiesPerRoundIncrement), 0, 400);
         int waveDelayValue = HordeConfigPage.clamp(this.getDraftInt("waveDelay", config.waveDelaySeconds), 0, 300);
+        boolean autoStartEnabledValue = this.getDraftBoolean("autoStartEnabled", config.autoStartIntervalMinutes > 0);
+        int autoStartIntervalDefaultValue = config.autoStartIntervalMinutes > 0 ? config.autoStartIntervalMinutes : 10;
+        int autoStartIntervalMinutesValue = HordeConfigPage.clamp(this.getDraftInt("autoStartIntervalMinutes", autoStartIntervalDefaultValue), 1, 1440);
         int rewardItemQuantityValue = HordeConfigPage.clamp(this.getDraftInt("rewardItemQuantity", config.rewardItemQuantity), 1, 100);
         double roundStartVolumeValue = HordeConfigPage.clamp(this.getDraftDouble("roundStartVolume", HordeConfigPage.toUiVolumePercent(config.roundStartVolume)), 0.0, 100.0);
         double roundVictoryVolumeValue = HordeConfigPage.clamp(this.getDraftDouble("roundVictoryVolume", HordeConfigPage.toUiVolumePercent(config.roundVictoryVolume)), 0.0, 100.0);
@@ -116,10 +125,19 @@ extends CustomUIPage {
         // In this runtime it repeatedly crashes clients/servers with:
         // "Crash - CustomUI Set command couldn't set value. Selector: #<SliderId>.Value"
         // We only read slider values from payload on Save/Start.
+        //
+        // IMPORTANT (known client crash from logs):
+        // We have seen singleplayer joins fail with "Crash - Failed to load CustomUI documents"
+        // when the page document is changed aggressively (new controls/layout edits).
+        // Also, this runtime may crash with:
+        // "Crash - CustomUI Set command couldn't set value. Selector: #RewardEveryRounds.Value"
+        // so we avoid writing to #RewardEveryRounds.Value and use dedicated stable controls instead.
         commandBuilder.append(LAYOUT)
                 .set("#SpawnX.Value", this.getDraftValue("spawnX", HordeConfigPage.formatDouble(config.spawnX)))
                 .set("#SpawnY.Value", this.getDraftValue("spawnY", HordeConfigPage.formatDouble(config.spawnY)))
                 .set("#SpawnZ.Value", this.getDraftValue("spawnZ", HordeConfigPage.formatDouble(config.spawnZ)))
+                .set("#AutoStartEnabled.Value", autoStartEnabledValue)
+                .set("#AutoStartInterval.Value", Integer.toString(autoStartIntervalMinutesValue))
                 .set("#EnemyType.Value", enemyTypeValue)
                 .set("#EnemyType.Entries", enemyTypeEntries)
                 .set("#Language.Value", language)
@@ -159,6 +177,7 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SetSpawnButton", this.buildLanguageEvent("set_spawn_here"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersRefreshButton", this.buildLanguageEvent("refresh_players"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#ReloadModButton", this.buildLanguageEvent("reload_config"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#AutoStartApplyButton", this.buildConfigSnapshotEvent("apply_auto_start"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#Language", this.buildLanguageEvent("set_language"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start"))
@@ -246,6 +265,11 @@ extends CustomUIPage {
                     refreshDraftFromConfig = result != null && result.isSuccess();
                     break;
                 }
+                case "apply_auto_start": {
+                    result = this.hordeService.applyUiConfig(this.extractConfigValuesForApply(), world);
+                    refreshDraftFromConfig = result != null && result.isSuccess();
+                    break;
+                }
                 case "save": {
                     result = this.hordeService.applyUiConfig(this.extractConfigValuesForApply(), world);
                     refreshDraftFromConfig = result != null && result.isSuccess();
@@ -306,6 +330,7 @@ extends CustomUIPage {
         }
         switch (action) {
             case "set_spawn_here":
+            case "apply_auto_start":
             case "save":
             case "skip_round":
             case "start": {
@@ -438,6 +463,8 @@ extends CustomUIPage {
         this.putDraftIfMissing("baseEnemies", Integer.toString(config.baseEnemiesPerRound));
         this.putDraftIfMissing("enemiesPerRound", Integer.toString(config.enemiesPerRoundIncrement));
         this.putDraftIfMissing("waveDelay", Integer.toString(config.waveDelaySeconds));
+        this.putDraftIfMissing("autoStartEnabled", Boolean.toString(config.autoStartIntervalMinutes > 0));
+        this.putDraftIfMissing("autoStartIntervalMinutes", Integer.toString(config.autoStartIntervalMinutes > 0 ? config.autoStartIntervalMinutes : 10));
         this.putDraftIfMissing("enemyType", config.enemyType == null ? "undead" : config.enemyType);
         this.putDraftIfMissing("language", HordeService.normalizeLanguage(config.language));
         this.putDraftIfMissing("rewardCategory", HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory()));
@@ -554,6 +581,9 @@ extends CustomUIPage {
         for (UiFieldBinding field : SNAPSHOT_FIELDS) {
             HordeConfigPage.putIfNotBlank(values, field.configKey, this.draftValues.get(field.configKey));
         }
+        boolean autoStartEnabled = this.getDraftBoolean("autoStartEnabled", false);
+        int autoStartIntervalMinutes = HordeConfigPage.clamp(this.getDraftInt("autoStartIntervalMinutes", 10), 1, 1440);
+        values.put("autoStartIntervalMinutes", Integer.toString(autoStartEnabled ? autoStartIntervalMinutes : 0));
         HordeConfigPage.putIfNotBlank(values, "enemyLevelMin", this.draftValues.get("enemyLevelMin"));
         HordeConfigPage.putIfNotBlank(values, "enemyLevelMax", this.draftValues.get("enemyLevelMax"));
         return values;
@@ -572,6 +602,8 @@ extends CustomUIPage {
                 return "spawnX".equals(field.configKey)
                         || "spawnY".equals(field.configKey)
                         || "spawnZ".equals(field.configKey)
+                        || "autoStartEnabled".equals(field.configKey)
+                        || "autoStartIntervalMinutes".equals(field.configKey)
                         || "language".equals(field.configKey);
             case TAB_HORDE:
                 return "minRadius".equals(field.configKey)
@@ -838,6 +870,9 @@ extends CustomUIPage {
                 .set("#LanguageLabel.Text", HordeConfigPage.t(language, english, "Interface language", "Idioma interfaz"))
                 .set("#EnemyLevelRangeLabel.Text", "")
                 .set("#EnemyLevelWipLabel.Text", "")
+                .set("#AutoStartEnabledLabel.Text", HordeConfigPage.t(language, english, "Automatic horde mode", "Modo horda automatica"))
+                .set("#AutoStartIntervalLabel.Text", HordeConfigPage.t(language, english, "Start every (minutes)", "Iniciar cada (minutos)"))
+                .set("#AutoStartApplyButton.Text", HordeConfigPage.t(language, english, "Apply auto mode", "Aplicar modo auto"))
                 .set("#RewardEveryRoundsLabel.Text", HordeConfigPage.t(language, english, "Reward every round(s)", "Recompensa por ronda(s)"))
                 .set("#RewardCategoryLabel.Text", HordeConfigPage.t(language, english, "Reward category", "Categoria recompensa"))
                 .set("#RewardCommandsLabel.Text", HordeConfigPage.t(language, english, "Reward item", "Item recompensa"))
@@ -880,7 +915,7 @@ extends CustomUIPage {
         boolean rewardsTab = TAB_REWARDS.equals(tab);
         boolean helpTab = TAB_HELP.equals(tab);
 
-        this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#LanguageLabel", "#Language");
+        this.setVisible(commandBuilder, generalTab, "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
         this.setVisible(commandBuilder, hordeTab, "#RoleLabel", "#EnemyType", "#FinalBossLabel", "#FinalBossEnabled", "#RadiusLabel", "#MinRadiusLabel", "#MinRadius", "#MaxRadiusLabel", "#MaxRadius", "#RoundConfigLabel", "#RoundLabel", "#Rounds", "#WaveDelayLabel", "#WaveDelay", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound");
         this.setVisible(commandBuilder, playersTab, "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundId", "#RoundStartVolumeLabel", "#RoundStartVolume", "#RoundVictorySoundLabel", "#RoundVictorySoundId", "#RoundVictoryVolumeLabel", "#RoundVictoryVolume");

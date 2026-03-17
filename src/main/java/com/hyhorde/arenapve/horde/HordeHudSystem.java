@@ -61,6 +61,7 @@ extends EntityTickingSystem<EntityStore> {
     public void tick(float deltaTime, int tickCounter, ArchetypeChunk<EntityStore> chunk, Store<EntityStore> store, CommandBuffer<EntityStore> commandBuffer) {
         EntityStore entityStore = (EntityStore)store.getExternalData();
         World world = entityStore == null ? null : entityStore.getWorld();
+        this.hordeService.tickAutoStart(store, world);
         // Known issue history (important for future maintenance):
         // - Client disconnect: "Failed to apply CustomUI HUD commands".
         // - Root cause: two mods writing CustomUIHud packets for the same player.
