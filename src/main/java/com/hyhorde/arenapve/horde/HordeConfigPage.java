@@ -167,7 +167,7 @@ extends CustomUIPage {
         this.populateAudienceRows(commandBuilder, eventBuilder, audienceRows, language, english);
         // IMPORTANT: Dropdowns like #Language must use ValueChanged.
         // Using Activating on dropdowns triggers client crash: "Failed to apply CustomUI event bindings".
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#CloseButton", EventData.of((String)"action", (String)"close"))
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, "#HordeCloseButton", EventData.of((String)"action", (String)"close"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabGeneralButton", this.buildLanguageEvent("tab_general"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabHordeButton", this.buildLanguageEvent("tab_horde"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabPlayersButton", this.buildLanguageEvent("tab_players"))
@@ -904,7 +904,7 @@ extends CustomUIPage {
                 .set("#HelpReloadLabel.Text", HordeConfigPage.t(language, english, "Reload and deployment", "Recarga y despliegue"))
                 .set("#HelpReloadLine1.Text", HordeConfigPage.t(language, english, "'Reload config' or /hordareload config reloads all JSON config files without restart.", "'Recargar config' o /hordareload config recarga todos los JSON de configuracion sin reiniciar."))
                 .set("#HelpReloadLine2.Text", HordeConfigPage.t(language, english, "Replacing the mod .jar still requires a full server restart.", "Reemplazar el .jar del mod sigue requiriendo reinicio completo del servidor."))
-                .set("#CloseButton.Text", HordeConfigPage.t(language, english, "Close", "Cerrar"));
+                .set("#HordeCloseButton.Text", HordeConfigPage.t(language, english, "Close", "Cerrar"));
     }
 
     private void applyTabVisibility(UICommandBuilder commandBuilder, String tab) {
