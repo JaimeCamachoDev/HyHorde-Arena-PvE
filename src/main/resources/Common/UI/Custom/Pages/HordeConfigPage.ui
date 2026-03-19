@@ -20,10 +20,14 @@ $C = "../Common.ui";
 );
 
 Group {
-  Anchor: (Left: 0, Top: 0, Width: 1920, Height: 1080);
+  Anchor: (Full: 0);
+
+  SceneBlur {
+    Anchor: (Full: 0);
+  }
 
   $C.@PageOverlay #Overlay {
-    Anchor: (Left: 0, Top: 0, Width: 1920, Height: 1080);
+    Anchor: (Full: 0);
   }
 
   $C.@DecoratedContainer #OfficialFrame {
