@@ -937,6 +937,27 @@ public final class HordeService {
         catch (IllegalArgumentException ex) {
             return OperationResult.fail(ex.getMessage());
         }
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedArenaForHorde = null;
+        String selectedArenaIdValue = values.get("selectedArenaId");
+        if (selectedArenaIdValue != null) {
+            updated.selectedArenaId = HordeService.cleanArenaSelectionValue(selectedArenaIdValue);
+        } else {
+            updated.selectedArenaId = HordeService.cleanArenaSelectionValue(updated.selectedArenaId);
+        }
+        if (!updated.selectedArenaId.isBlank()) {
+            selectedArenaForHorde = HordeService.findArenaById(this.bossArenaCatalogService.getArenaDefinitionsSnapshot(), updated.selectedArenaId);
+            if (selectedArenaForHorde == null) {
+                updated.selectedArenaId = "";
+            } else {
+                updated.spawnConfigured = true;
+                updated.spawnX = selectedArenaForHorde.x;
+                updated.spawnY = selectedArenaForHorde.y;
+                updated.spawnZ = selectedArenaForHorde.z;
+                if (selectedArenaForHorde.worldName != null && !selectedArenaForHorde.worldName.isBlank()) {
+                    updated.worldName = selectedArenaForHorde.worldName;
+                }
+            }
+        }
         String enemyTypeValue = values.get("enemyType");
         if (enemyTypeValue != null && !enemyTypeValue.isBlank()) {
             updated.enemyType = HordeService.normalizeEnemyType(enemyTypeValue);
@@ -1053,7 +1074,11 @@ public final class HordeService {
             return OperationResult.fail(english ? "enemyLevelMax must be greater than or equal to enemyLevelMin." : "enemyLevelMax debe ser mayor o igual a enemyLevelMin.");
         }
         updated.spawnConfigured = true;
-        updated.worldName = world.getName();
+        if (selectedArenaForHorde != null && selectedArenaForHorde.worldName != null && !selectedArenaForHorde.worldName.isBlank()) {
+            updated.worldName = selectedArenaForHorde.worldName;
+        } else {
+            updated.worldName = world.getName();
+        }
         this.config = updated;
         this.invalidateCachedRoundSoundIndexes();
         this.saveConfig();
@@ -4412,6 +4437,29 @@ public final class HordeService {
         return role == null ? "" : role;
     }
 
+    private static String cleanArenaSelectionValue(String arenaId) {
+        return arenaId == null ? "" : arenaId.trim();
+    }
+
+    private static BossArenaCatalogService.ArenaDefinitionSnapshot findArenaById(List<BossArenaCatalogService.ArenaDefinitionSnapshot> rows, String arenaId) {
+        if (rows == null || rows.isEmpty()) {
+            return null;
+        }
+        String requested = HordeService.cleanArenaSelectionValue(arenaId);
+        if (requested.isBlank()) {
+            return null;
+        }
+        for (BossArenaCatalogService.ArenaDefinitionSnapshot row : rows) {
+            if (row == null || row.arenaId == null) {
+                continue;
+            }
+            if (row.arenaId.equalsIgnoreCase(requested)) {
+                return row;
+            }
+        }
+        return null;
+    }
+
     private void loadConfig() {
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
@@ -4547,6 +4595,7 @@ public final class HordeService {
         if ("auto".equalsIgnoreCase(sanitized.npcRole) || "none".equalsIgnoreCase(sanitized.npcRole) || "clear".equalsIgnoreCase(sanitized.npcRole) || "default".equalsIgnoreCase(sanitized.npcRole)) {
             sanitized.npcRole = "";
         }
+        sanitized.selectedArenaId = HordeService.cleanArenaSelectionValue(sanitized.selectedArenaId);
         sanitized.language = HordeService.normalizeLanguage(sanitized.language);
         sanitized.worldName = sanitized.worldName == null || sanitized.worldName.isBlank() ? "default" : sanitized.worldName;
         return sanitized;
@@ -4726,6 +4775,7 @@ public final class HordeService {
         public int playerMultiplier;
         public String enemyType;
         public String npcRole;
+        public String selectedArenaId;
         public String language;
         public int rewardEveryRounds;
         public String rewardCategory;
@@ -4757,6 +4807,7 @@ public final class HordeService {
             defaults.playerMultiplier = HordeConfigRules.DEFAULT_PLAYER_MULTIPLIER;
             defaults.enemyType = DEFAULT_ENEMY_TYPE;
             defaults.npcRole = "";
+            defaults.selectedArenaId = "";
             defaults.language = LANGUAGE_SPANISH;
             defaults.rewardEveryRounds = HordeConfigRules.DEFAULT_REWARD_EVERY_ROUNDS;
             defaults.rewardCategory = DEFAULT_REWARD_CATEGORY;
@@ -4790,6 +4841,7 @@ public final class HordeService {
             copy.playerMultiplier = this.playerMultiplier;
             copy.enemyType = this.enemyType;
             copy.npcRole = this.npcRole;
+            copy.selectedArenaId = this.selectedArenaId;
             copy.language = this.language;
             copy.rewardEveryRounds = this.rewardEveryRounds;
             copy.rewardCategory = this.rewardCategory;

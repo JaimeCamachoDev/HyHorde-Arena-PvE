@@ -414,13 +414,14 @@ Group {
 
   Panel #CategoryLine {
     Anchor: (Left: 456, Top: 144, Width: 1008, Height: 8);
+    Visible: false;
     Background: #2a4565;
   }
 
   Label #TitleLabel {
-    Anchor: (Left: 456, Top: 92, Width: 470, Height: 40);
+    Anchor: (Left: 456, Top: 98, Width: 500, Height: 30);
     Text: "Horda PVE Config";
-    Style: (FontSize: 30, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 22, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #SubTitleLabel {
@@ -531,6 +532,17 @@ Group {
     Style: (FontSize: 13, TextColor: #cfe0f3, RenderBold: true, VerticalAlignment: Center);
   }
 
+  Label #GeneralArenaLabel {
+    Anchor: (Left: 456, Top: 234, Width: 568, Height: 24);
+    Text: "Arena actual de la horda";
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@DropdownBox #GeneralArenaId {
+    @Anchor = (Left: 456, Top: 262, Width: 568);
+    Value: "";
+  }
+
   Label #SpawnLabel {
     Anchor: (Left: 456, Top: 234, Width: 180, Height: 28);
     Text: "Centro (X Y Z)";
@@ -559,29 +571,29 @@ Group {
   }
 
   Label #AutoStartEnabledLabel {
-    Anchor: (Left: 1080, Top: 286, Width: 270, Height: 24);
+    Anchor: (Left: 1048, Top: 320, Width: 340, Height: 24);
     Text: "Modo horda automatica";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@CheckBox #AutoStartEnabled {
-    Anchor: (Left: 1360, Top: 288, Width: 22, Height: 22);
+    Anchor: (Left: 1420, Top: 322, Width: 22, Height: 22);
     Value: false;
   }
 
   Label #AutoStartIntervalLabel {
-    Anchor: (Left: 1080, Top: 318, Width: 384, Height: 22);
+    Anchor: (Left: 1048, Top: 354, Width: 416, Height: 22);
     Text: "Iniciar cada (minutos)";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@TextField #AutoStartInterval {
-    @Anchor = (Left: 1080, Top: 342, Width: 120);
+    @Anchor = (Left: 1048, Top: 378, Width: 120);
     Value: "10";
   }
 
   TextButton #AutoStartApplyButton {
-    Anchor: (Left: 1210, Top: 342, Width: 254, Height: 34);
+    Anchor: (Left: 1176, Top: 378, Width: 288, Height: 34);
     Text: "Aplicar modo auto";
     Style: $C.@SecondaryTextButtonStyle;
   }
@@ -742,7 +754,7 @@ Group {
   }
 
   Label #LanguageLabel {
-    Anchor: (Left: 642, Top: 286, Width: 384, Height: 24);
+    Anchor: (Left: 1048, Top: 234, Width: 416, Height: 24);
     Text: "Idioma de interfaz";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
@@ -758,7 +770,7 @@ Group {
   }
 
   $C.@DropdownBox #Language {
-    @Anchor = (Left: 642, Top: 314, Width: 384);
+    @Anchor = (Left: 1048, Top: 262, Width: 416);
     Value: "es";
 
     DropdownEntry {
@@ -1358,7 +1370,15 @@ Group {
     Label #ArenaName1 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords1 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen1 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete1 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete1 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow2 {
@@ -1368,7 +1388,15 @@ Group {
     Label #ArenaName2 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords2 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen2 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete2 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete2 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow3 {
@@ -1378,7 +1406,15 @@ Group {
     Label #ArenaName3 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords3 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen3 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete3 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete3 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow4 {
@@ -1388,7 +1424,15 @@ Group {
     Label #ArenaName4 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords4 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen4 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete4 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete4 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow5 {
@@ -1398,7 +1442,15 @@ Group {
     Label #ArenaName5 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords5 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen5 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete5 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete5 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow6 {
@@ -1408,7 +1460,15 @@ Group {
     Label #ArenaName6 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords6 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen6 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete6 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete6 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow7 {
@@ -1418,7 +1478,15 @@ Group {
     Label #ArenaName7 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords7 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen7 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete7 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete7 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow8 {
@@ -1428,7 +1496,15 @@ Group {
     Label #ArenaName8 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords8 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen8 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete8 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete8 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow9 {
@@ -1438,7 +1514,15 @@ Group {
     Label #ArenaName9 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords9 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen9 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete9 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete9 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   Panel #ArenaRow10 {
@@ -1448,7 +1532,15 @@ Group {
     Label #ArenaName10 { Anchor: (Left: 10, Top: 6, Width: 220, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
     Label #ArenaCoords10 { Anchor: (Left: 236, Top: 6, Width: 184, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
     TextButton #ArenaOpen10 { Anchor: (Left: 426, Top: 4, Width: 86, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; }
-    TextButton #ArenaDelete10 { Anchor: (Left: 518, Top: 4, Width: 40, Height: 26); Text: "-"; Style: $C.@SmallSecondaryTextButtonStyle; }
+    TextButton #ArenaDelete10 {
+      Anchor: (Left: 518, Top: 4, Width: 40, Height: 26);
+      Text: "-";
+      Style: TextButtonStyle(
+        Default: (Background: #4f1f1f, LabelStyle: (FontSize: 14, TextColor: #ffd8d8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Hovered: (Background: #6a2929, LabelStyle: (FontSize: 14, TextColor: #ffeaea, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+        Pressed: (Background: #873636, LabelStyle: (FontSize: 14, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      );
+    }
   }
 
   TextButton #ArenaPagePrevButton { Anchor: (Left: 456, Top: 722, Width: 32, Height: 28); Text: "<"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }

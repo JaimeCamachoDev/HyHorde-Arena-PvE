@@ -58,6 +58,7 @@ extends CustomUIPage {
             // Keep auto-start on dedicated stable controls in General tab.
             new UiFieldBinding("autoStartEnabled", "AutoStartEnabled", "#AutoStartEnabled.Value"),
             new UiFieldBinding("autoStartIntervalMinutes", "AutoStartIntervalMinutes", "#AutoStartInterval.Value"),
+            new UiFieldBinding("selectedArenaId", "GeneralArenaId", "#GeneralArenaId.Value"),
             new UiFieldBinding("enemyType", "EnemyType", "#EnemyType.Value", "role", "@Role", "Role"),
             new UiFieldBinding("language", "Language", "#Language.Value"),
             new UiFieldBinding("rewardCategory", "RewardCategory", "#RewardCategory.Value"),
@@ -160,11 +161,17 @@ extends CustomUIPage {
         List<BossArenaCatalogService.ArenaDefinitionSnapshot> arenaRows = this.hordeService.getArenaDefinitionsSnapshot();
         this.ensureBossDraftDefaults(bossRows, arenaRows);
         this.ensureArenaDraftDefaults(arenaRows);
+        String selectedArenaForHordeValue = HordeConfigPage.firstNonEmpty(this.getDraftValue("selectedArenaId", ""), config.selectedArenaId, HordeConfigPage.firstArenaId(arenaRows));
+        if (!selectedArenaForHordeValue.isBlank()) {
+            this.draftValues.put("selectedArenaId", selectedArenaForHordeValue);
+        }
+        selectedArenaForHordeValue = this.getDraftValue("selectedArenaId", "");
         String bossSelectedValue = this.getDraftValue("bossSelected", "");
         String arenaSelectedValue = this.getDraftValue("arenaSelected", "");
         String bossTierValue = this.getDraftValue("bossEditTier", "common");
         String bossSpawnTriggerValue = this.getDraftValue("bossSpawnTrigger", "before_boss");
         String bossTimedProximityArenaValue = this.getDraftValue("bossTimedProximityArena", "");
+        List<DropdownEntryInfo> generalArenaEntries = HordeConfigPage.buildDropdownEntries(HordeConfigPage.collectArenaIds(arenaRows), selectedArenaForHordeValue);
         List<DropdownEntryInfo> bossTierEntries = HordeConfigPage.buildDropdownEntries(this.hordeService.getBossTierOptions(), bossTierValue);
         List<DropdownEntryInfo> bossSpawnTriggerEntries = HordeConfigPage.buildBossSpawnTriggerEntries(BOSS_SPAWN_TRIGGER_OPTIONS, bossSpawnTriggerValue, language, english);
         List<DropdownEntryInfo> bossTimedProximityArenaEntries = HordeConfigPage.buildDropdownEntries(HordeConfigPage.collectArenaIds(arenaRows), bossTimedProximityArenaValue);
@@ -186,6 +193,8 @@ extends CustomUIPage {
                 .set("#SpawnX.Value", this.getDraftValue("spawnX", HordeConfigPage.formatDouble(config.spawnX)))
                 .set("#SpawnY.Value", this.getDraftValue("spawnY", HordeConfigPage.formatDouble(config.spawnY)))
                 .set("#SpawnZ.Value", this.getDraftValue("spawnZ", HordeConfigPage.formatDouble(config.spawnZ)))
+                .set("#GeneralArenaId.Value", selectedArenaForHordeValue)
+                .set("#GeneralArenaId.Entries", generalArenaEntries)
                 .set("#AutoStartEnabled.Value", autoStartEnabledValue)
                 .set("#AutoStartInterval.Value", Integer.toString(autoStartIntervalMinutesValue))
                 .set("#EnemyType.Value", enemyTypeValue)
@@ -711,6 +720,7 @@ extends CustomUIPage {
         this.putDraftIfMissing("waveDelay", Integer.toString(config.waveDelaySeconds));
         this.putDraftIfMissing("autoStartEnabled", Boolean.toString(config.autoStartIntervalMinutes > 0));
         this.putDraftIfMissing("autoStartIntervalMinutes", Integer.toString(config.autoStartIntervalMinutes > 0 ? config.autoStartIntervalMinutes : 10));
+        this.putDraftIfMissing("selectedArenaId", config.selectedArenaId == null ? "" : config.selectedArenaId.trim());
         this.putDraftIfMissing("enemyType", config.enemyType == null ? "undead" : config.enemyType);
         this.putDraftIfMissing("language", HordeService.normalizeLanguage(config.language));
         this.putDraftIfMissing("rewardCategory", HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory()));
@@ -1094,6 +1104,7 @@ extends CustomUIPage {
                         || "spawnZ".equals(field.configKey)
                         || "autoStartEnabled".equals(field.configKey)
                         || "autoStartIntervalMinutes".equals(field.configKey)
+                        || "selectedArenaId".equals(field.configKey)
                         || "language".equals(field.configKey);
             case TAB_HORDE:
                 return "minRadius".equals(field.configKey)
@@ -1391,6 +1402,7 @@ extends CustomUIPage {
                 .set("#TabArenasButton.Text", HordeConfigPage.t(language, english, "Arenas", "Arenas"))
                 .set("#TabHelpButton.Text", HordeConfigPage.t(language, english, "Help", "Ayuda"))
                 .set("#TabHintLabel.Text", "")
+                .set("#GeneralArenaLabel.Text", HordeConfigPage.t(language, english, "Current horde arena", "Arena actual de la horda"))
                 .set("#SpawnLabel.Text", HordeConfigPage.t(language, english, "Center (X Y Z)", "Centro (X Y Z)"))
                 .set("#SetSpawnButton.Text", HordeConfigPage.t(language, english, "Use my current position", "Usar mi posicion actual"))
                 .set("#RadiusLabel.Text", HordeConfigPage.t(language, english, "Enemy spawn radius setup", "Configuracion del radio de aparicion de enemigos"))
@@ -1501,13 +1513,13 @@ extends CustomUIPage {
         boolean arenasTab = TAB_ARENAS.equals(tab);
         boolean helpTab = TAB_HELP.equals(tab);
 
-        this.setVisible(commandBuilder, generalTab, "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
+        this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaId", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
         this.setVisible(commandBuilder, hordeTab, "#RoleLabel", "#EnemyType", "#FinalBossLabel", "#FinalBossEnabled", "#RadiusLabel", "#MinRadiusLabel", "#MinRadius", "#MaxRadiusLabel", "#MaxRadius", "#RoundConfigLabel", "#RoundLabel", "#Rounds", "#WaveDelayLabel", "#WaveDelay", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound");
         this.setVisible(commandBuilder, playersTab, "#AudienceInfoLabel", "#PlayersListTitle", "#PlayersCountLabel", "#PlayersCountValue", "#PlayersListHint", "#PlayersRefreshButton", "#PlayersHeaderName", "#PlayersHeaderMode", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#AudienceHelpLabel", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius");
         this.setVisible(commandBuilder, soundsTab, "#RoundStartSoundLabel", "#RoundStartSoundId", "#RoundStartVolumeLabel", "#RoundStartVolume", "#RoundVictorySoundLabel", "#RoundVictorySoundId", "#RoundVictoryVolumeLabel", "#RoundVictoryVolume");
         this.setVisible(commandBuilder, rewardsTab, "#RewardCategoryLabel", "#RewardCategory", "#RewardCommandsLabel", "#RewardItemId", "#RewardItemQuantityLabel", "#RewardItemQuantity");
         this.setVisible(commandBuilder, bossesTab, "#BossesTitleLabel", "#BossCreateIdLabel", "#BossCreateId", "#BossAddButton", "#BossHeaderName", "#BossHeaderNpc", "#BossHeaderTier", "#BossHeaderAmount", "#BossHeaderActions", "#BossPagePrevButton", "#BossPageNextButton", "#BossPageLabel", "#BossEmptyLabel", "#BossOverflowLabel", "#BossEditorTitleLabel", "#BossSelectedLabel", "#BossEditNameLabel", "#BossEditName", "#BossEditNpcIdLabel", "#BossEditNpcId", "#BossEditTierLabel", "#BossEditTier", "#BossEditAmountLabel", "#BossEditAmount", "#BossEditLevelOverrideLabel", "#BossEditLevelOverride", "#BossEditLootRadiusLabel", "#BossEditLootRadius", "#BossSpawnTriggerLabel", "#BossSpawnTrigger", "#BossSpawnTriggerValueLabel", "#BossSpawnTriggerValue", "#BossWaveRandomLocationsLabel", "#BossWaveRandomLocations", "#BossWaveRandomRadiusLabel", "#BossWaveRandomRadius", "#BossTimedProximityEnabledLabel", "#BossTimedProximityEnabled", "#BossTimedProximityArenaLabel", "#BossTimedProximityArena", "#BossTimedProximityRadiusLabel", "#BossTimedProximityRadius", "#BossTimedProximityCooldownLabel", "#BossTimedProximityCooldown", "#BossSaveButton", "#BossStatusLabel", "#BossRow1", "#BossRow2", "#BossRow3", "#BossRow4");
-        this.setVisible(commandBuilder, arenasTab, "#ArenasTitleLabel", "#ArenaAddButton", "#ArenaHeaderName", "#ArenaHeaderCoords", "#ArenaHeaderActions", "#ArenaPagePrevButton", "#ArenaPageNextButton", "#ArenaPageLabel", "#ArenaEmptyLabel", "#ArenaOverflowLabel", "#ArenaEditorTitleLabel", "#ArenaSelectedLabel", "#ArenaSelected", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaStatusLabel", "#ArenaRow1", "#ArenaRow2", "#ArenaRow3", "#ArenaRow4", "#ArenaRow5", "#ArenaRow6", "#ArenaRow7", "#ArenaRow8", "#ArenaRow9", "#ArenaRow10");
+        this.setVisible(commandBuilder, arenasTab, "#ArenasTitleLabel", "#ArenaAddButton", "#ArenaHeaderName", "#ArenaHeaderCoords", "#ArenaHeaderActions", "#ArenaPagePrevButton", "#ArenaPageNextButton", "#ArenaPageLabel", "#ArenaEmptyLabel", "#ArenaOverflowLabel", "#ArenaEditorTitleLabel", "#ArenaSelectedLabel", "#ArenaSelected", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaRow1", "#ArenaRow2", "#ArenaRow3", "#ArenaRow4", "#ArenaRow5", "#ArenaRow6", "#ArenaRow7", "#ArenaRow8", "#ArenaRow9", "#ArenaRow10");
         this.setVisible(commandBuilder, helpTab, "#HelpIntroLabel", "#HelpCommandsLabel", "#HelpCommandsLine1", "#HelpCommandsLine2", "#HelpCommandsLine3", "#HelpConfigLabel", "#HelpConfigLine1", "#HelpConfigLine2", "#HelpConfigLine3", "#HelpExternalLabel", "#HelpExternalLine1", "#HelpExternalLine2", "#HelpExternalLine3", "#HelpReloadLabel", "#HelpReloadLine1", "#HelpReloadLine2");
         this.setVisible(commandBuilder, generalTab, "#TabGeneralActiveBack", "#TabGeneralActiveTop", "#TabGeneralActiveNotch");
         this.setVisible(commandBuilder, hordeTab, "#TabHordeActiveBack", "#TabHordeActiveTop", "#TabHordeActiveNotch");
@@ -1517,7 +1529,7 @@ extends CustomUIPage {
         this.setVisible(commandBuilder, bossesTab, "#TabBossesActiveBack", "#TabBossesActiveTop", "#TabBossesActiveNotch");
         this.setVisible(commandBuilder, arenasTab, "#TabArenasActiveBack", "#TabArenasActiveTop", "#TabArenasActiveNotch");
         this.setVisible(commandBuilder, helpTab, "#TabHelpActiveBack", "#TabHelpActiveTop", "#TabHelpActiveNotch");
-        this.setVisible(commandBuilder, false, "#SubTitleLabel", "#TabHintLabel", "#StatusTitleLabel", "#StatusPanel", "#StatusLabel", "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#RoleHelpLabel", "#RoundSoundHelpLabel", "#RewardCommandsHelpLabel", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax", "#LanguagePrevButton", "#LanguageNextButton", "#FinalBossPrevButton", "#FinalBossNextButton", "#RoundStartSoundPrevButton", "#RoundStartSoundNextButton", "#RoundVictorySoundPrevButton", "#RoundVictorySoundNextButton", "#RewardCategoryPrevButton", "#RewardCategoryNextButton", "#RewardItemPrevButton", "#RewardItemNextButton", "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#HelpDiscordButton", "#HelpCurseForgeButton");
+        this.setVisible(commandBuilder, false, "#SubTitleLabel", "#TabHintLabel", "#StatusTitleLabel", "#StatusPanel", "#StatusLabel", "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#ArenaStatusLabel", "#RoleHelpLabel", "#RoundSoundHelpLabel", "#RewardCommandsHelpLabel", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax", "#LanguagePrevButton", "#LanguageNextButton", "#FinalBossPrevButton", "#FinalBossNextButton", "#RoundStartSoundPrevButton", "#RoundStartSoundNextButton", "#RoundVictorySoundPrevButton", "#RoundVictorySoundNextButton", "#RewardCategoryPrevButton", "#RewardCategoryNextButton", "#RewardItemPrevButton", "#RewardItemNextButton", "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#HelpDiscordButton", "#HelpCurseForgeButton");
     }
 
     private void setVisible(UICommandBuilder commandBuilder, boolean visible, String ... elementIds) {
