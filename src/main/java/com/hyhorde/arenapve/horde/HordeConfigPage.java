@@ -275,6 +275,11 @@ extends CustomUIPage {
                 .set("#GeneralRewardId.Entries", generalRewardEntries)
                 .set("#HordeSelected.Value", hordeSelectedValue)
                 .set("#HordeEditId.Value", this.getDraftValue("hordeEditId", hordeSelectedValue))
+                .set("#MaxRadius.Value", this.getDraftValue("maxRadius", HordeConfigPage.formatDouble(maxRadiusValue)))
+                .set("#Rounds.Value", this.getDraftValue("rounds", Integer.toString(roundsValue)))
+                .set("#BaseEnemies.Value", this.getDraftValue("baseEnemies", Integer.toString(baseEnemiesValue)))
+                .set("#EnemiesPerRound.Value", this.getDraftValue("enemiesPerRound", Integer.toString(enemiesPerRoundValue)))
+                .set("#WaveDelay.Value", this.getDraftValue("waveDelay", Integer.toString(waveDelayValue)))
                 .set("#HordeStatusLabel.Text", this.hordeStatusText == null ? "" : this.hordeStatusText)
                 .set("#PlayerSelected.Value", playerSelectedValue)
                 .set("#PlayerEditMode.Value", playerEditModeValue)
@@ -1602,8 +1607,8 @@ extends CustomUIPage {
                 .set("#PlayersPageNextButton.Visible", pageCount > 1)
                 .set("#PlayersEmptyLabel.Visible", total == 0)
                 .set("#PlayersEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No players detected in the current arena radius.", "No hay jugadores detectados en el radio actual de arena.") : "")
-                .set("#PlayersOverflowLabel.Visible", total > MAX_PLAYER_ROWS)
-                .set("#PlayersOverflowLabel.Text", total > MAX_PLAYER_ROWS ? HordeConfigPage.t(language, english, "More players available. Use page controls.", "Hay mas jugadores disponibles. Usa el paginado.") : "")
+                .set("#PlayersOverflowLabel.Visible", false)
+                .set("#PlayersOverflowLabel.Text", "")
                 .set("#PlayersCountValue.Text", Integer.toString(total));
     }
 
@@ -1638,8 +1643,8 @@ extends CustomUIPage {
                 .set("#EnemyCatPageNextButton.Visible", pageCount > 1)
                 .set("#EnemyCatEmptyLabel.Visible", total == 0)
                 .set("#EnemyCatEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No enemy categories yet. Press Add category to create one.", "Aun no hay categorias de enemigos. Pulsa Anadir categoria para crear una.") : "")
-                .set("#EnemyCatOverflowLabel.Visible", total > MAX_ENEMY_CATEGORY_ROWS)
-                .set("#EnemyCatOverflowLabel.Text", total > MAX_ENEMY_CATEGORY_ROWS ? HordeConfigPage.t(language, english, "More enemy categories available. Use page controls.", "Hay mas categorias de enemigos disponibles. Usa el paginado.") : "");
+                .set("#EnemyCatOverflowLabel.Visible", false)
+                .set("#EnemyCatOverflowLabel.Text", "");
         this.populateEnemyCategoryEditorRoles(commandBuilder, eventBuilder, HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("enemyCategoryEditRoles", "")), language, english);
     }
 
@@ -1702,8 +1707,8 @@ extends CustomUIPage {
                 .set("#RewardCatPageNextButton.Visible", pageCount > 1)
                 .set("#RewardCatEmptyLabel.Visible", total == 0)
                 .set("#RewardCatEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No reward categories yet. Press Add category to create one.", "Aun no hay categorias de recompensa. Pulsa Anadir categoria para crear una.") : "")
-                .set("#RewardCatOverflowLabel.Visible", total > MAX_REWARD_CATEGORY_ROWS)
-                .set("#RewardCatOverflowLabel.Text", total > MAX_REWARD_CATEGORY_ROWS ? HordeConfigPage.t(language, english, "More reward categories available. Use page controls.", "Hay mas categorias de recompensa disponibles. Usa el paginado.") : "");
+                .set("#RewardCatOverflowLabel.Visible", false)
+                .set("#RewardCatOverflowLabel.Text", "");
         this.populateRewardCategoryEditorItems(commandBuilder, eventBuilder, HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("rewardCatEditItems", "")), language, english);
     }
 
@@ -1768,8 +1773,8 @@ extends CustomUIPage {
                 .set("#HordePageNextButton.Visible", pageCount > 1)
                 .set("#HordeEmptyLabel.Visible", total == 0)
                 .set("#HordeEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No horde definitions yet. Press Add horde to create one.", "Aun no hay definiciones de horda. Pulsa Anadir horda para crear una.") : "")
-                .set("#HordeOverflowLabel.Visible", total > MAX_HORDE_ROWS)
-                .set("#HordeOverflowLabel.Text", total > MAX_HORDE_ROWS ? HordeConfigPage.t(language, english, "More horde definitions available. Use page controls.", "Hay mas definiciones de horda disponibles. Usa el paginado.") : "");
+                .set("#HordeOverflowLabel.Visible", false)
+                .set("#HordeOverflowLabel.Text", "");
     }
 
     private void populateBossRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<BossArenaCatalogService.BossDefinitionSnapshot> rows, String language, boolean english) {
@@ -1808,8 +1813,8 @@ extends CustomUIPage {
                 .set("#BossPageNextButton.Visible", pageCount > 1)
                 .set("#BossEmptyLabel.Visible", total == 0)
                 .set("#BossEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No bosses yet. Press Add Boss to create one.", "Aun no hay bosses. Pulsa Anadir Boss para crear uno.") : "")
-                .set("#BossOverflowLabel.Visible", total > MAX_BOSS_ROWS)
-                .set("#BossOverflowLabel.Text", total > MAX_BOSS_ROWS ? HordeConfigPage.t(language, english, "More bosses available. Use page controls.", "Hay mas bosses disponibles. Usa el paginado.") : "");
+                .set("#BossOverflowLabel.Visible", false)
+                .set("#BossOverflowLabel.Text", "");
     }
 
     private void populateArenaRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<BossArenaCatalogService.ArenaDefinitionSnapshot> rows, String language, boolean english) {
@@ -1844,8 +1849,8 @@ extends CustomUIPage {
                 .set("#ArenaPageNextButton.Visible", pageCount > 1)
                 .set("#ArenaEmptyLabel.Visible", total == 0)
                 .set("#ArenaEmptyLabel.Text", total == 0 ? HordeConfigPage.t(language, english, "No arenas yet. Use Add Arena to create one from your position.", "Aun no hay arenas. Usa Anadir arena para crear una desde tu posicion.") : "")
-                .set("#ArenaOverflowLabel.Visible", total > MAX_ARENA_ROWS)
-                .set("#ArenaOverflowLabel.Text", total > MAX_ARENA_ROWS ? HordeConfigPage.t(language, english, "More arenas available. Use page controls.", "Hay mas arenas disponibles. Usa el paginado.") : "");
+                .set("#ArenaOverflowLabel.Visible", false)
+                .set("#ArenaOverflowLabel.Text", "");
     }
 
     private void populateAudienceRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.AudiencePlayerSnapshot> rows, String language, boolean english) {
@@ -2374,7 +2379,9 @@ extends CustomUIPage {
         boolean bossesTab = TAB_BOSSES.equals(tab);
         boolean arenasTab = TAB_ARENAS.equals(tab);
         boolean helpTab = TAB_HELP.equals(tab);
+        boolean twoColumnBackdrop = !helpTab;
 
+        this.setVisible(commandBuilder, twoColumnBackdrop, "#DefinitionsColumnBackdrop", "#EditorColumnBackdrop");
         this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaId", "#GeneralBossLabel", "#GeneralBossId", "#GeneralHordeLabel", "#GeneralHordeId", "#GeneralRewardLabel", "#GeneralRewardId", "#FinalBossLabel", "#FinalBossEnabled", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
         this.setVisible(commandBuilder, enemiesTab, "#EnemyCatTitleLabel", "#EnemyCatAddButton", "#EnemyCatHeaderName", "#EnemyCatHeaderPreview", "#EnemyCatHeaderActions", "#EnemyCatPagePrevButton", "#EnemyCatPageNextButton", "#EnemyCatPageLabel", "#EnemyCatEmptyLabel", "#EnemyCatOverflowLabel", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatRolePickerLabel", "#EnemyCatRolePicker", "#EnemyCatRoleAddButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesPagePrevButton", "#EnemyCatRolesPageNextButton", "#EnemyCatRolesPageLabel", "#EnemyCatSaveButton", "#EnemyCatRow1", "#EnemyCatRow2", "#EnemyCatRow3", "#EnemyCatRow4", "#EnemyCatRow5", "#EnemyCatRow6", "#EnemyCatRow7", "#EnemyCatRow8", "#EnemyCatRow9", "#EnemyCatRow10", "#EnemyCatRoleRow1", "#EnemyCatRoleRow2", "#EnemyCatRoleRow3", "#EnemyCatRoleRow4", "#EnemyCatRoleRow5", "#EnemyCatRoleRow6", "#EnemyCatRoleRow7", "#EnemyCatRoleRow8", "#EnemyCatRoleRow9", "#EnemyCatRoleRow10");
         this.setVisible(commandBuilder, hordeTab, "#HordesTitleLabel", "#HordeAddButton", "#HordeHeaderId", "#HordeHeaderType", "#HordeHeaderRounds", "#HordeHeaderActions", "#HordePagePrevButton", "#HordePageNextButton", "#HordePageLabel", "#HordeEmptyLabel", "#HordeOverflowLabel", "#HordeEditorTitleLabel", "#HordeEditIdLabel", "#HordeEditId", "#RoleLabel", "#EnemyType", "#MaxRadiusLabel", "#MaxRadius", "#RoundLabel", "#Rounds", "#WaveDelayLabel", "#WaveDelay", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#HordeSaveButton", "#HordeRow1", "#HordeRow2", "#HordeRow3", "#HordeRow4", "#HordeRow5", "#HordeRow6", "#HordeRow7", "#HordeRow8", "#HordeRow9", "#HordeRow10");

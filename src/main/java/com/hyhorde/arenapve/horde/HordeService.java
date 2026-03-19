@@ -143,6 +143,8 @@ public final class HordeService {
     private static final int DEFAULT_AUTO_START_INTERVAL_MINUTES = 0;
     private static final long AUTO_START_POLL_INTERVAL_MILLIS = 1000L;
     private static final long AUTO_START_RETRY_NO_AUDIENCE_MILLIS = 5000L;
+    private static final long START_DIAGNOSTIC_RATE_LIMIT_MILLIS = 12000L;
+    private static final int START_DIAGNOSTIC_PREVIEW_LIMIT = 6;
     private static final int MIN_REWARD_ITEM_QUANTITY = HordeConfigRules.MIN_REWARD_ITEM_QUANTITY;
     private static final int MAX_REWARD_ITEM_QUANTITY = HordeConfigRules.MAX_REWARD_ITEM_QUANTITY;
     private static final int MIN_ENEMY_LEVEL = HordeConfigRules.MIN_ENEMY_LEVEL;
@@ -189,6 +191,8 @@ public final class HordeService {
     private HordeSession session;
     private long nextAutoStartPollAtMillis;
     private long nextAutoStartAtMillis;
+    private long lastStartDiagnosticAtMillis;
+    private String lastStartDiagnosticSignature;
 
     public HordeService(PluginBase plugin) {
         this.plugin = plugin;
@@ -211,6 +215,8 @@ public final class HordeService {
         this.config = HordeConfig.defaults();
         this.nextAutoStartPollAtMillis = 0L;
         this.nextAutoStartAtMillis = 0L;
+        this.lastStartDiagnosticAtMillis = 0L;
+        this.lastStartDiagnosticSignature = "";
         this.loadEnemyCategoriesFromDisk(true);
         this.loadRewardItemsFromDisk(true);
         this.loadRoundSoundsFromDisk(true);
@@ -1423,14 +1429,14 @@ public final class HordeService {
         HordeSession newSession;
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.pluginReloadInProgress) {
-            return OperationResult.fail(english ? "Plugin reload in progress. Try again in a few seconds." : "Recarga de plugin en progreso. Prueba de nuevo en unos segundos.");
+            return this.failStartWithDiagnostics(english ? "Plugin reload in progress. Try again in a few seconds." : "Recarga de plugin en progreso. Prueba de nuevo en unos segundos.", english, world, startedBy, List.of());
         }
         if (this.session != null) {
-            return OperationResult.fail(english ? "There is already an active horde." : "Ya hay una horda activa.");
+            return this.failStartWithDiagnostics(english ? "There is already an active horde." : "Ya hay una horda activa.", english, world, startedBy, List.of());
         }
         List<String> roles = NPCPlugin.get().getRoleTemplateNames(true);
         if (roles.isEmpty()) {
-            return OperationResult.fail(english ? "There are no NPC roles available." : "No hay roles de NPC disponibles.");
+            return this.failStartWithDiagnostics(english ? "There are no NPC roles available." : "No hay roles de NPC disponibles.", english, world, startedBy, roles);
         }
         if (!this.config.spawnConfigured || !Objects.equals(this.config.worldName, world.getName())) {
             Transform transform = startedBy.getTransform();
@@ -1466,25 +1472,52 @@ public final class HordeService {
         } else {
             selectedRole = HordeService.resolveRoleForEnemyType(roles, selectedEnemyType);
             if (selectedRole == null) {
-                return OperationResult.fail(english ? "Category '" + selectedEnemyType + "' has no compatible NPCs in this modpack. Use /hordeconfig enemytypes." : "La categoria '" + selectedEnemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordeconfig tipos.");
+                return this.failStartWithDiagnostics(english ? "Category '" + selectedEnemyType + "' has no compatible NPCs in this modpack. Use /hordeconfig enemytypes." : "La categoria '" + selectedEnemyType + "' no tiene NPCs compatibles en este modpack. Usa /hordeconfig tipos.", english, world, startedBy, roles);
             }
         }
         if (selectedRole == null) {
-            return OperationResult.fail(english ? "Could not resolve a compatible NPC role to start the horde." : "No se pudo resolver un rol NPC compatible para iniciar la horda.");
+            return this.failStartWithDiagnostics(english ? "Could not resolve a compatible NPC role to start the horde." : "No se pudo resolver un rol NPC compatible para iniciar la horda.", english, world, startedBy, roles);
         }
         LinkedHashSet<UUID> lockedPlayers = new LinkedHashSet<UUID>();
         LinkedHashSet<UUID> lockedSpectators = new LinkedHashSet<UUID>();
         this.captureArenaAudience(world, lockedPlayers, lockedSpectators);
         if (lockedPlayers.isEmpty()) {
             if (english) {
-                return OperationResult.fail(String.format(Locale.ROOT, "No arena players found inside radius %.2f. Move into the arena area (or disable spectator mode) before starting.", this.getArenaJoinRadius()));
+                return this.failStartWithDiagnostics(String.format(Locale.ROOT, "No arena players found inside radius %.2f. Move into the arena area (or disable spectator mode) before starting.", this.getArenaJoinRadius()), english, world, startedBy, roles);
             }
-            return OperationResult.fail(String.format(Locale.ROOT, "No hay jugadores de arena dentro del radio %.2f. Entra al area (o quita modo espectador) antes de iniciar.", this.getArenaJoinRadius()));
+            return this.failStartWithDiagnostics(String.format(Locale.ROOT, "No hay jugadores de arena dentro del radio %.2f. Entra al area (o quita modo espectador) antes de iniciar.", this.getArenaJoinRadius()), english, world, startedBy, roles);
         }
         int playerMultiplier = HordeService.resolvePlayerMultiplierFromAudience(lockedPlayers, this.config.playerMultiplier);
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedArenaDefinition = HordeService.findArenaById(this.bossArenaCatalogService.getArenaDefinitionsSnapshot(), this.config.selectedArenaId);
+        String selectedArenaSessionId = "";
+        double sessionArenaCenterX = this.config.spawnX;
+        double sessionArenaCenterY = this.config.spawnY;
+        double sessionArenaCenterZ = this.config.spawnZ;
+        if (selectedArenaDefinition != null) {
+            boolean arenaWorldMatches = selectedArenaDefinition.worldName == null || selectedArenaDefinition.worldName.isBlank() || selectedArenaDefinition.worldName.equalsIgnoreCase(world.getName());
+            if (arenaWorldMatches) {
+                selectedArenaSessionId = HordeService.cleanArenaSelectionValue(selectedArenaDefinition.arenaId);
+                sessionArenaCenterX = selectedArenaDefinition.x;
+                sessionArenaCenterY = selectedArenaDefinition.y;
+                sessionArenaCenterZ = selectedArenaDefinition.z;
+            } else {
+                this.plugin.getLogger().at(Level.WARNING).log("Selected arena '%s' belongs to world '%s' but active world is '%s'. Reward center will fallback to current horde center.", (Object)selectedArenaDefinition.arenaId, (Object)HordeService.trimToEmpty(selectedArenaDefinition.worldName), (Object)world.getName());
+            }
+        }
+        BossArenaCatalogService.BossDefinitionSnapshot selectedBossDefinition = HordeService.findBossById(this.bossArenaCatalogService.getBossDefinitionsSnapshot(), this.config.selectedBossId);
+        String selectedBossSessionId = selectedBossDefinition == null ? "" : HordeService.cleanBossSelectionValue(selectedBossDefinition.bossId);
+        String selectedBossNpcRole = selectedBossDefinition == null || selectedBossDefinition.npcId == null ? "" : selectedBossDefinition.npcId.trim();
+        int selectedBossAmount = selectedBossDefinition == null ? 1 : Math.max(1, Math.min(250, selectedBossDefinition.amount));
+        if (this.config.finalBossEnabled) {
+            if (!HordeService.cleanBossSelectionValue(this.config.selectedBossId).isBlank() && selectedBossDefinition == null) {
+                this.plugin.getLogger().at(Level.WARNING).log("Final boss config: selectedBossId='%s' no existe en bosses.json. Se usara fallback legacy.", (Object)HordeService.trimToEmpty(this.config.selectedBossId));
+            } else {
+                this.plugin.getLogger().at(Level.INFO).log("Final boss config: enabled=true | selectedBossId=%s | npcRole=%s | amount=%d", (Object)(selectedBossSessionId.isBlank() ? "<none>" : selectedBossSessionId), (Object)(selectedBossNpcRole.isBlank() ? "<legacy>" : selectedBossNpcRole), (Object)Integer.valueOf(selectedBossAmount));
+            }
+        }
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
         long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_TOTAL_SECONDS * 1000L;
-        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis, lockedPlayers, lockedSpectators);
+        this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis, lockedPlayers, lockedSpectators, selectedArenaSessionId, sessionArenaCenterX, sessionArenaCenterY, sessionArenaCenterZ, selectedBossSessionId, selectedBossNpcRole, selectedBossAmount);
         this.syncSessionPlayers(newSession);
         newSession.ticker = HytaleServer.SCHEDULED_EXECUTOR.scheduleAtFixedRate(() -> this.tickSession(newSession), 0L, SESSION_TICK_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         String roleSuffix = forcedRole == null ? selectedRole : selectedRole + (english ? " (forced)" : " (forzado)");
@@ -1498,6 +1531,129 @@ public final class HordeService {
         this.broadcastHordeStartAnnouncement(newSession, selectedEnemyType, selectedRole, playerMultiplier);
         this.scheduleNextAutoStartFromNow();
         return OperationResult.ok(english ? "Horde started. Countdown: 3..2..1." : "Horda iniciada. Cuenta atras: 3..2..1.");
+    }
+
+    private OperationResult failStartWithDiagnostics(String message, boolean english, World world, PlayerRef startedBy, List<String> rolesSnapshot) {
+        this.logStartFailureDiagnostics(message, english, world, startedBy, rolesSnapshot);
+        return OperationResult.fail(message);
+    }
+
+    private void logStartFailureDiagnostics(String failureMessage, boolean english, World world, PlayerRef startedBy, List<String> rolesSnapshot) {
+        String worldName = world == null ? "<null>" : world.getName();
+        String selectedEnemyType = HordeService.normalizeEnemyType(this.config.enemyType);
+        String signature = HordeService.trimToEmpty(failureMessage) + "|" + worldName + "|" + HordeService.trimToEmpty(this.config.selectedArenaId) + "|" + HordeService.trimToEmpty(this.config.selectedHordeId) + "|" + HordeService.trimToEmpty(this.config.selectedBossId) + "|" + selectedEnemyType;
+        long now = System.currentTimeMillis();
+        if (signature.equals(this.lastStartDiagnosticSignature) && now - this.lastStartDiagnosticAtMillis < START_DIAGNOSTIC_RATE_LIMIT_MILLIS) {
+            return;
+        }
+        this.lastStartDiagnosticSignature = signature;
+        this.lastStartDiagnosticAtMillis = now;
+        List<String> roles = rolesSnapshot == null ? List.of() : new ArrayList<String>(rolesSnapshot);
+        if (roles.isEmpty()) {
+            try {
+                roles = NPCPlugin.get().getRoleTemplateNames(true);
+            }
+            catch (Exception ignored) {
+                roles = List.of();
+            }
+        }
+        int allowedRoles = 0;
+        for (String role : roles) {
+            if (HordeService.isBlockedEnemyRole(role)) continue;
+            ++allowedRoles;
+        }
+        String forcedRole = HordeService.findRoleByExactName(roles, this.config.npcRole);
+        List<String> randomizableEnemyTypes = HordeService.findSupportedEnemyCategories(roles);
+        String candidateRole = null;
+        if (forcedRole != null) {
+            candidateRole = forcedRole;
+        } else if (HordeService.isRandomEnemyType(selectedEnemyType)) {
+            String sampleType = randomizableEnemyTypes.isEmpty() ? DEFAULT_ENEMY_TYPE : randomizableEnemyTypes.get(0);
+            candidateRole = HordeService.resolveRoleForEnemyType(roles, sampleType);
+            if (candidateRole == null) {
+                candidateRole = HordeService.resolveAutoRole(roles);
+            }
+        } else if (HordeService.isRandomAllEnemyType(selectedEnemyType)) {
+            candidateRole = HordeService.findFirstAllowedRole(roles);
+            if (candidateRole == null) {
+                candidateRole = HordeService.resolveAutoRole(roles);
+            }
+        } else {
+            candidateRole = HordeService.resolveRoleForEnemyType(roles, selectedEnemyType);
+        }
+        List<BossArenaCatalogService.ArenaDefinitionSnapshot> arenaRows = this.bossArenaCatalogService.getArenaDefinitionsSnapshot();
+        List<BossArenaCatalogService.BossDefinitionSnapshot> bossRows = this.bossArenaCatalogService.getBossDefinitionsSnapshot();
+        List<HordeDefinitionCatalogService.HordeDefinitionSnapshot> hordeRows = this.hordeDefinitionCatalogService.getDefinitionsSnapshot();
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedArena = HordeService.findArenaById(arenaRows, this.config.selectedArenaId);
+        BossArenaCatalogService.BossDefinitionSnapshot selectedBoss = HordeService.findBossById(bossRows, this.config.selectedBossId);
+        HordeDefinitionCatalogService.HordeDefinitionSnapshot selectedHorde = HordeService.findHordeById(hordeRows, this.config.selectedHordeId);
+        LinkedHashSet<UUID> lockedPlayers = new LinkedHashSet<UUID>();
+        LinkedHashSet<UUID> lockedSpectators = new LinkedHashSet<UUID>();
+        if (world != null) {
+            this.captureArenaAudience(world, lockedPlayers, lockedSpectators);
+        }
+        int matchedRolesForEnemyType = HordeService.findRolesForEnemyType(roles, selectedEnemyType).size();
+        boolean enemyTypeConfigured = HordeService.isRandomEnemyType(selectedEnemyType) || HordeService.isRandomAllEnemyType(selectedEnemyType) || ENEMY_TYPE_HINTS.containsKey(selectedEnemyType);
+        ArrayList<String> issues = new ArrayList<String>();
+        if (this.pluginReloadInProgress) {
+            issues.add(english ? "Plugin reload is in progress." : "Hay una recarga de plugin en progreso.");
+        }
+        if (this.session != null) {
+            issues.add(english ? "There is already an active horde session." : "Ya existe una sesion de horda activa.");
+        }
+        if (world == null) {
+            issues.add(english ? "World is null for start operation." : "El mundo es null para la operacion de inicio.");
+        }
+        if (roles.isEmpty()) {
+            issues.add(english ? "NPC role catalog is empty." : "El catalogo de roles NPC esta vacio.");
+        } else if (allowedRoles <= 0) {
+            issues.add(english ? "All NPC roles are filtered/blocked by hostile-role rules." : "Todos los roles NPC quedaron filtrados/bloqueados por reglas de roles hostiles.");
+        }
+        if (!enemyTypeConfigured) {
+            issues.add(english ? "Configured enemyType does not exist in enemy categories: '" + selectedEnemyType + "'." : "El enemyType configurado no existe en categorias de enemigos: '" + selectedEnemyType + "'.");
+        }
+        if (this.config.npcRole != null && !this.config.npcRole.isBlank() && forcedRole == null) {
+            issues.add(english ? "Forced npcRole is invalid/not found: '" + this.config.npcRole + "'." : "El npcRole forzado es invalido/no existe: '" + this.config.npcRole + "'.");
+        }
+        if (!HordeService.isRandomEnemyType(selectedEnemyType) && !HordeService.isRandomAllEnemyType(selectedEnemyType) && matchedRolesForEnemyType <= 0) {
+            issues.add(english ? "No compatible NPC roles were found for enemyType '" + selectedEnemyType + "'." : "No se encontraron roles NPC compatibles para el enemyType '" + selectedEnemyType + "'.");
+        }
+        if (!HordeService.cleanArenaSelectionValue(this.config.selectedArenaId).isBlank() && selectedArena == null) {
+            issues.add(english ? "Selected arena ID was not found: '" + this.config.selectedArenaId + "'." : "No se encontro el ID de arena seleccionado: '" + this.config.selectedArenaId + "'.");
+        }
+        if (!HordeService.cleanBossSelectionValue(this.config.selectedBossId).isBlank() && selectedBoss == null) {
+            issues.add(english ? "Selected boss ID was not found: '" + this.config.selectedBossId + "'." : "No se encontro el ID de boss seleccionado: '" + this.config.selectedBossId + "'.");
+        }
+        if (!HordeService.cleanHordeSelectionValue(this.config.selectedHordeId).isBlank() && selectedHorde == null) {
+            issues.add(english ? "Selected horde ID was not found: '" + this.config.selectedHordeId + "'." : "No se encontro el ID de horda seleccionado: '" + this.config.selectedHordeId + "'.");
+        }
+        if (selectedHorde != null) {
+            String selectedHordeEnemyType = HordeService.normalizeEnemyType(selectedHorde.enemyType);
+            if (!selectedHordeEnemyType.equals(selectedEnemyType)) {
+                issues.add(english ? "Current config enemyType differs from selected horde definition. Save config before start." : "El enemyType de la configuracion actual difiere de la horda seleccionada. Guarda configuracion antes de iniciar.");
+            }
+        }
+        if (!this.config.spawnConfigured) {
+            issues.add(english ? "Spawn is not configured yet." : "El spawn aun no esta configurado.");
+        }
+        if (world != null && lockedPlayers.isEmpty()) {
+            issues.add(english ? String.format(Locale.ROOT, "No arena players found inside radius %.2f.", this.getArenaJoinRadius()) : String.format(Locale.ROOT, "No hay jugadores de arena dentro del radio %.2f.", this.getArenaJoinRadius()));
+        }
+        this.plugin.getLogger().at(Level.WARNING).log("=== Horde start failed diagnostics ===");
+        this.plugin.getLogger().at(Level.WARNING).log("Failure: %s", (Object)failureMessage);
+        this.plugin.getLogger().at(Level.WARNING).log("Context | by=%s | world=%s | configWorld=%s | spawnConfigured=%s | spawn=(%.2f, %.2f, %.2f)", (Object)HordeService.safePlayerName(startedBy), (Object)worldName, (Object)HordeService.trimToEmpty(this.config.worldName), (Object)Boolean.valueOf(this.config.spawnConfigured), (Object)Double.valueOf(this.config.spawnX), (Object)Double.valueOf(this.config.spawnY), (Object)Double.valueOf(this.config.spawnZ));
+        this.plugin.getLogger().at(Level.WARNING).log("Selection | enemyType=%s | npcRole=%s | selectedArena=%s | selectedHorde=%s | selectedBoss=%s", (Object)selectedEnemyType, (Object)HordeService.trimToEmpty(this.config.npcRole), (Object)HordeService.trimToEmpty(this.config.selectedArenaId), (Object)HordeService.trimToEmpty(this.config.selectedHordeId), (Object)HordeService.trimToEmpty(this.config.selectedBossId));
+        this.plugin.getLogger().at(Level.WARNING).log("Catalogs | arenas=%d (selected:%s) | hordes=%d (selected:%s) | bosses=%d (selected:%s)", (Object)Integer.valueOf(arenaRows == null ? 0 : arenaRows.size()), (Object)(selectedArena == null ? "no" : "yes"), (Object)Integer.valueOf(hordeRows == null ? 0 : hordeRows.size()), (Object)(selectedHorde == null ? "no" : "yes"), (Object)Integer.valueOf(bossRows == null ? 0 : bossRows.size()), (Object)(selectedBoss == null ? "no" : "yes"));
+        this.plugin.getLogger().at(Level.WARNING).log("Roles | total=%d | allowed=%d | matchedForType=%d | candidateRole=%s | supportedTypes=%s", (Object)Integer.valueOf(roles.size()), (Object)Integer.valueOf(allowedRoles), (Object)Integer.valueOf(matchedRolesForEnemyType), (Object)HordeService.safeRoleValue(candidateRole), (Object)HordeService.summarizeForDiagnostic(HordeService.findSupportedEnemyTypes(roles), START_DIAGNOSTIC_PREVIEW_LIMIT));
+        this.plugin.getLogger().at(Level.WARNING).log("Audience | playersInArea=%d | spectatorsInArea=%d | arenaJoinRadius=%.2f", (Object)Integer.valueOf(lockedPlayers.size()), (Object)Integer.valueOf(lockedSpectators.size()), (Object)Double.valueOf(this.getArenaJoinRadius()));
+        if (issues.isEmpty()) {
+            this.plugin.getLogger().at(Level.WARNING).log(english ? "No additional probable causes detected. Check server/world state and recent stack traces." : "No se detectaron causas probables adicionales. Revisa estado del servidor/mundo y trazas recientes.");
+        } else {
+            for (int i = 0; i < issues.size(); ++i) {
+                this.plugin.getLogger().at(Level.WARNING).log("Cause %d: %s", (Object)Integer.valueOf(i + 1), (Object)issues.get(i));
+            }
+        }
+        this.plugin.getLogger().at(Level.WARNING).log(english ? "Tip: open /hordeconfig, verify General + Horde selections, save config, and retry start." : "Sugerencia: abre /hordeconfig, verifica selecciones de General + Horda, guarda configuracion y vuelve a iniciar.");
     }
 
     public synchronized OperationResult stop(boolean cleanupAliveEnemies) {
@@ -1690,14 +1846,20 @@ public final class HordeService {
         int levelMax = ENEMY_LEVEL_SYSTEM_ENABLED ? Math.min(MAX_ENEMY_LEVEL, Math.max(this.config.enemyLevelMin, this.config.enemyLevelMax)) : MIN_ENEMY_LEVEL;
         boolean finalRound = nextRound >= this.config.rounds;
         boolean spawnFinalBoss = finalRound && this.config.finalBossEnabled;
-        int spawnGoal = targetCount + (spawnFinalBoss ? 1 : 0);
+        int configuredFinalBossCount = spawnFinalBoss ? Math.max(1, sessionToAdvance.selectedBossAmount) : 0;
+        int spawnGoal = targetCount + configuredFinalBossCount;
         Vector3d center = new Vector3d(this.config.spawnX, this.config.spawnY, this.config.spawnZ);
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int spawned = 0;
-        boolean bossSpawned = false;
+        int bossSpawnedCount = 0;
         String bossRoleUsed = "";
+        String configuredFinalBossRole = spawnFinalBoss ? this.resolveConfiguredFinalBossRole(sessionToAdvance) : "";
+        boolean finalBossFromSelectedConfig = spawnFinalBoss && configuredFinalBossRole != null && !configuredFinalBossRole.isBlank();
+        if (spawnFinalBoss) {
+            this.plugin.getLogger().at(Level.INFO).log("Final boss spawn plan | round=%d/%d | selectedBossId=%s | selectedBossNpc=%s | requestedBossCount=%d | resolvedRole=%s | source=%s", (Object)Integer.valueOf(nextRound), (Object)Integer.valueOf(this.config.rounds), (Object)(sessionToAdvance.selectedBossId == null || sessionToAdvance.selectedBossId.isBlank() ? "<none>" : sessionToAdvance.selectedBossId), (Object)(sessionToAdvance.selectedBossNpcId == null || sessionToAdvance.selectedBossNpcId.isBlank() ? "<none>" : sessionToAdvance.selectedBossNpcId), (Object)Integer.valueOf(configuredFinalBossCount), (Object)(configuredFinalBossRole == null || configuredFinalBossRole.isBlank() ? "<legacy>" : configuredFinalBossRole), (Object)(finalBossFromSelectedConfig ? "selectedBossId" : "legacyFinalBossRoles"));
+        }
         for (int i = 0; i < spawnGoal; ++i) {
-            boolean bossSpawn = spawnFinalBoss && i == spawnGoal - 1;
+            boolean bossSpawn = spawnFinalBoss && i >= spawnGoal - configuredFinalBossCount;
             double angle = random.nextDouble(0.0, Math.PI * 2);
             double distance = random.nextDouble(this.config.minSpawnRadius, this.config.maxSpawnRadius);
             double offsetX = Math.cos(angle) * distance;
@@ -1725,7 +1887,10 @@ public final class HordeService {
                     }
                 }
                 if (bossSpawn) {
-                    String finalBossRole = HordeService.pickFinalBossRole(sessionToAdvance.availableRoles);
+                    String finalBossRole = configuredFinalBossRole;
+                    if (finalBossRole == null || finalBossRole.isBlank()) {
+                        finalBossRole = HordeService.pickFinalBossRole(sessionToAdvance.availableRoles);
+                    }
                     if (finalBossRole != null && !finalBossRole.isBlank()) {
                         roleForSpawn = finalBossRole;
                     }
@@ -1745,8 +1910,10 @@ public final class HordeService {
                 ++sessionToAdvance.totalSpawned;
                 ++spawned;
                 if (bossSpawn) {
-                    bossSpawned = true;
-                    bossRoleUsed = roleForSpawn;
+                    ++bossSpawnedCount;
+                    if (bossRoleUsed.isBlank()) {
+                        bossRoleUsed = roleForSpawn;
+                    }
                 }
                 continue;
             }
@@ -1758,16 +1925,35 @@ public final class HordeService {
             this.endSession(sessionToAdvance, english ? "Horde cancelled: could not spawn any NPC with role " + sessionToAdvance.role + "." : "La horda se cancelo: no se pudo spawnear ningun NPC con el rol " + sessionToAdvance.role + ".", false);
             return;
         }
+        if (spawnFinalBoss) {
+            this.plugin.getLogger().at(Level.INFO).log("Final boss spawn result | round=%d/%d | requested=%d | spawned=%d | role=%s | source=%s", (Object)Integer.valueOf(nextRound), (Object)Integer.valueOf(this.config.rounds), (Object)Integer.valueOf(configuredFinalBossCount), (Object)Integer.valueOf(bossSpawnedCount), (Object)(bossRoleUsed.isBlank() ? "<none>" : bossRoleUsed), (Object)(finalBossFromSelectedConfig ? "selectedBossId" : "legacyFinalBossRoles"));
+        }
         sessionToAdvance.currentRound = nextRound;
         sessionToAdvance.roundActive = true;
         sessionToAdvance.nextRoundAtMillis = 0L;
         this.playRoundStartSound(sessionToAdvance);
         String levelInfo = ENEMY_LEVEL_SYSTEM_ENABLED ? "lvl " + levelMin + "-" + levelMax : (english ? "lvl WIP" : "nivel WIP");
         if (english) {
-            String bossSuffix = spawnFinalBoss ? (bossSpawned ? " | Final boss spawned" + (bossRoleUsed.isBlank() ? "." : " (" + bossRoleUsed + ").") : " | Final boss requested but could not spawn.") : "";
+            String bossSuffix = "";
+            if (spawnFinalBoss) {
+                if (bossSpawnedCount > 0) {
+                    String sourceText = finalBossFromSelectedConfig ? "selected boss" : "legacy fallback";
+                    bossSuffix = " | Final boss spawned: " + bossSpawnedCount + "/" + configuredFinalBossCount + (bossRoleUsed.isBlank() ? "" : " (" + bossRoleUsed + ")") + " [" + sourceText + "].";
+                } else {
+                    bossSuffix = " | Final boss requested but could not spawn.";
+                }
+            }
             this.sendAudienceMessage(sessionToAdvance, "Round " + nextRound + "/" + this.config.rounds + " started: " + spawned + " enemies (x" + playerMultiplier + " players, " + levelInfo + ")." + bossSuffix);
         } else {
-            String bossSuffix = spawnFinalBoss ? (bossSpawned ? " | Boss final invocado" + (bossRoleUsed.isBlank() ? "." : " (" + bossRoleUsed + ").") : " | Boss final solicitado pero no se pudo invocar.") : "";
+            String bossSuffix = "";
+            if (spawnFinalBoss) {
+                if (bossSpawnedCount > 0) {
+                    String sourceText = finalBossFromSelectedConfig ? "boss seleccionado" : "fallback legacy";
+                    bossSuffix = " | Boss final invocado: " + bossSpawnedCount + "/" + configuredFinalBossCount + (bossRoleUsed.isBlank() ? "" : " (" + bossRoleUsed + ")") + " [" + sourceText + "].";
+                } else {
+                    bossSuffix = " | Boss final solicitado pero no se pudo invocar.";
+                }
+            }
             this.sendAudienceMessage(sessionToAdvance, "Ronda " + nextRound + "/" + this.config.rounds + " iniciada: " + spawned + " enemigos (x" + playerMultiplier + " jugadores, " + levelInfo + ")." + bossSuffix);
         }
         this.broadcastRoundStartAnnouncement(sessionToAdvance, nextRound, this.config.rounds, spawned, playerMultiplier);
@@ -1775,19 +1961,22 @@ public final class HordeService {
 
     private void grantRoundRewards(HordeSession trackedSession, int completedRound) {
         if (completedRound <= 0 || this.config.rewardEveryRounds <= 0) {
+            this.plugin.getLogger().at(Level.INFO).log("Reward check skipped | round=%d | rewardEveryRounds=%d.", (Object)Integer.valueOf(completedRound), (Object)Integer.valueOf(this.config.rewardEveryRounds));
             return;
         }
         if (completedRound % this.config.rewardEveryRounds != 0) {
+            this.plugin.getLogger().at(Level.INFO).log("Reward locked | round=%d | rewardEveryRounds=%d.", (Object)Integer.valueOf(completedRound), (Object)Integer.valueOf(this.config.rewardEveryRounds));
             return;
         }
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         int rewardQuantity = Math.max(1, this.config.rewardItemQuantity);
-            this.sendAudienceMessage(trackedSession, english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".");
+        this.sendAudienceMessage(trackedSession, english ? "Reward unlocked for completing round " + completedRound + "." : "Recompensa desbloqueada por completar la ronda " + completedRound + ".");
         String rewardCategory = HordeService.normalizeRewardCategory(this.config.rewardCategory);
         String configuredRewardItemId = HordeService.normalizeRewardItemId(this.config.rewardItemId);
         boolean configuredRandom = HordeService.isRandomRewardMode(configuredRewardItemId);
         boolean configuredValid = configuredRandom || HordeService.isRewardItemAllowedForCategory(configuredRewardItemId, rewardCategory) && HordeService.isUsableRewardItemId(configuredRewardItemId, rewardQuantity);
         String rewardItemId = this.resolveRewardItemIdForDrop(rewardQuantity, rewardCategory, configuredRewardItemId);
+        this.plugin.getLogger().at(Level.INFO).log("Reward drop check | round=%d | every=%d | category=%s | configuredItem=%s | resolvedItem=%s | quantity=%d | configuredValid=%s | randomMode=%s", (Object)Integer.valueOf(completedRound), (Object)Integer.valueOf(this.config.rewardEveryRounds), (Object)rewardCategory, (Object)(configuredRewardItemId == null || configuredRewardItemId.isBlank() ? "<empty>" : configuredRewardItemId), (Object)(rewardItemId == null || rewardItemId.isBlank() ? "<none>" : rewardItemId), (Object)Integer.valueOf(rewardQuantity), (Object)Boolean.valueOf(configuredValid), (Object)Boolean.valueOf(configuredRandom));
         if (rewardItemId == null || rewardItemId.isBlank()) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo dropear recompensa: no hay rewardItemId valido disponible.");
             this.sendAudienceMessage(trackedSession, english ? "Could not drop reward item: no valid reward IDs were resolved." : "No se pudo dropear el item de recompensa: no se resolvieron IDs validas.");
@@ -1800,10 +1989,11 @@ public final class HordeService {
             this.sendAudienceMessage(trackedSession, english ? "RewardItemId empty/invalid. Auto-using: " + rewardItemId + " (category: " + rewardCategory + ")." : "RewardItemId vacio/invalido. Se usara automaticamente: " + rewardItemId + " (categoria: " + rewardCategory + ").");
         }
         ItemStack rewardStack = new ItemStack(rewardItemId, rewardQuantity);
-        Vector3d dropPosition = new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
+        String dropSource = trackedSession != null && trackedSession.selectedArenaId != null && !trackedSession.selectedArenaId.isBlank() ? "selected-arena-center" : "horde-center";
+        Vector3d dropPosition = this.resolveRewardDropPosition(trackedSession);
         Holder itemEntityHolder = ItemComponent.generateItemDrop(trackedSession.store, rewardStack, dropPosition, Vector3f.ZERO, 0.0f, 0.35f, 0.0f);
         if (itemEntityHolder == null) {
-            this.plugin.getLogger().at(Level.WARNING).log("No se pudo generar la entidad de recompensa para '%s'.", (Object)rewardItemId);
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo generar la entidad de recompensa | round=%d | item=%s | qty=%d | source=%s | drop=(%.2f, %.2f, %.2f).", (Object)Integer.valueOf(completedRound), (Object)rewardItemId, (Object)Integer.valueOf(rewardQuantity), (Object)dropSource, (Object)Double.valueOf(dropPosition.x), (Object)Double.valueOf(dropPosition.y), (Object)Double.valueOf(dropPosition.z));
             return;
         }
         ItemComponent itemComponent = (ItemComponent)itemEntityHolder.getComponent(ItemComponent.getComponentType());
@@ -1811,7 +2001,19 @@ public final class HordeService {
             itemComponent.setPickupDelay(0.6f);
         }
         trackedSession.store.addEntity(itemEntityHolder, AddReason.SPAWN);
-            this.sendAudienceMessage(trackedSession, english ? "Reward item dropped at center: " + rewardItemId + " x" + rewardQuantity + "." : "Item recompensa dropeado en el centro: " + rewardItemId + " x" + rewardQuantity + ".");
+        this.plugin.getLogger().at(Level.INFO).log("Reward dropped | round=%d | item=%s | qty=%d | source=%s | drop=(%.2f, %.2f, %.2f).", (Object)Integer.valueOf(completedRound), (Object)rewardItemId, (Object)Integer.valueOf(rewardQuantity), (Object)dropSource, (Object)Double.valueOf(dropPosition.x), (Object)Double.valueOf(dropPosition.y), (Object)Double.valueOf(dropPosition.z));
+        if (english) {
+            this.sendAudienceMessage(trackedSession, "Reward item dropped at arena center: " + rewardItemId + " x" + rewardQuantity + ".");
+        } else {
+            this.sendAudienceMessage(trackedSession, "Item recompensa dropeado en el centro de arena: " + rewardItemId + " x" + rewardQuantity + ".");
+        }
+    }
+
+    private Vector3d resolveRewardDropPosition(HordeSession trackedSession) {
+        if (trackedSession != null) {
+            return new Vector3d(trackedSession.arenaCenterX, trackedSession.arenaCenterY + 1.0, trackedSession.arenaCenterZ);
+        }
+        return new Vector3d(this.config.spawnX, this.config.spawnY + 1.0, this.config.spawnZ);
     }
 
     private String resolveRewardItemIdForDrop(int quantity, String rewardCategoryInput, String configuredRewardItemId) {
@@ -2822,6 +3024,25 @@ public final class HordeService {
         }
         int randomIndex = ThreadLocalRandom.current().nextInt(matches.size());
         return matches.get(randomIndex);
+    }
+
+    private String resolveConfiguredFinalBossRole(HordeSession sessionToAdvance) {
+        if (sessionToAdvance == null || sessionToAdvance.availableRoles == null || sessionToAdvance.availableRoles.isEmpty()) {
+            return "";
+        }
+        String configuredNpcId = sessionToAdvance.selectedBossNpcId == null ? "" : sessionToAdvance.selectedBossNpcId.trim();
+        if (configuredNpcId.isBlank()) {
+            return "";
+        }
+        String exactRole = HordeService.findRoleByExactName(sessionToAdvance.availableRoles, configuredNpcId);
+        if (exactRole != null && !exactRole.isBlank()) {
+            return exactRole;
+        }
+        List<String> containsMatches = HordeService.findRolesByContains(sessionToAdvance.availableRoles, configuredNpcId);
+        if (!containsMatches.isEmpty()) {
+            return containsMatches.get(0);
+        }
+        return "";
     }
 
     private static String pickFinalBossRole(List<String> roles) {
@@ -5040,6 +5261,17 @@ public final class HordeService {
         return role == null ? "" : role;
     }
 
+    private static String summarizeForDiagnostic(List<String> values, int maxItems) {
+        if (values == null || values.isEmpty()) {
+            return "-";
+        }
+        int safeLimit = Math.max(1, maxItems);
+        int count = Math.min(safeLimit, values.size());
+        List<String> preview = values.subList(0, count);
+        String suffix = values.size() > count ? " ... (+" + (values.size() - count) + ")" : "";
+        return String.join((CharSequence)", ", preview) + suffix;
+    }
+
     private static String cleanArenaSelectionValue(String arenaId) {
         return arenaId == null ? "" : arenaId.trim();
     }
@@ -5535,6 +5767,13 @@ public final class HordeService {
         private final String enemyType;
         private final List<String> availableRoles;
         private final List<String> randomEnemyTypes;
+        private final String selectedArenaId;
+        private final double arenaCenterX;
+        private final double arenaCenterY;
+        private final double arenaCenterZ;
+        private final String selectedBossId;
+        private final String selectedBossNpcId;
+        private final int selectedBossAmount;
         private final int playerMultiplier;
         private final Vector3f startRotation;
         private final Set<UUID> arenaPlayerIds;
@@ -5554,7 +5793,7 @@ public final class HordeService {
         private final long startedAtMillis;
         private ScheduledFuture<?> ticker;
 
-        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, long firstRoundAtMillis, Set<UUID> arenaPlayerIds, Set<UUID> arenaSpectatorIds) {
+        private HordeSession(World world, Store<EntityStore> store, String role, String enemyType, List<String> availableRoles, int playerMultiplier, String forcedRole, List<String> randomEnemyTypes, Vector3f startRotation, long firstRoundAtMillis, Set<UUID> arenaPlayerIds, Set<UUID> arenaSpectatorIds, String selectedArenaId, double arenaCenterX, double arenaCenterY, double arenaCenterZ, String selectedBossId, String selectedBossNpcId, int selectedBossAmount) {
             this.world = world;
             this.store = store;
             this.role = role;
@@ -5562,6 +5801,13 @@ public final class HordeService {
             this.enemyType = enemyType;
             this.availableRoles = availableRoles == null ? new ArrayList<String>() : new ArrayList<String>(availableRoles);
             this.randomEnemyTypes = randomEnemyTypes == null ? new ArrayList<String>() : new ArrayList<String>(randomEnemyTypes);
+            this.selectedArenaId = selectedArenaId == null ? "" : selectedArenaId.trim();
+            this.arenaCenterX = arenaCenterX;
+            this.arenaCenterY = arenaCenterY;
+            this.arenaCenterZ = arenaCenterZ;
+            this.selectedBossId = selectedBossId == null ? "" : selectedBossId.trim();
+            this.selectedBossNpcId = selectedBossNpcId == null ? "" : selectedBossNpcId.trim();
+            this.selectedBossAmount = Math.max(1, Math.min(250, selectedBossAmount));
             this.playerMultiplier = Math.max(MIN_PLAYER_MULTIPLIER, playerMultiplier);
             this.startRotation = startRotation == null ? Vector3f.ZERO : new Vector3f(startRotation);
             this.arenaPlayerIds = arenaPlayerIds == null ? new LinkedHashSet<UUID>() : new LinkedHashSet<UUID>(arenaPlayerIds);

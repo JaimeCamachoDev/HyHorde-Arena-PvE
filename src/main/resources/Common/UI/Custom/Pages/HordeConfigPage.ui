@@ -495,6 +495,18 @@ Group {
     Style: (FontSize: 14, TextColor: #b8cadf, VerticalAlignment: Center);
   }
 
+  Panel #DefinitionsColumnBackdrop {
+    Anchor: (Left: 448, Top: 224, Width: 516, Height: 572);
+    Background: #0d1726(0.72);
+    Visible: false;
+  }
+
+  Panel #EditorColumnBackdrop {
+    Anchor: (Left: 972, Top: 224, Width: 500, Height: 572);
+    Background: #0c1624(0.72);
+    Visible: false;
+  }
+
   TextButton #TabGeneralButton {
     Anchor: (Left: 767, Top: 24, Width: 74, Height: 40);
     Text: "General";
@@ -745,23 +757,16 @@ Group {
     Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@SliderNumberField #MaxRadius {
-    @Anchor = (Left: 1148, Top: 492, Width: 316);
-    Value: 12.0;
-    Min: 1.0;
-    Max: 128.0;
-    Step: 0.5;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
+  $C.@TextField #MaxRadius { @Anchor = (Left: 1148, Top: 492, Width: 316); Value: "12.0"; }
 
   Label #ArenaJoinRadiusLabel {
-    Anchor: (Left: 980, Top: 544, Width: 160, Height: 22);
+    Anchor: (Left: 980, Top: 362, Width: 160, Height: 22);
     Text: "Radio de jugadores de arena";
     Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@SliderNumberField #ArenaJoinRadius {
-    @Anchor = (Left: 1148, Top: 540, Width: 316);
+    @Anchor = (Left: 1148, Top: 358, Width: 316);
     Value: 32.0;
     Min: 4.0;
     Max: 512.0;
@@ -781,14 +786,7 @@ Group {
     Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@SliderNumberField #Rounds {
-    @Anchor = (Left: 1148, Top: 538, Width: 316);
-    Value: 5;
-    Min: 1;
-    Max: 200;
-    Step: 1;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
+  $C.@TextField #Rounds { @Anchor = (Left: 1148, Top: 538, Width: 316); Value: "5"; }
 
   Label #BaseEnemiesLabel {
     Anchor: (Left: 980, Top: 588, Width: 160, Height: 22);
@@ -796,14 +794,7 @@ Group {
     Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@SliderNumberField #BaseEnemies {
-    @Anchor = (Left: 1148, Top: 584, Width: 316);
-    Value: 8;
-    Min: 1;
-    Max: 400;
-    Step: 1;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
+  $C.@TextField #BaseEnemies { @Anchor = (Left: 1148, Top: 584, Width: 316); Value: "8"; }
 
   Label #EnemiesPerRoundLabel {
     Anchor: (Left: 980, Top: 634, Width: 160, Height: 22);
@@ -811,14 +802,7 @@ Group {
     Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@SliderNumberField #EnemiesPerRound {
-    @Anchor = (Left: 1148, Top: 630, Width: 316);
-    Value: 2;
-    Min: 0;
-    Max: 400;
-    Step: 1;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
+  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 1148, Top: 630, Width: 316); Value: "2"; }
 
   Label #WaveDelayLabel {
     Anchor: (Left: 980, Top: 680, Width: 160, Height: 22);
@@ -826,14 +810,7 @@ Group {
     Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@SliderNumberField #WaveDelay {
-    @Anchor = (Left: 1148, Top: 676, Width: 316);
-    Value: 8;
-    Min: 0;
-    Max: 300;
-    Step: 1;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
+  $C.@TextField #WaveDelay { @Anchor = (Left: 1148, Top: 676, Width: 316); Value: "8"; }
 
   Label #PlayerMultiplierLabel {
     Anchor: (Left: 1096, Top: 232, Width: 170, Height: 24);
@@ -1109,16 +1086,16 @@ Group {
   Label #PlayersHeaderMode { Anchor: (Left: 660, Top: 308, Width: 122, Height: 22); Text: "Modo"; Visible: false; Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
   Label #PlayersHeaderActions { Anchor: (Left: 788, Top: 308, Width: 158, Height: 22); Text: "Acciones"; Visible: false; Style: (FontSize: 12, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
 
-  Panel #PlayerRow1 { Anchor: (Left: 456, Top: 336, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName1 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode1 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen1 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete1 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow2 { Anchor: (Left: 456, Top: 374, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName2 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode2 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen2 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete2 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow3 { Anchor: (Left: 456, Top: 412, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName3 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode3 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen3 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete3 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow4 { Anchor: (Left: 456, Top: 450, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName4 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode4 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen4 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete4 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow5 { Anchor: (Left: 456, Top: 488, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName5 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode5 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen5 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete5 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow6 { Anchor: (Left: 456, Top: 526, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName6 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode6 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen6 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete6 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow7 { Anchor: (Left: 456, Top: 564, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName7 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode7 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen7 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete7 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow8 { Anchor: (Left: 456, Top: 602, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName8 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode8 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen8 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete8 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow9 { Anchor: (Left: 456, Top: 640, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName9 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode9 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen9 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete9 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #PlayerRow10 { Anchor: (Left: 456, Top: 678, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName10 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode10 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen10 { Anchor: (Left: 332, Top: 4, Width: 76, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete10 { Anchor: (Left: 414, Top: 4, Width: 76, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow1 { Anchor: (Left: 456, Top: 336, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName1 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode1 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen1 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete1 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow2 { Anchor: (Left: 456, Top: 374, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName2 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode2 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen2 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete2 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow3 { Anchor: (Left: 456, Top: 412, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName3 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode3 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen3 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete3 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow4 { Anchor: (Left: 456, Top: 450, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName4 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode4 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen4 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete4 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow5 { Anchor: (Left: 456, Top: 488, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName5 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode5 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen5 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete5 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow6 { Anchor: (Left: 456, Top: 526, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName6 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode6 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen6 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete6 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow7 { Anchor: (Left: 456, Top: 564, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName7 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode7 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen7 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete7 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow8 { Anchor: (Left: 456, Top: 602, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName8 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode8 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen8 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete8 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow9 { Anchor: (Left: 456, Top: 640, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName9 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode9 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen9 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete9 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
+  Panel #PlayerRow10 { Anchor: (Left: 456, Top: 678, Width: 500, Height: 34); Background: #16283f; Visible: false; Label #PlayerName10 { Anchor: (Left: 10, Top: 6, Width: 188, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } Label #PlayerMode10 { Anchor: (Left: 204, Top: 6, Width: 122, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); } TextButton #PlayerOpen10 { Anchor: (Left: 364, Top: 4, Width: 88, Height: 26); Text: "Edit"; Style: $C.@SmallSecondaryTextButtonStyle; } TextButton #PlayerDelete10 { Anchor: (Left: 458, Top: 4, Width: 32, Height: 26); Text: "-"; Style: $C.@CancelTextButtonStyle; } }
 
   TextButton #PlayersPagePrevButton { Anchor: (Left: 456, Top: 722, Width: 32, Height: 28); Text: "<"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #PlayersPageLabel { Anchor: (Left: 492, Top: 724, Width: 96, Height: 24); Text: "0/0"; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
@@ -1135,8 +1112,8 @@ Group {
 
   TextButton #PlayersSaveButton { Anchor: (Left: 1148, Top: 264, Width: 316, Height: 34); Text: "Guardar modo jugador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
   TextField #PlayerSelected { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
-  Label #PlayersCountLabel { Anchor: (Left: 980, Top: 236, Width: 154, Height: 22); Text: "Detectados"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
-  Label #PlayersCountValue { Anchor: (Left: 1138, Top: 236, Width: 64, Height: 22); Text: "0"; Visible: false; Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center); }
+  Label #PlayersCountLabel { Anchor: (Left: 980, Top: 404, Width: 154, Height: 22); Text: "Detectados"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
+  Label #PlayersCountValue { Anchor: (Left: 1138, Top: 404, Width: 64, Height: 22); Text: "0"; Visible: false; Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center); }
   Label #PlayerEditModeLabel { Anchor: (Left: 980, Top: 312, Width: 160, Height: 22); Text: "Modo de audiencia"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@DropdownBox #PlayerEditMode { @Anchor = (Left: 1148, Top: 308, Width: 316, Height: 34); Value: "player"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 316); }
   Label #AudienceInfoLabel { Anchor: (Left: 980, Top: 360, Width: 484, Height: 20); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #b5c7df, VerticalAlignment: Center); }
