@@ -448,6 +448,9 @@ public final class HordeService {
             if (trimmed.isBlank()) {
                 continue;
             }
+            if (HordeService.isBlockedEnemyRole(trimmed)) {
+                continue;
+            }
             values.add(trimmed);
         }
         for (String[] hints : ENEMY_TYPE_HINTS.values()) {
@@ -462,6 +465,9 @@ public final class HordeService {
                 if (trimmed.isBlank()) {
                     continue;
                 }
+                if (HordeService.isBlockedEnemyRole(trimmed)) {
+                    continue;
+                }
                 values.add(trimmed);
             }
         }
@@ -473,6 +479,9 @@ public final class HordeService {
                 }
                 String trimmed = row.npcId.trim();
                 if (trimmed.isBlank()) {
+                    continue;
+                }
+                if (HordeService.isBlockedEnemyRole(trimmed)) {
                     continue;
                 }
                 values.add(trimmed);
@@ -3208,6 +3217,9 @@ public final class HordeService {
             return true;
         }
         String normalizedRole = role.toLowerCase(Locale.ROOT);
+        if (HordeService.hasBlockedEnemyRolePrefix(normalizedRole)) {
+            return true;
+        }
         if (normalizedRole.equals("cat") || normalizedRole.contains("/cat") || normalizedRole.contains("cat/") || normalizedRole.contains("-cat") || normalizedRole.contains("cat-") || normalizedRole.contains("_cat") || normalizedRole.contains("cat_")) {
             return true;
         }
@@ -3216,6 +3228,25 @@ public final class HordeService {
             return true;
         }
         return false;
+    }
+
+    private static boolean hasBlockedEnemyRolePrefix(String normalizedRole) {
+        if (normalizedRole == null || normalizedRole.isBlank()) {
+            return true;
+        }
+        String value = normalizedRole.trim().toLowerCase(Locale.ROOT);
+        if (value.startsWith("static_") || value.startsWith("tamed_") || value.startsWith("test_")) {
+            return true;
+        }
+        int delimiter = -1;
+        for (int i = 0; i < value.length(); ++i) {
+            char current = value.charAt(i);
+            if (current != '_' && current != '-' && current != '/' && current != ' ' && current != ':') continue;
+            delimiter = i;
+            break;
+        }
+        String prefix = delimiter <= 0 ? value : value.substring(0, delimiter);
+        return prefix.equals("static") || prefix.equals("tamed") || prefix.equals("test");
     }
 
     public static boolean isEnglishLanguage(String language) {
@@ -3538,18 +3569,25 @@ public final class HordeService {
     }
 
     private static void applyRewardCatalogRuntime(Map<String, List<String>> categories) {
-        LinkedHashMap<String, List<String>> safeCategories = new LinkedHashMap<String, List<String>>(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
+        LinkedHashMap<String, List<String>> safeCategories = new LinkedHashMap<String, List<String>>();
         if (categories != null && !categories.isEmpty()) {
             for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
                 if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                    continue;
+                }
+                String normalizedCategory = HordeService.normalizeRewardCategoryKey(entry.getKey());
+                if (normalizedCategory.isBlank()) {
                     continue;
                 }
                 List<String> cleanedItems = HordeService.sanitizeRoleIdList(entry.getValue());
                 if (cleanedItems.isEmpty()) {
                     continue;
                 }
-                safeCategories.put(entry.getKey(), cleanedItems);
+                safeCategories.put(normalizedCategory, cleanedItems);
             }
+        }
+        if (safeCategories.isEmpty()) {
+            safeCategories.putAll(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
         }
         REWARD_CATEGORY_ITEMS = safeCategories;
         REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
@@ -3878,7 +3916,7 @@ public final class HordeService {
 
     private RewardCatalogLoadReport loadRewardItemsFromDisk(boolean createTemplateIfMissing) {
         RewardCatalogLoadReport report = new RewardCatalogLoadReport();
-        LinkedHashMap<String, List<String>> mergedCategories = new LinkedHashMap<String, List<String>>(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
+        LinkedHashMap<String, List<String>> mergedCategories = new LinkedHashMap<String, List<String>>();
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
         }
