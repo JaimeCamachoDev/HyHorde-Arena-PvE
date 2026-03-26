@@ -317,10 +317,7 @@ public final class HordeService {
     public synchronized String getStatusLine() {
         String language = HordeService.normalizeLanguage(this.config.language);
         if (this.session == null) {
-            if (HordeService.isEnglishLanguage(language)) {
-                return HordeI18n.translateLegacy(language, "No active horde. Use /hordeconfig to open the interface.");
-            }
-            return HordeI18n.translateLegacy(language, "Sin horda activa. Usa /hordeconfig para abrir la interfaz.");
+            return HordeI18n.translateUi(language, "No active horde. Use /hordeconfig to open the interface.", "Sin horda activa. Usa /hordeconfig para abrir la interfaz.");
         }
         this.syncSessionPlayers(this.session);
         int alive = HordeService.countAlive(this.session.activeEnemies);
@@ -328,14 +325,15 @@ public final class HordeService {
         int lockedPlayers = this.session.arenaPlayerIds.size();
         int lockedSpectators = this.session.arenaSpectatorIds.size();
         int playerMultiplier = HordeService.resolvePlayerMultiplierFromAudience(lockedPlayers, this.session.playerMultiplier);
-        String rewardInfo = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, false);
-        String finalBossInfo = this.config.finalBossEnabled ? (HordeService.isEnglishLanguage(language) ? "on" : "si") : (HordeService.isEnglishLanguage(language) ? "off" : "no");
-        String levelInfo = this.buildEnemyLevelStatusText(HordeService.isEnglishLanguage(language));
-        if (HordeService.isEnglishLanguage(language)) {
-            rewardInfo = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, true);
-            return HordeI18n.translateLegacy(language, "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + playerMultiplier + " | Locked players: " + lockedPlayers + " | Spectators: " + lockedSpectators + " | Levels: " + levelInfo + " | Final boss: " + finalBossInfo + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfo);
-        }
-        return HordeI18n.translateLegacy(language, "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Muertes de jugadores: " + totalDeaths + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + playerMultiplier + " | Jugadores bloqueados: " + lockedPlayers + " | Espectadores: " + lockedSpectators + " | Niveles: " + levelInfo + " | Boss final: " + finalBossInfo + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfo);
+        String rewardInfoEnglish = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, true);
+        String rewardInfoSpanish = HordeService.formatRewardInfo(this.config.rewardItemId, this.config.rewardItemQuantity, false);
+        String finalBossInfoEnglish = this.config.finalBossEnabled ? "on" : "off";
+        String finalBossInfoSpanish = this.config.finalBossEnabled ? "si" : "no";
+        String levelInfoEnglish = this.buildEnemyLevelStatusText(true);
+        String levelInfoSpanish = this.buildEnemyLevelStatusText(false);
+        String englishText = "Horde active | Round " + this.session.currentRound + "/" + this.config.rounds + " | Remaining enemies: " + alive + " | Total spawned: " + this.session.totalSpawned + " | Kills detected: " + this.session.totalKilled + " | Player deaths: " + totalDeaths + " | Type: " + this.session.enemyType + " | Real role: " + this.session.role + " | Players x" + playerMultiplier + " | Locked players: " + lockedPlayers + " | Spectators: " + lockedSpectators + " | Levels: " + levelInfoEnglish + " | Final boss: " + finalBossInfoEnglish + " | Reward every: " + this.config.rewardEveryRounds + " round(s) | Item: " + rewardInfoEnglish;
+        String spanishText = "Horda activa | Ronda " + this.session.currentRound + "/" + this.config.rounds + " | Enemigos vivos: " + alive + " | Spawn total: " + this.session.totalSpawned + " | Kills detectadas: " + this.session.totalKilled + " | Muertes de jugadores: " + totalDeaths + " | Tipo: " + this.session.enemyType + " | Rol real: " + this.session.role + " | Jugadores x" + playerMultiplier + " | Jugadores bloqueados: " + lockedPlayers + " | Espectadores: " + lockedSpectators + " | Niveles: " + levelInfoSpanish + " | Boss final: " + finalBossInfoSpanish + " | Recompensa por cada: " + this.config.rewardEveryRounds + " ronda(s) | Item: " + rewardInfoSpanish;
+        return HordeI18n.translateUi(language, englishText, spanishText);
     }
 
     private String buildEnemyLevelStatusText(boolean english) {

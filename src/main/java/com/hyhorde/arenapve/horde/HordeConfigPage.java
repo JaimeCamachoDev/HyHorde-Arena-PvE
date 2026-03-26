@@ -421,7 +421,7 @@ extends CustomUIPage {
             payload = JsonParser.parseString((String)payloadText).getAsJsonObject();
         }
         catch (Exception ex) {
-            this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, english ? "Could not parse the UI event payload." : "No se pudo interpretar el evento de la UI.")));
+            this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateUi(language, "Could not parse the UI event payload.", "No se pudo interpretar el evento de la UI.")));
             return;
         }
         try {
@@ -437,7 +437,7 @@ extends CustomUIPage {
             EntityStore entityStore = (EntityStore)store.getExternalData();
             World world = entityStore == null ? null : entityStore.getWorld();
             if (world == null && HordeConfigPage.requiresWorld(action)) {
-                this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, english ? "Could not access the active world to process this UI action." : "No se pudo acceder al mundo actual para procesar la accion de UI.")));
+                this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateUi(language, "Could not access the active world to process this UI action.", "No se pudo acceder al mundo actual para procesar la accion de UI.")));
                 this.safeRebuild();
                 return;
             }
@@ -588,7 +588,7 @@ extends CustomUIPage {
             }
         }
         catch (Exception ex) {
-            this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, english ? "Internal error while processing horde UI. Check server logs and try again." : "Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo.")));
+            this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateUi(language, "Internal error while processing horde UI. Check server logs and try again.", "Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo.")));
         }
         this.safeRebuild();
     }
@@ -2236,22 +2236,7 @@ extends CustomUIPage {
     }
 
     private static String t(String language, boolean english, String englishText, String spanishText) {
-        String normalizedLanguage = HordeService.normalizeLanguage(language);
-        if (HordeI18n.LANGUAGE_ENGLISH.equals(normalizedLanguage)) {
-            return englishText;
-        }
-        if (HordeI18n.LANGUAGE_SPANISH.equals(normalizedLanguage)) {
-            return spanishText;
-        }
-        String translatedFromEnglish = HordeI18n.translateLegacy(normalizedLanguage, englishText);
-        if (!translatedFromEnglish.equals(englishText)) {
-            return translatedFromEnglish;
-        }
-        String translatedFromSpanish = HordeI18n.translateLegacy(normalizedLanguage, spanishText);
-        if (!translatedFromSpanish.equals(spanishText)) {
-            return translatedFromSpanish;
-        }
-        return translatedFromEnglish;
+        return HordeI18n.translateUi(HordeService.normalizeLanguage(language), englishText, spanishText);
     }
 
     private void setLocalizedTexts(UICommandBuilder commandBuilder, String language, boolean english) {

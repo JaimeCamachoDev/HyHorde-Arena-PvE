@@ -501,33 +501,33 @@ extends EntityTickingSystem<EntityStore> {
         private void updateHudValues(UICommandBuilder commandBuilder) {
             HordeService.StatusSnapshot status = this.snapshot == null ? this.hordeService.getStatusSnapshot() : this.snapshot;
             String language = HordeService.normalizeLanguage(status.language);
-            boolean english = HordeService.isEnglishLanguage(language);
             String worldText = status.worldName == null || status.worldName.isBlank() ? "default" : status.worldName;
-            String stateLine = HordeI18n.translateLegacy(language, english ? "State: " + (status.active ? "Active" : "Inactive") + " | World: " + worldText : "Estado: " + (status.active ? "Activa" : "Inactiva") + " | Mundo: " + worldText);
-            String roundLine = HordeI18n.translateLegacy(language, english ? "Round: " + status.currentRound + "/" + status.totalRounds : "Ronda: " + status.currentRound + "/" + status.totalRounds);
-            String enemiesLine = HordeI18n.translateLegacy(language, english ? "Enemies alive: " + status.aliveEnemies : "Enemigos vivos: " + status.aliveEnemies);
-            String killsLine = HordeI18n.translateLegacy(language, english ? "Kills: " + status.totalKilled + " | Deaths: " + status.totalDeaths : "Bajas: " + status.totalKilled + " | Muertes: " + status.totalDeaths);
-            String nextLine = HordeI18n.translateLegacy(language, english ? "Next round: " + (status.nextRoundInSeconds > 0L ? status.nextRoundInSeconds + "s" : "-") : "Siguiente: " + (status.nextRoundInSeconds > 0L ? status.nextRoundInSeconds + "s" : "-"));
-            String rewardLine = this.buildRewardLine(language, english);
-            commandBuilder.set("#TitleLabel.Text", HordeI18n.translateLegacy(language, english ? "HORDE PVE" : "HORDA PVE")).set("#StateLine.Text", stateLine).set("#RoundLine.Text", roundLine).set("#EnemiesLine.Text", enemiesLine).set("#KillsLine.Text", killsLine).set("#NextLine.Text", nextLine).set("#RewardLine.Text", rewardLine);
+            String stateLine = HordeI18n.translateUi(language, "State: " + (status.active ? "Active" : "Inactive") + " | World: " + worldText, "Estado: " + (status.active ? "Activa" : "Inactiva") + " | Mundo: " + worldText);
+            String roundLine = HordeI18n.translateUi(language, "Round: " + status.currentRound + "/" + status.totalRounds, "Ronda: " + status.currentRound + "/" + status.totalRounds);
+            String enemiesLine = HordeI18n.translateUi(language, "Enemies alive: " + status.aliveEnemies, "Enemigos vivos: " + status.aliveEnemies);
+            String killsLine = HordeI18n.translateUi(language, "Kills: " + status.totalKilled + " | Deaths: " + status.totalDeaths, "Bajas: " + status.totalKilled + " | Muertes: " + status.totalDeaths);
+            String nextLine = HordeI18n.translateUi(language, "Next round: " + (status.nextRoundInSeconds > 0L ? status.nextRoundInSeconds + "s" : "-"), "Siguiente: " + (status.nextRoundInSeconds > 0L ? status.nextRoundInSeconds + "s" : "-"));
+            String rewardLine = this.buildRewardLine(language);
+            commandBuilder.set("#TitleLabel.Text", HordeI18n.translateUi(language, "HORDE PVE", "HORDA PVE")).set("#StateLine.Text", stateLine).set("#RoundLine.Text", roundLine).set("#EnemiesLine.Text", enemiesLine).set("#KillsLine.Text", killsLine).set("#NextLine.Text", nextLine).set("#RewardLine.Text", rewardLine);
         }
 
-        private String buildRewardLine(String language, boolean english) {
+        private String buildRewardLine(String language) {
             HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
             String itemId = config.rewardItemId == null ? "" : config.rewardItemId.trim();
             int quantity = Math.max(1, config.rewardItemQuantity);
-            String mode;
+            String modeEnglish;
+            String modeSpanish;
             if (itemId.isBlank()) {
-                mode = english ? "none" : "ninguno";
+                modeEnglish = "none";
+                modeSpanish = "ninguno";
             } else if ("random".equalsIgnoreCase(itemId)) {
-                mode = english ? "random" : "aleatorio";
+                modeEnglish = "random";
+                modeSpanish = "aleatorio";
             } else {
-                mode = itemId;
+                modeEnglish = itemId;
+                modeSpanish = itemId;
             }
-            if (english) {
-                return HordeI18n.translateLegacy(language, "Reward: " + mode + " x" + quantity + " | Every " + config.rewardEveryRounds + " round(s)");
-            }
-            return HordeI18n.translateLegacy(language, "Recompensa: " + mode + " x" + quantity + " | Cada " + config.rewardEveryRounds + " ronda(s)");
+            return HordeI18n.translateUi(language, "Reward: " + modeEnglish + " x" + quantity + " | Every " + config.rewardEveryRounds + " round(s)", "Recompensa: " + modeSpanish + " x" + quantity + " | Cada " + config.rewardEveryRounds + " ronda(s)");
         }
     }
 }

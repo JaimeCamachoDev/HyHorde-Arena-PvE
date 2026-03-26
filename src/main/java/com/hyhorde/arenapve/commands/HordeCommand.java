@@ -37,16 +37,15 @@ extends AbstractPlayerCommand {
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        boolean english = HordeService.isEnglishLanguage(this.hordeService.getLanguage());
         String action = HordeCommand.readAction(commandContext, this.actionArg);
         if (!action.isBlank()) {
-            this.sendLocalized(playerRef, english ? "The /horda command does not use subcommands. Use /hordahelp." : "El comando /horda no usa subcomandos. Usa /hordahelp.");
+            this.sendLocalized(playerRef, "The /horda command does not use subcommands. Use /hordahelp.", "El comando /horda no usa subcomandos. Usa /hordahelp.");
             return;
         }
         NPCPlugin npcPlugin = NPCPlugin.get();
         List spawnableRoles = npcPlugin.getRoleTemplateNames(true);
         if (spawnableRoles.isEmpty()) {
-            this.sendLocalized(playerRef, english ? "No NPC roles are available to spawn enemies." : "No hay roles de NPC disponibles para spawnear enemigos.");
+            this.sendLocalized(playerRef, "No NPC roles are available to spawn enemies.", "No hay roles de NPC disponibles para spawnear enemigos.");
             return;
         }
         String enemyRole = HordeCommand.chooseEnemyRole(spawnableRoles);
@@ -71,10 +70,10 @@ extends AbstractPlayerCommand {
             }
         }
         if (spawned == 0) {
-            this.sendLocalized(playerRef, english ? "Could not create horde (role used: " + enemyRole + ")." : "No se pudo generar la horda (rol usado: " + enemyRole + ").");
+            this.sendLocalized(playerRef, "Could not create horde (role used: " + enemyRole + ").", "No se pudo generar la horda (rol usado: " + enemyRole + ").");
             return;
         }
-        this.sendLocalized(playerRef, english ? "Horde created: " + spawned + "/12 enemies (role: " + enemyRole + ")." : "Horda creada: " + spawned + "/12 enemigos (rol: " + enemyRole + ").");
+        this.sendLocalized(playerRef, "Horde created: " + spawned + "/12 enemies (role: " + enemyRole + ").", "Horda creada: " + spawned + "/12 enemigos (rol: " + enemyRole + ").");
     }
 
     private void sendLocalized(PlayerRef playerRef, String text) {
@@ -82,6 +81,13 @@ extends AbstractPlayerCommand {
             return;
         }
         playerRef.sendMessage(Message.raw((String)com.hyhorde.arenapve.horde.HordeI18n.translateLegacy(this.hordeService.getLanguage(), text)));
+    }
+
+    private void sendLocalized(PlayerRef playerRef, String englishText, String spanishText) {
+        if (playerRef == null) {
+            return;
+        }
+        playerRef.sendMessage(Message.raw((String)com.hyhorde.arenapve.horde.HordeI18n.translateUi(this.hordeService.getLanguage(), englishText, spanishText)));
     }
 
     private static String chooseEnemyRole(List<String> roles) {

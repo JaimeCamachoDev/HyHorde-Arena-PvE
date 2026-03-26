@@ -131,22 +131,7 @@ extends CustomUIPage {
     }
 
     private static String t(String language, boolean english, String englishText, String spanishText) {
-        String normalizedLanguage = HordeService.normalizeLanguage(language);
-        if (HordeI18n.LANGUAGE_ENGLISH.equals(normalizedLanguage)) {
-            return englishText;
-        }
-        if (HordeI18n.LANGUAGE_SPANISH.equals(normalizedLanguage)) {
-            return spanishText;
-        }
-        String translatedFromEnglish = HordeI18n.translateLegacy(normalizedLanguage, englishText);
-        if (!translatedFromEnglish.equals(englishText)) {
-            return translatedFromEnglish;
-        }
-        String translatedFromSpanish = HordeI18n.translateLegacy(normalizedLanguage, spanishText);
-        if (!translatedFromSpanish.equals(spanishText)) {
-            return translatedFromSpanish;
-        }
-        return translatedFromEnglish;
+        return HordeI18n.translateUi(HordeService.normalizeLanguage(language), englishText, spanishText);
     }
 
     private static String read(JsonObject object, String key) {
