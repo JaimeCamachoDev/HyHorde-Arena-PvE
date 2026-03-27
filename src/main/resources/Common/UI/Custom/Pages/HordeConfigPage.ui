@@ -57,8 +57,59 @@ Group {
     Anchor: (Full: 0);
   }
 
+  TabNavigation #CategoryTabs {
+    Anchor: (Left: 452, Top: 8, Width: 724, Height: 64);
+    Style: @OfficialTextTopTabsStyle;
+    SelectedTab: "general";
+
+    TabButton #TabGeneralButton {
+      Id: "general";
+      Text: "General";
+    }
+
+    TabButton #TabArenasButton {
+      Id: "arenas";
+      Text: "Arenas";
+    }
+
+    TabButton #TabEnemiesButton {
+      Id: "enemies";
+      Text: "Enemigos";
+    }
+
+    TabButton #TabHordeButton {
+      Id: "horde";
+      Text: "Horda";
+    }
+
+    TabButton #TabBossesButton {
+      Id: "bosses";
+      Text: "Bosses";
+    }
+
+    TabButton #TabPlayersButton {
+      Id: "players";
+      Text: "Jugadores";
+    }
+
+    TabButton #TabRewardsButton {
+      Id: "rewards";
+      Text: "Recomp.";
+    }
+
+    TabButton #TabSoundsButton {
+      Id: "sounds";
+      Text: "Sonidos";
+    }
+
+    TabButton #TabHelpButton {
+      Id: "help";
+      Text: "Ayuda";
+    }
+  }
+
   $C.@DecoratedContainer #OfficialFrame {
-    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 930);
+    Anchor: (Left: 430, Top: 80, Width: 1060, Height: 930);
 
     #Title {
       Label #OfficialFrameTitle {
@@ -70,145 +121,145 @@ Group {
   }
 
   Panel #Card {
-    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 930);
+    Anchor: (Left: 430, Top: 80, Width: 1060, Height: 930);
     Visible: false;
     Background: #142131;
   }
 
   Panel #Header {
-    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 116);
+    Anchor: (Left: 430, Top: 80, Width: 1060, Height: 116);
     Visible: false;
     Background: #213650;
   }
 
   Panel #CardOuterTop {
-    Anchor: (Left: 427, Top: 69, Width: 1066, Height: 3);
+    Anchor: (Left: 427, Top: 77, Width: 1066, Height: 3);
     Visible: false;
     Background: #060b14(0.98);
   }
 
   Panel #CardOuterBottom {
-    Anchor: (Left: 427, Top: 1002, Width: 1066, Height: 3);
+    Anchor: (Left: 427, Top: 1010, Width: 1066, Height: 3);
     Visible: false;
     Background: #060b14(0.98);
   }
 
   Panel #CardOuterLeft {
-    Anchor: (Left: 427, Top: 72, Width: 3, Height: 930);
+    Anchor: (Left: 427, Top: 80, Width: 3, Height: 930);
     Visible: false;
     Background: #060b14(0.98);
   }
 
   Panel #CardOuterRight {
-    Anchor: (Left: 1490, Top: 72, Width: 3, Height: 930);
+    Anchor: (Left: 1490, Top: 80, Width: 3, Height: 930);
     Visible: false;
     Background: #060b14(0.98);
   }
 
   Panel #CardMidTop {
-    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 1);
+    Anchor: (Left: 430, Top: 80, Width: 1060, Height: 1);
     Visible: false;
     Background: #2c4b72(0.92);
   }
 
   Panel #CardMidBottom {
-    Anchor: (Left: 430, Top: 1000, Width: 1060, Height: 1);
+    Anchor: (Left: 430, Top: 1008, Width: 1060, Height: 1);
     Visible: false;
     Background: #2c4b72(0.68);
   }
 
   Panel #CardMidLeft {
-    Anchor: (Left: 430, Top: 72, Width: 1, Height: 930);
+    Anchor: (Left: 430, Top: 80, Width: 1, Height: 930);
     Visible: false;
     Background: #2c4b72(0.86);
   }
 
   Panel #CardMidRight {
-    Anchor: (Left: 1489, Top: 72, Width: 1, Height: 930);
+    Anchor: (Left: 1489, Top: 80, Width: 1, Height: 930);
     Visible: false;
     Background: #2c4b72(0.86);
   }
 
   Panel #CardInnerTop {
-    Anchor: (Left: 431, Top: 73, Width: 1058, Height: 1);
+    Anchor: (Left: 431, Top: 81, Width: 1058, Height: 1);
     Visible: false;
     Background: #557ba8(0.64);
   }
 
   Panel #CardInnerBottom {
-    Anchor: (Left: 431, Top: 999, Width: 1058, Height: 1);
+    Anchor: (Left: 431, Top: 1007, Width: 1058, Height: 1);
     Visible: false;
     Background: #1a304f(0.74);
   }
 
   Panel #CardInnerLeft {
-    Anchor: (Left: 431, Top: 73, Width: 1, Height: 928);
+    Anchor: (Left: 431, Top: 81, Width: 1, Height: 928);
     Visible: false;
     Background: #4c7099(0.5);
   }
 
   Panel #CardInnerRight {
-    Anchor: (Left: 1488, Top: 73, Width: 1, Height: 928);
+    Anchor: (Left: 1488, Top: 81, Width: 1, Height: 928);
     Visible: false;
     Background: #4c7099(0.5);
   }
 
   Panel #CardCornerTLH {
-    Anchor: (Left: 433, Top: 75, Width: 18, Height: 2);
+    Anchor: (Left: 433, Top: 83, Width: 18, Height: 2);
     Visible: false;
     Background: #6f95c0(0.78);
   }
 
   Panel #CardCornerTLV {
-    Anchor: (Left: 433, Top: 75, Width: 2, Height: 18);
+    Anchor: (Left: 433, Top: 83, Width: 2, Height: 18);
     Visible: false;
     Background: #6f95c0(0.78);
   }
 
   Panel #CardCornerTRH {
-    Anchor: (Left: 1470, Top: 75, Width: 18, Height: 2);
+    Anchor: (Left: 1470, Top: 83, Width: 18, Height: 2);
     Visible: false;
     Background: #6f95c0(0.78);
   }
 
   Panel #CardCornerTRV {
-    Anchor: (Left: 1486, Top: 75, Width: 2, Height: 18);
+    Anchor: (Left: 1486, Top: 83, Width: 2, Height: 18);
     Visible: false;
     Background: #6f95c0(0.78);
   }
 
   Panel #CardCornerBLH {
-    Anchor: (Left: 433, Top: 997, Width: 18, Height: 2);
+    Anchor: (Left: 433, Top: 1005, Width: 18, Height: 2);
     Visible: false;
     Background: #274565(0.75);
   }
 
   Panel #CardCornerBLV {
-    Anchor: (Left: 433, Top: 981, Width: 2, Height: 18);
+    Anchor: (Left: 433, Top: 989, Width: 2, Height: 18);
     Visible: false;
     Background: #274565(0.75);
   }
 
   Panel #CardCornerBRH {
-    Anchor: (Left: 1470, Top: 997, Width: 18, Height: 2);
+    Anchor: (Left: 1470, Top: 1005, Width: 18, Height: 2);
     Visible: false;
     Background: #274565(0.75);
   }
 
   Panel #CardCornerBRV {
-    Anchor: (Left: 1486, Top: 981, Width: 2, Height: 18);
+    Anchor: (Left: 1486, Top: 989, Width: 2, Height: 18);
     Visible: false;
     Background: #274565(0.75);
   }
 
   Panel #HeaderTopEdge {
-    Anchor: (Left: 430, Top: 72, Width: 1060, Height: 2);
+    Anchor: (Left: 430, Top: 80, Width: 1060, Height: 2);
     Visible: false;
     Background: #4a6b93(0.7);
   }
 
   Panel #HeaderBottomEdge {
-    Anchor: (Left: 430, Top: 186, Width: 1060, Height: 2);
+    Anchor: (Left: 430, Top: 194, Width: 1060, Height: 2);
     Visible: false;
     Background: #13243a(0.78);
   }
@@ -536,57 +587,6 @@ Group {
     Anchor: (Left: 972, Top: 224, Width: 500, Height: 572);
     Background: #0c1624(0.72);
     Visible: false;
-  }
-
-  TabNavigation #CategoryTabs {
-    Anchor: (Left: 763, Top: 14, Width: 724, Height: 64);
-    Style: @OfficialTextTopTabsStyle;
-    SelectedTab: "general";
-
-    TabButton #TabGeneralButton {
-      Id: "general";
-      Text: "General";
-    }
-
-    TabButton #TabArenasButton {
-      Id: "arenas";
-      Text: "Arenas";
-    }
-
-    TabButton #TabEnemiesButton {
-      Id: "enemies";
-      Text: "Enemigos";
-    }
-
-    TabButton #TabHordeButton {
-      Id: "horde";
-      Text: "Horda";
-    }
-
-    TabButton #TabBossesButton {
-      Id: "bosses";
-      Text: "Bosses";
-    }
-
-    TabButton #TabPlayersButton {
-      Id: "players";
-      Text: "Jugadores";
-    }
-
-    TabButton #TabRewardsButton {
-      Id: "rewards";
-      Text: "Recomp.";
-    }
-
-    TabButton #TabSoundsButton {
-      Id: "sounds";
-      Text: "Sonidos";
-    }
-
-    TabButton #TabHelpButton {
-      Id: "help";
-      Text: "Ayuda";
-    }
   }
 
   Label #TabHintLabel {
