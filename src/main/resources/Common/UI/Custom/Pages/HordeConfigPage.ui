@@ -25,21 +25,20 @@ $C = "../Common.ui";
 @OfficialTextTopTabAnchor = Anchor(Width: 74, Height: 50, Right: 4, Bottom: -10);
 @OfficialTextTopTabStyle = TabStyleState(
   Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #8ea1bb(0.42)),
-  Overlay: "../Common/TabOverlay.png",
   LabelStyle: @OfficialTabLabelDefaultStyle,
-  Padding: (Left: 10, Right: 10, Top: 12),
+  Padding: (Left: 10, Right: 10, Top: 4, Bottom: 8),
   Anchor: @OfficialTextTopTabAnchor
 );
 @OfficialTextTopTabsStyle = TabNavigationStyle(
   TabStyle: (
     Default: @OfficialTextTopTabStyle,
-    Hovered: (...@OfficialTextTopTabStyle, Anchor: (...@OfficialTextTopTabAnchor, Bottom: -4), LabelStyle: @OfficialTabLabelHoverStyle),
-    Pressed: (...@OfficialTextTopTabStyle, Anchor: (...@OfficialTextTopTabAnchor, Bottom: -7), LabelStyle: @OfficialTabLabelPressedStyle)
+    Hovered: (...@OfficialTextTopTabStyle, Anchor: (...@OfficialTextTopTabAnchor, Height: 56, Bottom: -10), LabelStyle: @OfficialTabLabelHoverStyle),
+    Pressed: (...@OfficialTextTopTabStyle, Anchor: (...@OfficialTextTopTabAnchor, Height: 58, Bottom: -10), LabelStyle: @OfficialTabLabelPressedStyle)
   ),
   SelectedTabStyle: (
     Default: (
       ...@OfficialTextTopTabStyle,
-      Anchor: (...@OfficialTextTopTabAnchor, Bottom: 0),
+      Anchor: (...@OfficialTextTopTabAnchor, Height: 60, Bottom: -10),
       Overlay: "../Common/TabSelectedOverlay.png",
       LabelStyle: @OfficialTabLabelPressedStyle
     )
@@ -58,7 +57,7 @@ Group {
   }
 
   TabNavigation #CategoryTabs {
-    Anchor: (Left: 452, Top: 8, Width: 724, Height: 64);
+    Anchor: (Left: 452, Top: 12, Width: 724, Height: 64);
     Style: @OfficialTextTopTabsStyle;
     SelectedTab: "general";
 

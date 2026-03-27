@@ -101,3 +101,7 @@ Claves principales soportadas:
 Salida esperada:
 
 - `build/libs/HyHorde-Arena-PVE-<version>.jar`
+
+## Troubleshooting UI
+
+- Guia de errores recurrentes de Custom UI: `docs/CUSTOM_UI_GUARDRAILS.md`

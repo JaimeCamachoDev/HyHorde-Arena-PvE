@@ -28,6 +28,10 @@ import java.util.UUID;
 
 public final class HordeConfigPage
 extends CustomUIPage {
+    // Keep in sync with src/main/resources/Common/UI/Custom/Pages/HordeConfigPage.ui.
+    // If this path drifts, client can crash with:
+    // "Could not find document ... for Custom UI Append command".
+    // See docs/CUSTOM_UI_GUARDRAILS.md
     private static final String LAYOUT = "Pages/HordeConfigPage.ui";
     private static final String TAB_GENERAL = "general";
     private static final String TAB_HORDE = "horde";
