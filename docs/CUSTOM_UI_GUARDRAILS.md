@@ -178,7 +178,16 @@ Solucion:
 
 4. Texturas de tabs con cruces rojas
 - Causa: rutas de textura incorrectas.
-- Regla: usar rutas relativas `../Common/...` para recursos compartidos de tabs.
+- Regla: en `UIPath`, las rutas son relativas al `.ui` donde se declaran.
+- Regla: para `Pages/HordeConfigPage.ui`, usar:
+  - recursos de `Common/UI/Custom/Common/*`: `../Common/...`
+  - iconos para `TabButton.Icon`: `../Icons/...` dentro del propio asset pack del mod.
+- Error real visto (2026-03-29 16:59:40):
+  - `Failed to parse file Pages/HordeConfigPage.ui (54:13) - Could not resolve relative path: ../../../Icons/ItemCategories/Items.png`
+- Regla: no apuntar `TabButton.Icon` a `../../../Icons/...` ni a `Common/Icons/...` desde `Pages/HordeConfigPage.ui`.
+- Solucion estable:
+  - copiar los iconos necesarios a `src/main/resources/Common/UI/Custom/Icons/...`
+  - referenciar con `../Icons/...` desde `Pages/HordeConfigPage.ui`.
 
 5. Listas `TopScrolling` con filas desalineadas
 - Firma visual: mas padding a derecha que a izquierda, filas "finas/largas", boton `X` deformado.
@@ -261,6 +270,31 @@ Aplicado en este mod:
 
 8. Referencia NPC para pickers de enemigos
 - Regla: para listas de enemigos y validacion semantica, usar los docs NPC oficiales como referencia funcional (roles/templates), sin depender de fuentes no oficiales para IDs criticos.
+
+## Validacion build-11 (2026-03-29)
+
+Comprobado contra:
+- `C:\Users\Jaime\AppData\Roaming\Hytale\install\release\package\game\build-11\Assets.zip`
+- `Common/UI/Custom/Common.ui`
+
+Resultado:
+- Estan definidos y disponibles: `@TopTabsStyle`, `@TopTabStyle`, `@HeaderTabsStyle`, `@HeaderTabStyle`, `@HeaderSearch`.
+- En esta build no hay evidencia de crash por usar esos estilos nativos de tabs/search; los crashes vistos fueron por:
+  - propiedades incompatibles por tipo (ej. `Min` en `NumberField`)
+  - selectores/event bindings invalidos (elemento no encontrado o sin evento compatible).
+
+Decision:
+- Priorizar patron nativo oficial para navegacion y pickers:
+  - tabs principales: `Style: $C.@TopTabsStyle` con `TabButton.Icon` + `TooltipText`.
+  - tabs de cabecera en pickers: `Style: $C.@HeaderTabsStyle`.
+  - buscador de cabecera en pickers: `$C.@HeaderSearch #<Id> { ... }` y leer/escribir `#<Id> #SearchInput.Value`.
+
+Inventario de iconos (misma build):
+- `Common/Icons/*`: `3746` iconos.
+- Carpetas mas utiles para este mod:
+  - `Common/Icons/ItemCategories/*`
+  - `Common/Icons/CraftingCategories/*`
+  - `Common/Icons/ItemsGenerated/*`
 
 ## Checklist rapido antes de compilar
 
