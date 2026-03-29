@@ -94,6 +94,7 @@ public final class HordeService {
     private static final Map<String, String[]> DEFAULT_ENEMY_TYPE_HINTS = HordeService.buildEnemyTypeHints();
     private static final String[] DEFAULT_FINAL_BOSS_ROLE_HINTS = new String[]{"Dragon_Fire", "Dragon_Frost"};
     private static final String[] DEFAULT_BLOCKED_ENEMY_ROLE_HINTS = new String[]{"kitten", "feline", "civilian", "merchant", "vendor", "villager", "windwalker", "cub", "pet", "companion", "dummy", "training", "blanktemplate", "blank_template", "template", "friendly", "nonhostile", "feran"};
+    private static final String DEFAULT_ENEMY_CATEGORY_ICON_ITEM_ID = "Weapon_Wand_Wood";
     private static final Map<String, List<String>> DEFAULT_REWARD_CATEGORY_ITEMS = HordeService.buildRewardCategoryItems();
     private static Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.copyEnemyTypeHints(DEFAULT_ENEMY_TYPE_HINTS);
     private static String[] FINAL_BOSS_ROLE_HINTS = DEFAULT_FINAL_BOSS_ROLE_HINTS.clone();
@@ -511,6 +512,8 @@ public final class HordeService {
 
     public synchronized List<EnemyCategorySnapshot> getEnemyCategoryDefinitionsSnapshot() {
         ArrayList<EnemyCategorySnapshot> rows = new ArrayList<EnemyCategorySnapshot>();
+        EnemyCategoriesConfig editableConfig = this.readEnemyCategoriesConfigForEditor(false);
+        Map<String, String> categoryIcons = editableConfig == null ? new LinkedHashMap<String, String>() : HordeService.sanitizeEnemyCategoryIconMap(editableConfig.categoryIcons);
         for (Map.Entry<String, String[]> entry : ENEMY_TYPE_HINTS.entrySet()) {
             if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
                 continue;
@@ -533,7 +536,8 @@ public final class HordeService {
             if (cleanedRoles.isEmpty()) {
                 continue;
             }
-            rows.add(new EnemyCategorySnapshot(categoryId, cleanedRoles));
+            String iconItemId = HordeService.firstNonBlankValue(categoryIcons.get(categoryId), HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId));
+            rows.add(new EnemyCategorySnapshot(categoryId, cleanedRoles, iconItemId));
         }
         return rows;
     }
@@ -566,6 +570,9 @@ public final class HordeService {
         if (editableConfig.categories == null) {
             editableConfig.categories = new LinkedHashMap<String, List<String>>();
         }
+        if (editableConfig.categoryIcons == null) {
+            editableConfig.categoryIcons = new LinkedHashMap<String, String>();
+        }
         String baseCategoryId = HordeService.normalizeEnemyType(requestedCategoryId == null ? "" : requestedCategoryId.trim());
         if (baseCategoryId.isBlank() || HordeService.isRandomEnemyType(baseCategoryId) || HordeService.isRandomAllEnemyType(baseCategoryId)) {
             baseCategoryId = "enemy_category";
@@ -585,6 +592,7 @@ public final class HordeService {
             }
         }
         editableConfig.categories.put(uniqueCategoryId, List.of(fallbackRole));
+        editableConfig.categoryIcons.put(uniqueCategoryId, HordeService.resolveDefaultEnemyCategoryIconItemId(uniqueCategoryId));
         this.saveEnemyCategoriesEditorConfig(editableConfig);
         this.loadEnemyCategoriesFromDisk(false);
         return OperationResult.ok(english ? "Enemy category created: " + uniqueCategoryId + "." : "Categoria de enemigos creada: " + uniqueCategoryId + ".");
@@ -604,6 +612,7 @@ public final class HordeService {
         String selectedCategoryId = HordeService.normalizeEnemyType(selectedRaw);
         String rolesRaw = HordeService.trimToEmpty(values == null ? "" : values.get("enemyCategoryEditRoles"));
         List<String> cleanedRoles = HordeService.parseEnemyCategoryRoles(rolesRaw);
+        String requestedIconItemId = HordeService.normalizeEnemyCategoryIconItemId(values == null ? "" : values.get("enemyCategoryEditIconItemId"), requestedCategoryId);
         if (cleanedRoles.isEmpty()) {
             return OperationResult.fail(english ? "Enemy IDs list cannot be empty." : "La lista de Enemy IDs no puede estar vacia.");
         }
@@ -611,14 +620,19 @@ public final class HordeService {
         if (editableConfig.categories == null) {
             editableConfig.categories = new LinkedHashMap<String, List<String>>();
         }
+        if (editableConfig.categoryIcons == null) {
+            editableConfig.categoryIcons = new LinkedHashMap<String, String>();
+        }
         boolean creating = selectedCategoryId.isBlank() || !editableConfig.categories.containsKey(selectedCategoryId);
         if (!selectedCategoryId.equals(requestedCategoryId) && editableConfig.categories.containsKey(requestedCategoryId)) {
             return OperationResult.fail(english ? "An enemy category with that ID already exists." : "Ya existe una categoria de enemigos con ese ID.");
         }
         if (!selectedCategoryId.isBlank() && !selectedCategoryId.equals(requestedCategoryId)) {
             editableConfig.categories.remove(selectedCategoryId);
+            editableConfig.categoryIcons.remove(selectedCategoryId);
         }
         editableConfig.categories.put(requestedCategoryId, cleanedRoles);
+        editableConfig.categoryIcons.put(requestedCategoryId, requestedIconItemId);
         this.saveEnemyCategoriesEditorConfig(editableConfig);
         this.loadEnemyCategoriesFromDisk(false);
         return OperationResult.ok(english ? (creating ? "Enemy category saved: " : "Enemy category updated: ") + requestedCategoryId + "." : (creating ? "Categoria de enemigos guardada: " : "Categoria de enemigos actualizada: ") + requestedCategoryId + ".");
@@ -640,6 +654,9 @@ public final class HordeService {
         List<String> removed = editableConfig.categories.remove(normalizedCategoryId);
         if (removed == null) {
             return OperationResult.ok(english ? "Enemy category already removed: " + normalizedCategoryId + "." : "Categoria de enemigos ya eliminada: " + normalizedCategoryId + ".");
+        }
+        if (editableConfig.categoryIcons != null) {
+            editableConfig.categoryIcons.remove(normalizedCategoryId);
         }
         this.saveEnemyCategoriesEditorConfig(editableConfig);
         this.loadEnemyCategoriesFromDisk(false);
@@ -3653,6 +3670,55 @@ public final class HordeService {
         return copy;
     }
 
+    private static String resolveDefaultEnemyCategoryIconItemId(String categoryId) {
+        String normalizedCategory = HordeService.normalizeEnemyType(categoryId);
+        switch (normalizedCategory) {
+            case "undead":
+                return "Weapon_Sword_Basic";
+            case "goblins":
+                return "Tool_Pickaxe_Wood";
+            case "scarak":
+                return "Item_Misc_Mushroom";
+            case "void":
+                return "Potion_Signature_Greater";
+            case "wild":
+                return "Tool_Hatchet_Wood";
+            case "elementals":
+                return "Weapon_Wand_Wood";
+        }
+        return DEFAULT_ENEMY_CATEGORY_ICON_ITEM_ID;
+    }
+
+    private static String normalizeEnemyCategoryIconItemId(String iconItemId, String categoryId) {
+        String selected = HordeService.trimToEmpty(iconItemId);
+        if (selected.isBlank()) {
+            return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
+        }
+        String lower = selected.toLowerCase(Locale.ROOT);
+        if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
+            return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
+        }
+        return selected;
+    }
+
+    private static Map<String, String> sanitizeEnemyCategoryIconMap(Map<String, String> categoryIcons) {
+        LinkedHashMap<String, String> sanitized = new LinkedHashMap<String, String>();
+        if (categoryIcons == null || categoryIcons.isEmpty()) {
+            return sanitized;
+        }
+        for (Map.Entry<String, String> entry : categoryIcons.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String categoryId = HordeService.normalizeEnemyType(entry.getKey());
+            if (categoryId.isBlank() || HordeService.isRandomEnemyType(categoryId) || HordeService.isRandomAllEnemyType(categoryId)) {
+                continue;
+            }
+            sanitized.put(categoryId, HordeService.normalizeEnemyCategoryIconItemId(entry.getValue(), categoryId));
+        }
+        return sanitized;
+    }
+
     private static List<String> sanitizeRoleIdList(List<String> candidates) {
         LinkedHashSet<String> cleaned = new LinkedHashSet<String>();
         if (candidates == null || candidates.isEmpty()) {
@@ -3925,6 +3991,15 @@ public final class HordeService {
         if (sanitized.categories.isEmpty()) {
             sanitized.categories.putAll(EnemyCategoriesConfig.fromDefaults().categories);
         }
+        sanitized.categoryIcons = new LinkedHashMap<String, String>();
+        Map<String, String> loadedIcons = HordeService.sanitizeEnemyCategoryIconMap(loaded.categoryIcons);
+        for (String categoryId : sanitized.categories.keySet()) {
+            if (categoryId == null || categoryId.isBlank()) {
+                continue;
+            }
+            String iconItemId = HordeService.firstNonBlankValue(loadedIcons.get(categoryId), HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId));
+            sanitized.categoryIcons.put(categoryId, iconItemId);
+        }
         return sanitized;
     }
 
@@ -3942,6 +4017,7 @@ public final class HordeService {
         }
         payload.blockedRoleHints = new ArrayList<String>(blockedHints);
         payload.categories = new LinkedHashMap<String, List<String>>();
+        Map<String, String> sanitizedIcons = HordeService.sanitizeEnemyCategoryIconMap(config == null ? null : config.categoryIcons);
         if (config != null && config.categories != null) {
             for (Map.Entry<String, List<String>> entry : config.categories.entrySet()) {
                 if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
@@ -3960,6 +4036,13 @@ public final class HordeService {
         }
         if (payload.categories.isEmpty()) {
             payload.categories.putAll(EnemyCategoriesConfig.fromDefaults().categories);
+        }
+        payload.categoryIcons = new LinkedHashMap<String, String>();
+        for (String categoryId : payload.categories.keySet()) {
+            if (categoryId == null || categoryId.isBlank()) {
+                continue;
+            }
+            payload.categoryIcons.put(categoryId, HordeService.firstNonBlankValue(sanitizedIcons.get(categoryId), HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId)));
         }
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
@@ -5883,6 +5966,7 @@ public final class HordeService {
         private List<String> finalBossRoles;
         private List<String> blockedRoleHints;
         private Map<String, List<String>> categories;
+        private Map<String, String> categoryIcons;
 
         private static EnemyCategoriesConfig fromDefaults() {
             EnemyCategoriesConfig defaults = new EnemyCategoriesConfig();
@@ -5896,6 +5980,7 @@ public final class HordeService {
                 defaults.blockedRoleHints.add(hint);
             }
             defaults.categories = new LinkedHashMap<String, List<String>>();
+            defaults.categoryIcons = new LinkedHashMap<String, String>();
             for (Map.Entry<String, String[]> entry : DEFAULT_ENEMY_TYPE_HINTS.entrySet()) {
                 if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
                     continue;
@@ -5915,6 +6000,7 @@ public final class HordeService {
                     continue;
                 }
                 defaults.categories.put(entry.getKey(), roles);
+                defaults.categoryIcons.put(entry.getKey(), HordeService.resolveDefaultEnemyCategoryIconItemId(entry.getKey()));
             }
             return defaults;
         }
@@ -6320,14 +6406,16 @@ public final class HordeService {
         public final String rolesCsv;
         public final String rolesPreview;
         public final int roleCount;
+        public final String iconItemId;
 
-        private EnemyCategorySnapshot(String categoryId, List<String> roles) {
+        private EnemyCategorySnapshot(String categoryId, List<String> roles, String iconItemId) {
             this.categoryId = categoryId == null ? "" : categoryId;
             List<String> safeRoles = roles == null ? List.of() : List.copyOf(roles);
             this.roles = safeRoles;
             this.roleCount = safeRoles.size();
             this.rolesCsv = String.join(", ", safeRoles);
             this.rolesPreview = this.roleCount <= 3 ? this.rolesCsv : String.join(", ", safeRoles.subList(0, 3)) + " ...";
+            this.iconItemId = iconItemId == null || iconItemId.isBlank() ? HordeService.resolveDefaultEnemyCategoryIconItemId(this.categoryId) : iconItemId;
         }
     }
 
