@@ -42,7 +42,7 @@ extends AbstractPlayerCommand {
         switch (action) {
             case "menu":
             case "ui": {
-                this.openUi(store, ref, playerRef);
+                this.openUi(store, ref, playerRef, world);
                 return;
             }
             case "start": {
@@ -128,11 +128,15 @@ extends AbstractPlayerCommand {
         }
     }
 
-    private void openUi(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef) {
+    private void openUi(Store<EntityStore> store, Ref<EntityStore> playerEntityRef, PlayerRef playerRef, World world) {
         Player player = (Player)store.getComponent(playerEntityRef, Player.getComponentType());
         if (player == null) {
             this.sendLocalized(playerRef, "Could not open the interface right now. Use /hordahelp.", "No se pudo abrir la interfaz ahora mismo. Usa /hordahelp.");
             return;
+        }
+        HordeService.OperationResult bootstrapResult = this.hordeService.ensureUiBootstrapPresets(playerRef, world);
+        if (bootstrapResult != null && !bootstrapResult.isSuccess()) {
+            this.sendLocalized(playerRef, bootstrapResult.getMessage());
         }
         try {
             HordeConfigPage.open(playerEntityRef, store, player, playerRef, this.hordeService);

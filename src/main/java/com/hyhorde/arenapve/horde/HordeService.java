@@ -579,6 +579,116 @@ public final class HordeService {
         return rows;
     }
 
+    public synchronized OperationResult ensureUiBootstrapPresets(PlayerRef playerRef, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (this.pluginReloadInProgress) {
+            return OperationResult.fail(english ? "Plugin reload in progress. Try again in a few seconds." : "Recarga de plugin en progreso. Prueba de nuevo en unos segundos.");
+        }
+        boolean changed = false;
+        if (this.getEnemyCategoryDefinitionsSnapshot().isEmpty()) {
+            OperationResult result = this.createEnemyCategoryDraft(DEFAULT_ENEMY_TYPE);
+            if (result == null || !result.isSuccess()) {
+                return result == null ? OperationResult.fail(english ? "Could not create default enemy category preset." : "No se pudo crear el preset por defecto de categoria de enemigos.") : result;
+            }
+            changed = true;
+        }
+        if (this.getRewardCategoryDefinitionsSnapshot().isEmpty()) {
+            OperationResult result = this.createRewardCategoryDraft(DEFAULT_REWARD_CATEGORY);
+            if (result == null || !result.isSuccess()) {
+                return result == null ? OperationResult.fail(english ? "Could not create default rewards preset." : "No se pudo crear el preset por defecto de recompensas.") : result;
+            }
+            changed = true;
+        }
+        if (this.getHordeDefinitionsSnapshot().isEmpty()) {
+            OperationResult result = this.createHordeDefinitionDraft("horde_1");
+            if (result == null || !result.isSuccess()) {
+                return result == null ? OperationResult.fail(english ? "Could not create default horde preset." : "No se pudo crear el preset por defecto de horda.") : result;
+            }
+            changed = true;
+        }
+        if (this.getBossDefinitionsSnapshot().isEmpty()) {
+            OperationResult result = this.createBossDraft("boss_1");
+            if (result == null || !result.isSuccess()) {
+                return result == null ? OperationResult.fail(english ? "Could not create default boss preset." : "No se pudo crear el preset por defecto de boss.") : result;
+            }
+            changed = true;
+        }
+        if (this.getArenaDefinitionsSnapshot().isEmpty()) {
+            if (playerRef == null || world == null) {
+                return OperationResult.fail(english ? "Could not create a default arena: missing world/player context." : "No se pudo crear una arena por defecto: falta contexto de mundo/jugador.");
+            }
+            OperationResult result = this.createArenaFromPlayerDraft(playerRef, world, "arena_1");
+            if (result == null || !result.isSuccess()) {
+                return result == null ? OperationResult.fail(english ? "Could not create default arena preset." : "No se pudo crear el preset por defecto de arena.") : result;
+            }
+            changed = true;
+        }
+
+        List<BossArenaCatalogService.ArenaDefinitionSnapshot> arenaRows = this.getArenaDefinitionsSnapshot();
+        List<BossArenaCatalogService.BossDefinitionSnapshot> bossRows = this.getBossDefinitionsSnapshot();
+        List<HordeDefinitionCatalogService.HordeDefinitionSnapshot> hordeRows = this.getHordeDefinitionsSnapshot();
+        HordeConfig updated = this.config.copy();
+        boolean configChanged = false;
+
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedArena = HordeService.findArenaById(arenaRows, updated.selectedArenaId);
+        boolean selectedArenaAuto = false;
+        if (selectedArena == null && arenaRows != null && !arenaRows.isEmpty()) {
+            selectedArena = arenaRows.get(0);
+            String firstArenaId = HordeService.cleanArenaSelectionValue(selectedArena.arenaId);
+            if (!firstArenaId.equals(updated.selectedArenaId)) {
+                updated.selectedArenaId = firstArenaId;
+                configChanged = true;
+            }
+            selectedArenaAuto = true;
+        }
+        if (selectedArena != null && (selectedArenaAuto || !updated.spawnConfigured)) {
+            updated.spawnConfigured = true;
+            updated.spawnX = selectedArena.x;
+            updated.spawnY = selectedArena.y;
+            updated.spawnZ = selectedArena.z;
+            String selectedArenaWorldName = HordeService.trimToEmpty(selectedArena.worldName);
+            if (selectedArenaWorldName.isBlank() && world != null) {
+                selectedArenaWorldName = world.getName();
+            }
+            if (selectedArenaWorldName.isBlank()) {
+                selectedArenaWorldName = "default";
+            }
+            updated.worldName = selectedArenaWorldName;
+            configChanged = true;
+        }
+
+        BossArenaCatalogService.BossDefinitionSnapshot selectedBoss = HordeService.findBossById(bossRows, updated.selectedBossId);
+        if (selectedBoss == null && bossRows != null && !bossRows.isEmpty()) {
+            String firstBossId = HordeService.cleanBossSelectionValue(bossRows.get(0).bossId);
+            if (!firstBossId.equals(updated.selectedBossId)) {
+                updated.selectedBossId = firstBossId;
+                configChanged = true;
+            }
+        }
+
+        HordeDefinitionCatalogService.HordeDefinitionSnapshot selectedHorde = HordeService.findHordeById(hordeRows, updated.selectedHordeId);
+        if (selectedHorde == null && hordeRows != null && !hordeRows.isEmpty()) {
+            String firstHordeId = HordeService.cleanHordeSelectionValue(hordeRows.get(0).hordeId);
+            if (!firstHordeId.equals(updated.selectedHordeId)) {
+                updated.selectedHordeId = firstHordeId;
+                configChanged = true;
+            }
+        }
+
+        if (configChanged) {
+            this.config = HordeService.sanitize(updated);
+            this.invalidateCachedRoundSoundIndexes();
+            this.saveConfig();
+            this.resetAutoStartSchedule(false);
+            changed = true;
+        }
+
+        if (!changed) {
+            return OperationResult.ok(english ? "UI presets already initialized." : "Los presets de la UI ya estaban inicializados.");
+        }
+        return OperationResult.ok(english ? "Initial presets initialized." : "Presets iniciales inicializados.");
+    }
+
     public synchronized OperationResult createEnemyCategoryDraft(String requestedCategoryId) {
         boolean english = HordeService.isEnglishLanguage(this.config.language);
         if (this.pluginReloadInProgress) {

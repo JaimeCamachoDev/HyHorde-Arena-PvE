@@ -91,6 +91,7 @@ extends CustomUIPage {
             new UiFieldBinding("enemyCategoryEditIconItemId", "EnemyCatEditIconItemId", "#EnemyCatEditIconItemId.Value"),
             new UiFieldBinding("playerSelected", "PlayerSelected", "#PlayerSelected.Value"),
             new UiFieldBinding("playerEditMode", "PlayerEditMode", "#PlayerEditMode.Value"),
+            new UiFieldBinding("playerEditIconItemId", "PlayerEditIconItemId", "#PlayerEditIconItemId.Value"),
             new UiFieldBinding("rewardCatSelected", "RewardCatSelected", "#RewardCatSelected.Value"),
             new UiFieldBinding("rewardCatEditId", "RewardCatEditId", "#RewardCatEditId.Value"),
             new UiFieldBinding("rewardCatEditItems", "RewardCatEditItems", "#RewardCatEditItems.Value"),
@@ -129,6 +130,7 @@ extends CustomUIPage {
     };
     private final HordeService hordeService;
     private final Map<String, String> draftValues;
+    private final Map<UUID, String> playerIconOverrides;
     private String activeTab;
     private int playerPage;
     private int hordePage;
@@ -151,6 +153,7 @@ extends CustomUIPage {
     private boolean bossEditorModalVisible;
     private boolean soundsEditorModalVisible;
     private boolean arenaEditorModalVisible;
+    private boolean playerIconPickerModalVisible;
     private boolean enemyCategoryEnemyPickerModalVisible;
     private boolean enemyCategoryIconPickerModalVisible;
     private boolean rewardCategoryIconPickerModalVisible;
@@ -165,6 +168,7 @@ extends CustomUIPage {
         super(playerRef, CustomPageLifetime.CanDismiss);
         this.hordeService = hordeService;
         this.draftValues = new HashMap<String, String>();
+        this.playerIconOverrides = new HashMap<UUID, String>();
         this.activeTab = TAB_GENERAL;
         this.playerPage = 0;
         this.hordePage = 0;
@@ -187,6 +191,7 @@ extends CustomUIPage {
         this.bossEditorModalVisible = false;
         this.soundsEditorModalVisible = false;
         this.arenaEditorModalVisible = false;
+        this.playerIconPickerModalVisible = false;
         this.enemyCategoryEnemyPickerModalVisible = false;
         this.enemyCategoryIconPickerModalVisible = false;
         this.rewardCategoryIconPickerModalVisible = false;
@@ -280,6 +285,21 @@ extends CustomUIPage {
         String arenaSelectedValue = this.getDraftValue("arenaSelected", "");
         String playerSelectedValue = this.getDraftValue("playerSelected", "");
         String playerEditModeValue = HordeConfigPage.normalizeAudienceMode(this.getDraftValue("playerEditMode", "player"));
+        HordeService.AudiencePlayerSnapshot selectedAudienceSnapshot = HordeConfigPage.findAudienceSnapshot(audienceRows, playerSelectedValue);
+        String playerEditIconItemIdValue = HordeConfigPage.resolveListIconCandidate(this.getDraftValue(
+                "playerEditIconItemId",
+                HordeConfigPage.firstNonEmpty(
+                        selectedAudienceSnapshot != null && selectedAudienceSnapshot.playerId != null ? this.playerIconOverrides.get(selectedAudienceSnapshot.playerId) : "",
+                        HordeConfigPage.resolveAudienceModeIcon(playerEditModeValue),
+                        DEFAULT_ARENA_ITEM_ICON_ID
+                )
+        ));
+        this.draftValues.put("playerEditIconItemId", playerEditIconItemIdValue);
+        String playerPreviewNameValue = selectedAudienceSnapshot == null
+                ? HordeConfigPage.t(language, english, "No player selected", "Sin jugador seleccionado")
+                : HordeConfigPage.firstNonEmpty(selectedAudienceSnapshot.username, selectedAudienceSnapshot.playerId == null ? "" : selectedAudienceSnapshot.playerId.toString());
+        String playerPreviewModeValue = HordeConfigPage.audienceModeDisplay(playerEditModeValue, language);
+        String audienceInfoValue = HordeConfigPage.buildAudienceInfo(arenaJoinRadiusValue, audienceRows == null ? 0 : audienceRows.size(), language);
         String hordeSelectedValue = this.getDraftValue("hordeSelected", "");
         HordeDefinitionCatalogService.HordeDefinitionSnapshot selectedHordeSnapshot = HordeConfigPage.findHordeSnapshot(hordeRows, hordeSelectedValue);
         String hordeEditIconItemIdValue = this.getDraftValue(
@@ -374,6 +394,11 @@ extends CustomUIPage {
                 .set("#PlayerSelected.Value", playerSelectedValue)
                 .set("#PlayerEditMode.Value", playerEditModeValue)
                 .set("#PlayerEditMode.Entries", playerModeEntries)
+                .set("#PlayerEditIconItemId.Value", playerEditIconItemIdValue)
+                .set("#PlayerCharacterPreview.ItemId", playerEditIconItemIdValue)
+                .set("#PlayerPreviewNameValue.Text", playerPreviewNameValue)
+                .set("#PlayerPreviewModeValue.Text", playerPreviewModeValue)
+                .set("#AudienceInfoLabel.Text", audienceInfoValue)
                 .set("#PlayerStatusLabel.Text", this.playerStatusText == null ? "" : this.playerStatusText)
                 .set("#EnemyCatSelected.Value", enemyCategorySelectedValue)
                 .set("#EnemyCatEditId.Value", enemyCategoryEditIdValue)
@@ -443,6 +468,7 @@ extends CustomUIPage {
         this.applyTabVisibility(commandBuilder, tab);
         if (TAB_PLAYERS.equals(tab)) {
             this.populatePlayerRows(commandBuilder, eventBuilder, audienceRows, language, english);
+            this.populatePlayerIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
         }
         if (TAB_ENEMIES.equals(tab)) {
             this.populateEnemyCategoryRows(commandBuilder, eventBuilder, enemyCategoryRows, language, english, rewardItemCatalogOptions);
@@ -486,6 +512,7 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabHelpButton", this.buildLanguageEvent("tab_help"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersAddButton", this.buildConfigSnapshotEvent("playerdef_add"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersSaveButton", this.buildConfigSnapshotEvent("playerdef_save"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#PlayerIconPickerCloseButton", this.buildConfigSnapshotEvent("playerdef_icon_picker_close"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersPagePrevButton", this.buildConfigSnapshotEvent("playerdef_page_prev"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersPageNextButton", this.buildConfigSnapshotEvent("playerdef_page_next"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatAddButton", this.buildConfigSnapshotEvent("enemycat_add"))
@@ -550,6 +577,7 @@ extends CustomUIPage {
         this.bossEditorModalVisible = false;
         this.soundsEditorModalVisible = false;
         this.arenaEditorModalVisible = false;
+        this.playerIconPickerModalVisible = false;
         this.enemyCategoryEnemyPickerModalVisible = false;
         this.enemyCategoryIconPickerModalVisible = false;
         this.rewardCategoryIconPickerModalVisible = false;
@@ -830,9 +858,30 @@ extends CustomUIPage {
         }
         if ("playerdef_close_editor".equals(action)) {
             this.playerEditorModalVisible = false;
+            this.playerIconPickerModalVisible = false;
+            return null;
+        }
+        if ("playerdef_icon_picker_open".equals(action)) {
+            this.playerIconPickerModalVisible = true;
+            return null;
+        }
+        if ("playerdef_icon_picker_close".equals(action)) {
+            this.playerIconPickerModalVisible = false;
             return null;
         }
         List<HordeService.AudiencePlayerSnapshot> rows = world == null ? List.of() : this.hordeService.getArenaAudiencePlayers(world);
+        if (action.startsWith("playerdef_icon_open:")) {
+            String playerIdRaw = HordeConfigPage.extractActionArgument(action);
+            UUID playerId = HordeConfigPage.parseUuid(playerIdRaw);
+            if (playerId == null) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid player ID." : "ID de jugador invalido.");
+                this.playerStatusText = result.getMessage();
+                return result;
+            }
+            this.selectAudiencePlayerForEditing(rows, playerId.toString());
+            this.playerIconPickerModalVisible = true;
+            return null;
+        }
         if ("playerdef_add".equals(action)) {
             this.selectAudiencePlayerForEditing(rows, "");
             HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Players list refreshed." : "Lista de jugadores actualizada.");
@@ -848,17 +897,39 @@ extends CustomUIPage {
                 return result;
             }
             String mode = HordeConfigPage.normalizeAudienceMode(this.getDraftValue("playerEditMode", "player"));
+            String selectedIconItemId = HordeConfigPage.resolveListIconCandidate(this.getDraftValue("playerEditIconItemId", HordeConfigPage.resolveAudienceModeIcon(mode)));
+            this.playerIconOverrides.put(playerId, selectedIconItemId);
             HordeService.OperationResult result = this.hordeService.setArenaAudienceMode(playerId, mode, world);
             this.playerStatusText = result == null ? "" : result.getMessage();
             if (result != null && result.isSuccess()) {
                 this.selectAudiencePlayerForEditing(this.hordeService.getArenaAudiencePlayers(world), playerId.toString());
+                this.playerIconPickerModalVisible = false;
             }
+            return result;
+        }
+        if (action.startsWith("playerdef_icon_pick:")) {
+            String pickedItemId = HordeConfigPage.extractActionArgument(action);
+            if (pickedItemId == null || pickedItemId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
+                this.playerStatusText = result.getMessage();
+                return result;
+            }
+            String normalizedItemId = HordeConfigPage.resolveListIconCandidate(pickedItemId.trim());
+            this.draftValues.put("playerEditIconItemId", normalizedItemId);
+            UUID selectedPlayerId = HordeConfigPage.parseUuid(this.getDraftValue("playerSelected", ""));
+            if (selectedPlayerId != null) {
+                this.playerIconOverrides.put(selectedPlayerId, normalizedItemId);
+            }
+            this.playerIconPickerModalVisible = false;
+            HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Player icon updated." : "Icono del jugador actualizado.");
+            this.playerStatusText = result.getMessage();
             return result;
         }
         if (action.startsWith("playerdef_open:")) {
             String playerId = HordeConfigPage.extractActionArgument(action);
             this.selectAudiencePlayerForEditing(rows, playerId);
             this.playerEditorModalVisible = true;
+            this.playerIconPickerModalVisible = false;
             return null;
         }
         if (action.startsWith("playerdef_delete:")) {
@@ -873,6 +944,7 @@ extends CustomUIPage {
             this.playerStatusText = result == null ? "" : result.getMessage();
             if (result != null && result.isSuccess()) {
                 this.selectAudiencePlayerForEditing(this.hordeService.getArenaAudiencePlayers(world), playerId.toString());
+                this.playerIconOverrides.remove(playerId);
             }
             return result;
         }
@@ -912,6 +984,18 @@ extends CustomUIPage {
         }
         if ("enemycat_icon_picker_close".equals(action)) {
             this.enemyCategoryIconPickerModalVisible = false;
+            return null;
+        }
+        if (action.startsWith("enemycat_icon_open:")) {
+            String categoryId = HordeConfigPage.extractActionArgument(action);
+            if (categoryId == null || categoryId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid category ID." : "ID de categoria invalido.");
+                this.enemyCategoryStatusText = result.getMessage();
+                return result;
+            }
+            this.selectEnemyCategoryForEditing(categoryId);
+            this.enemyCategoryIconPickerModalVisible = true;
+            this.enemyCategoryEnemyPickerModalVisible = false;
             return null;
         }
         if ("enemycat_enemy_picker_open".equals(action)) {
@@ -984,7 +1068,10 @@ extends CustomUIPage {
             }
             this.draftValues.put("enemyCategoryEditIconItemId", pickedItemId.trim());
             this.enemyCategoryIconPickerModalVisible = false;
-            HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Category icon updated." : "Icono de categoria actualizado.");
+            HordeService.OperationResult result = this.hordeService.saveEnemyCategoryFromUi(this.extractEnemyCategoryValuesForSave());
+            if (result != null && result.isSuccess()) {
+                this.selectEnemyCategoryForEditing(this.getDraftValue("enemyCategoryEditId", this.getDraftValue("enemyCategorySelected", "")));
+            }
             this.enemyCategoryStatusText = result.getMessage();
             return result;
         }
@@ -1058,6 +1145,18 @@ extends CustomUIPage {
             this.rewardCategoryIconPickerModalVisible = false;
             return null;
         }
+        if (action.startsWith("rewardcat_icon_open:")) {
+            String categoryId = HordeConfigPage.extractActionArgument(action);
+            if (categoryId == null || categoryId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid category ID." : "ID de categoria invalido.");
+                this.rewardCategoryStatusText = result.getMessage();
+                return result;
+            }
+            this.selectRewardCategoryForEditing(categoryId);
+            this.rewardCategoryIconPickerModalVisible = true;
+            this.rewardCategoryItemPickerModalVisible = false;
+            return null;
+        }
         if ("rewardcat_item_picker_open".equals(action)) {
             this.rewardCategoryItemPickerModalVisible = true;
             this.rewardCategoryIconPickerModalVisible = false;
@@ -1076,7 +1175,10 @@ extends CustomUIPage {
             }
             this.draftValues.put("rewardCatEditIconItemId", pickedItemId.trim());
             this.rewardCategoryIconPickerModalVisible = false;
-            HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Category icon updated." : "Icono de categoria actualizado.");
+            HordeService.OperationResult result = this.hordeService.saveRewardCategoryFromUi(this.extractRewardCategoryValuesForSave());
+            if (result != null && result.isSuccess()) {
+                this.selectRewardCategoryForEditing(this.getDraftValue("rewardCatEditId", this.getDraftValue("rewardCatSelected", "")));
+            }
             this.rewardCategoryStatusText = result.getMessage();
             return result;
         }
@@ -1323,6 +1425,17 @@ extends CustomUIPage {
             this.hordeIconPickerModalVisible = false;
             return null;
         }
+        if (action.startsWith("hordedef_icon_open:")) {
+            String hordeId = HordeConfigPage.extractActionArgument(action);
+            if (hordeId == null || hordeId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid horde ID." : "ID de horda invalido.");
+                this.hordeStatusText = result.getMessage();
+                return result;
+            }
+            this.selectHordeForEditing(hordeId);
+            this.hordeIconPickerModalVisible = true;
+            return null;
+        }
         if (action.startsWith("hordedef_icon_pick:")) {
             String itemId = HordeConfigPage.extractActionArgument(action);
             if (itemId == null || itemId.isBlank()) {
@@ -1332,7 +1445,12 @@ extends CustomUIPage {
             }
             this.draftValues.put("hordeEditIconItemId", itemId.trim());
             this.hordeIconPickerModalVisible = false;
-            return null;
+            HordeService.OperationResult result = this.hordeService.saveHordeDefinitionFromUi(this.extractHordeValuesForSave());
+            this.hordeStatusText = result == null ? "" : result.getMessage();
+            if (result != null && result.isSuccess()) {
+                this.selectHordeForEditing(this.getDraftValue("hordeEditId", this.getDraftValue("hordeSelected", "")));
+            }
+            return result;
         }
         if ("hordedef_add".equals(action)) {
             HordeService.OperationResult result = this.hordeService.createHordeDefinitionDraft("");
@@ -1399,13 +1517,33 @@ extends CustomUIPage {
             this.bossIconPickerModalVisible = false;
             return null;
         }
+        if (action.startsWith("boss_icon_open:")) {
+            String bossId = HordeConfigPage.extractActionArgument(action);
+            if (bossId == null || bossId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid boss ID." : "ID de boss invalido.");
+                this.bossStatusText = result.getMessage();
+                return result;
+            }
+            this.selectBossForEditing(bossId);
+            this.bossIconPickerModalVisible = true;
+            this.bossEnemyPickerModalVisible = false;
+            return null;
+        }
         if (action.startsWith("boss_icon_pick:")) {
             String itemId = HordeConfigPage.extractActionArgument(action);
-            if (itemId != null && !itemId.isBlank()) {
-            this.draftValues.put("bossEditIconItemId", itemId.trim());
+            if (itemId == null || itemId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
+                this.bossStatusText = result.getMessage();
+                return result;
             }
+            this.draftValues.put("bossEditIconItemId", itemId.trim());
             this.bossIconPickerModalVisible = false;
-            return null;
+            HordeService.OperationResult result = this.hordeService.saveBossDefinitionFromUi(this.extractBossValuesForSave());
+            this.bossStatusText = result == null ? "" : result.getMessage();
+            if (result != null && result.isSuccess()) {
+                this.selectBossForEditing(this.getDraftValue("bossEditName", this.getDraftValue("bossSelected", "")));
+            }
+            return result;
         }
         if ("boss_enemy_picker_open".equals(action)) {
             this.bossEnemyPickerModalVisible = true;
@@ -1487,13 +1625,32 @@ extends CustomUIPage {
             this.arenaIconPickerModalVisible = false;
             return null;
         }
+        if (action.startsWith("arena_icon_open:")) {
+            String arenaId = HordeConfigPage.extractActionArgument(action);
+            if (arenaId == null || arenaId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid arena ID." : "ID de arena invalido.");
+                this.arenaStatusText = result.getMessage();
+                return result;
+            }
+            this.selectArenaForEditing(arenaId);
+            this.arenaIconPickerModalVisible = true;
+            return null;
+        }
         if (action.startsWith("arena_icon_pick:")) {
             String itemId = HordeConfigPage.extractActionArgument(action);
-            if (itemId != null && !itemId.isBlank()) {
-                this.draftValues.put("arenaEditIconItemId", itemId);
+            if (itemId == null || itemId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
+                this.arenaStatusText = result.getMessage();
+                return result;
             }
+            this.draftValues.put("arenaEditIconItemId", itemId.trim());
             this.arenaIconPickerModalVisible = false;
-            return null;
+            HordeService.OperationResult result = this.hordeService.saveArenaDefinitionFromUi(this.extractArenaValuesForSave(), fallbackWorldName);
+            this.arenaStatusText = result == null ? "" : result.getMessage();
+            if (result != null && result.isSuccess()) {
+                this.selectArenaForEditing(this.getDraftValue("arenaEditId", this.getDraftValue("arenaSelected", "")));
+            }
+            return result;
         }
         if ("arena_add_from_player".equals(action)) {
             if (world == null) {
@@ -1769,8 +1926,11 @@ extends CustomUIPage {
         if (selected != null) {
             this.putDraftIfMissing("playerSelected", selected.playerId == null ? "" : selected.playerId.toString());
             this.putDraftIfMissing("playerEditMode", HordeConfigPage.normalizeAudienceMode(selected.mode));
+            String overrideIconItemId = selected.playerId == null ? "" : this.playerIconOverrides.get(selected.playerId);
+            this.putDraftIfMissing("playerEditIconItemId", HordeConfigPage.firstNonEmpty(overrideIconItemId, HordeConfigPage.resolveAudienceModeIcon(selected.mode), DEFAULT_ARENA_ITEM_ICON_ID));
         } else {
             this.putDraftIfMissing("playerEditMode", "player");
+            this.putDraftIfMissing("playerEditIconItemId", HordeConfigPage.resolveAudienceModeIcon("player"));
         }
     }
 
@@ -1900,6 +2060,7 @@ extends CustomUIPage {
         if (selected == null) {
             this.draftValues.remove("playerSelected");
             this.draftValues.put("playerEditMode", "player");
+            this.draftValues.put("playerEditIconItemId", HordeConfigPage.resolveAudienceModeIcon("player"));
             return;
         }
         this.applyAudienceDraftFromSnapshot(selected);
@@ -2022,6 +2183,8 @@ extends CustomUIPage {
         }
         this.draftValues.put("playerSelected", snapshot.playerId.toString());
         this.draftValues.put("playerEditMode", HordeConfigPage.normalizeAudienceMode(snapshot.mode));
+        String overrideIconItemId = this.playerIconOverrides.get(snapshot.playerId);
+        this.draftValues.put("playerEditIconItemId", HordeConfigPage.firstNonEmpty(overrideIconItemId, HordeConfigPage.resolveAudienceModeIcon(snapshot.mode), DEFAULT_ARENA_ITEM_ICON_ID));
     }
 
     private void applyBossDraftFromSnapshot(BossArenaCatalogService.BossDefinitionSnapshot snapshot) {
@@ -2176,12 +2339,18 @@ extends CustomUIPage {
                 String rowSelector = "#PlayersRowsList[" + renderedRows + "]";
                 String mode = HordeConfigPage.normalizeAudienceMode(row.mode);
                 String iconItemId = HordeConfigPage.resolveAudienceModeIcon(mode);
+                String overrideIconItemId = this.playerIconOverrides.get(row.playerId);
+                if (overrideIconItemId != null && !overrideIconItemId.isBlank()) {
+                    iconItemId = HordeConfigPage.resolveListIconCandidate(overrideIconItemId);
+                }
                 commandBuilder.append("#PlayersRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", HordeConfigPage.compactName(row.username, 30))
                         .set(rowSelector + " #ArenaCoords.Text", HordeConfigPage.audienceModeDisplay(mode, language))
                         .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildPlayerDefinitionAction("open", row.playerId.toString())))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildPlayerDefinitionAction("icon_open", row.playerId.toString())))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildPlayerDefinitionAction("delete", row.playerId.toString())));
                 ++renderedRows;
             }
@@ -2194,6 +2363,52 @@ extends CustomUIPage {
                 .set("#PlayersOverflowLabel.Visible", false)
                 .set("#PlayersOverflowLabel.Text", "")
                 .set("#PlayersCountValue.Text", Integer.toString(total));
+    }
+
+    private void populatePlayerIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+        String selectedIconItemId = HordeConfigPage.firstNonEmpty(
+                this.getDraftValue("playerEditIconItemId", ""),
+                HordeConfigPage.resolveAudienceModeIcon(this.getDraftValue("playerEditMode", "player")),
+                DEFAULT_ARENA_ITEM_ICON_ID
+        );
+        selectedIconItemId = HordeConfigPage.resolveListIconCandidate(selectedIconItemId);
+        this.draftValues.put("playerEditIconItemId", selectedIconItemId);
+        commandBuilder.set("#PlayerEditIconItemId.Value", selectedIconItemId)
+                .set("#PlayerCharacterPreview.ItemId", selectedIconItemId);
+
+        boolean pickerVisible = this.playerIconPickerModalVisible;
+        commandBuilder.set("#PlayerIconPickerShade.Visible", pickerVisible)
+                .set("#PlayerIconPickerFrame.Visible", pickerVisible)
+                .set("#PlayerIconPickerCloseButton.Visible", pickerVisible)
+                .set("#PlayerIconPickerTitleLabel.Visible", pickerVisible)
+                .set("#PlayerIconPickerGrid.Visible", pickerVisible);
+        commandBuilder.clear("#PlayerIconPickerGrid");
+        if (!pickerVisible) {
+            return;
+        }
+
+        List<String> iconOptions = HordeConfigPage.buildArenaIconPickerOptions(rewardItemCatalogOptions, selectedIconItemId);
+        int rows = (iconOptions.size() + ARENA_ICON_PICKER_COLUMNS - 1) / ARENA_ICON_PICKER_COLUMNS;
+        for (int rowIndex = 0; rowIndex < rows; ++rowIndex) {
+            commandBuilder.append("#PlayerIconPickerGrid", ARENA_ICON_PICKER_ROW_LAYOUT);
+            String rowSelector = "#PlayerIconPickerGrid[" + rowIndex + "]";
+            for (int column = 0; column < ARENA_ICON_PICKER_COLUMNS; ++column) {
+                int iconIndex = rowIndex * ARENA_ICON_PICKER_COLUMNS + column;
+                int slotNumber = column + 1;
+                String buttonSelector = rowSelector + " #IconPickButton" + slotNumber;
+                String iconSelector = rowSelector + " #IconPickIcon" + slotNumber;
+                if (iconIndex < iconOptions.size()) {
+                    String option = iconOptions.get(iconIndex);
+                    commandBuilder.set(buttonSelector + ".Visible", true)
+                            .set(iconSelector + ".Visible", true)
+                            .set(iconSelector + ".ItemId", option);
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, buttonSelector, this.buildConfigSnapshotEvent(HordeConfigPage.buildPlayerDefinitionAction("icon_pick", option)));
+                    continue;
+                }
+                commandBuilder.set(buttonSelector + ".Visible", false)
+                        .set(iconSelector + ".Visible", false);
+            }
+        }
     }
 
     private void populateEnemyCategoryRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.EnemyCategorySnapshot> rows, String language, boolean english, List<String> rewardItemCatalogOptions) {
@@ -2211,8 +2426,10 @@ extends CustomUIPage {
                         .set(rowSelector + " #ArenaName.Text", row.categoryId)
                         .set(rowSelector + " #ArenaCoords.Text", preview)
                         .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("open", row.categoryId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("icon_open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("delete", row.categoryId)));
                 ++renderedRows;
             }
@@ -2263,7 +2480,7 @@ extends CustomUIPage {
                 .set("#EnemyCatEditIconPreview.ItemId", selectedIconItemId)
                 .set("#EnemyCatEditIconCurrentLabel.Text", selectedIconItemId);
 
-        boolean pickerVisible = this.enemyCategoryEditorModalVisible && this.enemyCategoryIconPickerModalVisible;
+        boolean pickerVisible = this.enemyCategoryIconPickerModalVisible;
         commandBuilder.set("#EnemyCatIconPickerShade.Visible", pickerVisible)
                 .set("#EnemyCatIconPickerFrame.Visible", pickerVisible)
                 .set("#EnemyCatIconPickerCloseButton.Visible", pickerVisible)
@@ -2354,8 +2571,10 @@ extends CustomUIPage {
                         .set(rowSelector + " #ArenaName.Text", row.categoryId)
                         .set(rowSelector + " #ArenaCoords.Text", preview)
                         .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("open", row.categoryId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("icon_open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("delete", row.categoryId)));
                 ++renderedRows;
             }
@@ -2406,7 +2625,7 @@ extends CustomUIPage {
                 .set("#RewardCatEditIconPreview.ItemId", selectedIconItemId)
                 .set("#RewardCatEditIconCurrentLabel.Text", selectedIconItemId);
 
-        boolean pickerVisible = this.rewardCategoryEditorModalVisible && this.rewardCategoryIconPickerModalVisible;
+        boolean pickerVisible = this.rewardCategoryIconPickerModalVisible;
         commandBuilder.set("#RewardCatIconPickerShade.Visible", pickerVisible)
                 .set("#RewardCatIconPickerFrame.Visible", pickerVisible)
                 .set("#RewardCatIconPickerCloseButton.Visible", pickerVisible)
@@ -2500,8 +2719,10 @@ extends CustomUIPage {
                         .set(rowSelector + " #ArenaName.Text", row.hordeId)
                         .set(rowSelector + " #ArenaCoords.Text", subtitle)
                         .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("open", row.hordeId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("icon_open", row.hordeId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("delete", row.hordeId)));
                 ++renderedRows;
             }
@@ -2526,7 +2747,7 @@ extends CustomUIPage {
                 .set("#HordeEditIconPreview.ItemId", selectedIconItemId)
                 .set("#HordeEditIconCurrentLabel.Text", selectedIconItemId);
 
-        boolean pickerVisible = this.hordeEditorModalVisible && this.hordeIconPickerModalVisible;
+        boolean pickerVisible = this.hordeIconPickerModalVisible;
         commandBuilder.set("#HordeIconPickerShade.Visible", pickerVisible)
                 .set("#HordeIconPickerFrame.Visible", pickerVisible)
                 .set("#HordeIconPickerCloseButton.Visible", pickerVisible)
@@ -2578,8 +2799,10 @@ extends CustomUIPage {
                         .set(rowSelector + " #ArenaName.Text", row.bossId)
                         .set(rowSelector + " #ArenaCoords.Text", subtitle)
                         .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("open", row.bossId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("icon_open", row.bossId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("delete", row.bossId)));
                 ++renderedRows;
             }
@@ -2603,7 +2826,7 @@ extends CustomUIPage {
                 .set("#BossEditIconPreview.ItemId", selectedIconItemId)
                 .set("#BossEditIconCurrentLabel.Text", selectedIconItemId);
 
-        boolean pickerVisible = this.bossEditorModalVisible && this.bossIconPickerModalVisible;
+        boolean pickerVisible = this.bossIconPickerModalVisible;
         commandBuilder.set("#BossIconPickerShade.Visible", pickerVisible)
                 .set("#BossIconPickerFrame.Visible", pickerVisible)
                 .set("#BossIconPickerCloseButton.Visible", pickerVisible)
@@ -2707,8 +2930,10 @@ extends CustomUIPage {
                 .set(selectorPrefix + " #ArenaName.Text", eventLabel)
                 .set(selectorPrefix + " #ArenaCoords.Text", eventMeta)
                 .set(selectorPrefix + " #ArenaIcon.ItemId", iconItemId)
+                .set(selectorPrefix + " #ArenaIconButton.Visible", true)
                 .set(selectorPrefix + " #ArenaDeleteButton.Visible", false);
-        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaOpenButton", this.buildConfigSnapshotEvent(openAction));
+        eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaOpenButton", this.buildConfigSnapshotEvent(openAction))
+                .addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaIconButton", this.buildConfigSnapshotEvent(openAction));
         return rowIndex + 1;
     }
 
@@ -2801,8 +3026,10 @@ extends CustomUIPage {
                 commandBuilder.append("#ArenaRowsList", "Pages/HordeArenaRow.ui")
                         .set(selectorPrefix + " #ArenaName.Text", row.arenaId)
                         .set(selectorPrefix + " #ArenaCoords.Text", coords)
-                        .set(selectorPrefix + " #ArenaIcon.ItemId", iconItemId);
+                        .set(selectorPrefix + " #ArenaIcon.ItemId", iconItemId)
+                        .set(selectorPrefix + " #ArenaIconButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("open", row.arenaId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("icon_open", row.arenaId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("delete", row.arenaId)));
                 ++renderedRows;
             }
@@ -2820,7 +3047,7 @@ extends CustomUIPage {
                 .set("#ArenaEditIconPreview.ItemId", selectedIconItemId)
                 .set("#ArenaEditIconCurrentLabel.Text", selectedIconItemId);
 
-        boolean pickerVisible = this.arenaEditorModalVisible && this.arenaIconPickerModalVisible;
+        boolean pickerVisible = this.arenaIconPickerModalVisible;
         commandBuilder.set("#ArenaIconPickerShade.Visible", pickerVisible)
                 .set("#ArenaIconPickerFrame.Visible", pickerVisible)
                 .set("#ArenaIconPickerCloseButton.Visible", pickerVisible)
@@ -3040,7 +3267,8 @@ extends CustomUIPage {
             case TAB_PLAYERS:
                 return "arenaJoinRadius".equals(field.configKey)
                         || "playerSelected".equals(field.configKey)
-                        || "playerEditMode".equals(field.configKey);
+                        || "playerEditMode".equals(field.configKey)
+                        || "playerEditIconItemId".equals(field.configKey);
             case TAB_SOUNDS:
                 return "roundStartSoundId".equals(field.configKey)
                         || "roundStartVolume".equals(field.configKey)
@@ -3390,15 +3618,15 @@ extends CustomUIPage {
     private void setLocalizedTexts(UICommandBuilder commandBuilder, String language, boolean english) {
         commandBuilder.set("#TitleLabel.Text", HordeConfigPage.t(language, english, "Horde PVE Config", "Horda PVE Config"))
                 .set("#SubTitleLabel.Text", "")
-                .set("#TabGeneralButton.Text", "")
-                .set("#TabArenasButton.Text", "")
-                .set("#TabEnemiesButton.Text", "")
-                .set("#TabHordeButton.Text", "")
-                .set("#TabBossesButton.Text", "")
-                .set("#TabPlayersButton.Text", "")
-                .set("#TabRewardsButton.Text", "")
-                .set("#TabSoundsButton.Text", "")
-                .set("#TabHelpButton.Text", "")
+                .set("#TabGeneralButton.Text", HordeConfigPage.t(language, english, "General", "General"))
+                .set("#TabArenasButton.Text", HordeConfigPage.t(language, english, "Arenas", "Arenas"))
+                .set("#TabEnemiesButton.Text", HordeConfigPage.t(language, english, "Enemies", "Enemigos"))
+                .set("#TabHordeButton.Text", HordeConfigPage.t(language, english, "Horde", "Horda"))
+                .set("#TabBossesButton.Text", HordeConfigPage.t(language, english, "Bosses", "Bosses"))
+                .set("#TabPlayersButton.Text", HordeConfigPage.t(language, english, "Players", "Jugadores"))
+                .set("#TabRewardsButton.Text", HordeConfigPage.t(language, english, "Rewards", "Recompensas"))
+                .set("#TabSoundsButton.Text", HordeConfigPage.t(language, english, "Sounds", "Sonidos"))
+                .set("#TabHelpButton.Text", HordeConfigPage.t(language, english, "Help", "Ayuda"))
                 .set("#TabGeneralButton.TooltipText", HordeConfigPage.t(language, english, "General", "General"))
                 .set("#TabPlayersButton.TooltipText", HordeConfigPage.t(language, english, "Players", "Jugadores"))
                 .set("#TabArenasButton.TooltipText", HordeConfigPage.t(language, english, "Arenas", "Arenas"))
@@ -3427,11 +3655,14 @@ extends CustomUIPage {
                 .set("#PlayersHeaderMode.Text", HordeConfigPage.t(language, english, "Mode", "Modo"))
                 .set("#PlayersHeaderActions.Text", "")
                 .set("#PlayersEditorTitleLabel.Text", HordeConfigPage.t(language, english, "Player editor", "Editor de jugador"))
+                .set("#PlayerPreviewNameLabel.Text", HordeConfigPage.t(language, english, "Player", "Jugador"))
+                .set("#PlayerPreviewModeLabel.Text", HordeConfigPage.t(language, english, "Current mode", "Modo actual"))
+                .set("#PlayerIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
                 .set("#PlayerEditModeLabel.Text", HordeConfigPage.t(language, english, "Audience mode", "Modo de audiencia"))
                 .set("#PlayersSaveButton.Text", HordeConfigPage.t(language, english, "Save player mode", "Guardar modo jugador"))
                 .set("#PlayersPagePrevButton.Text", "<")
                 .set("#PlayersPageNextButton.Text", ">")
-                .set("#AudienceHelpLabel.Text", "")
+                .set("#AudienceHelpLabel.Text", HordeConfigPage.t(language, english, "Select a player from the list, choose the audience mode, then save.", "Selecciona un jugador de la lista, elige el modo de audiencia y guarda."))
                 .set("#EnemyCatTitleLabel.Text", HordeConfigPage.t(language, english, "Enemy category definitions", "Definiciones de categorias de enemigos"))
                 .set("#EnemyCatAddButton.Text", HordeConfigPage.t(language, english, "Add category", "Anadir categoria"))
                 .set("#EnemyCatHeaderName.Text", HordeConfigPage.t(language, english, "Category ID", "Categoria ID"))
@@ -3606,7 +3837,7 @@ extends CustomUIPage {
         this.setVisible(commandBuilder, bossesTab, "#BossesTitleLabel", "#BossAddButton", "#BossListInset", "#BossRowsList", "#BossEmptyLabel", "#BossOverflowLabel");
         this.setVisible(commandBuilder, arenasTab, "#ArenasTitleLabel", "#ArenaAddButton", "#ArenaListInset", "#ArenaRowsList", "#ArenaEmptyLabel", "#ArenaOverflowLabel");
         this.setVisible(commandBuilder, helpTab, "#HelpIntroLabel", "#HelpCommandsLabel", "#HelpCommandsLine1", "#HelpCommandsLine2", "#HelpCommandsLine3", "#HelpConfigLabel", "#HelpConfigLine1", "#HelpConfigLine2", "#HelpConfigLine3", "#HelpExternalLabel", "#HelpExternalLine1", "#HelpExternalLine2", "#HelpExternalLine3", "#HelpReloadLabel", "#HelpReloadLine1", "#HelpReloadLine2", "#StatusTitleLabel", "#StatusPanel", "#StatusLabel");
-        this.setVisible(commandBuilder, false, "#SubTitleLabel", "#TabHintLabel", "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#HordeSelected", "#HordeEditIconItemId", "#HordeIconSelectorLabel", "#HordeIconSelectorCard", "#HordeEditIconPreview", "#HordeEditIconCurrentLabel", "#HordeIconPickerOpenButton", "#HordeIconPickerShade", "#HordeIconPickerFrame", "#HordeIconPickerCloseButton", "#HordeIconPickerTitleLabel", "#HordeIconPickerGrid", "#BossSelectedLabel", "#BossSelected", "#BossEditIconItemId", "#BossIconSelectorLabel", "#BossIconSelectorCard", "#BossEditIconPreview", "#BossEditIconCurrentLabel", "#BossIconPickerOpenButton", "#BossIconPickerShade", "#BossIconPickerFrame", "#BossIconPickerCloseButton", "#BossIconPickerTitleLabel", "#BossIconPickerGrid", "#BossEnemyPickerLabel", "#BossEnemyPickerOpenButton", "#BossEnemyPickerShade", "#BossEnemyPickerFrame", "#BossEnemyPickerCloseButton", "#BossEnemyPickerTitleLabel", "#BossEnemyPickerGrid", "#ArenaSelectedLabel", "#ArenaSelected", "#BossStatusLabel", "#ArenaStatusLabel", "#ArenaEditorTitleLabel", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaIconSelectorLabel", "#ArenaIconSelectorCard", "#ArenaEditIconPreview", "#ArenaEditIconCurrentLabel", "#ArenaIconPickerOpenButton", "#ArenaEditIconItemId", "#ArenaCoordsTitleLabel", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaEditorModalShade", "#ArenaEditorModalFrame", "#ArenaEditorCloseButton", "#ArenaIconPickerShade", "#ArenaIconPickerFrame", "#ArenaIconPickerCloseButton", "#ArenaIconPickerTitleLabel", "#ArenaIconPickerGrid", "#RoleHelpLabel", "#RewardCommandsHelpLabel", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RadiusLabel", "#RoundConfigLabel", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax", "#LanguagePrevButton", "#LanguageNextButton", "#FinalBossPrevButton", "#FinalBossNextButton", "#RewardCategoryPrevButton", "#RewardCategoryNextButton", "#RewardItemPrevButton", "#RewardItemNextButton", "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategory", "#RewardCommandsLabel", "#RewardItemId", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#PlayersListTitle", "#PlayersListHint", "#PlayersRefreshButton", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#HelpDiscordButton", "#HelpCurseForgeButton", "#CategoryBar", "#CategoryOuterTop", "#CategoryOuterBottom", "#CategoryOuterLeft", "#CategoryOuterRight", "#CategoryInnerTop", "#CategoryInnerBottom", "#CategoryCornerTL", "#CategoryCornerTR", "#CategoryCornerBL", "#CategoryCornerBR", "#CategoryBarInset", "#CategoryBarBottomEdge", "#CategoryLine", "#TabGeneralPlate", "#TabArenasPlate", "#TabEnemiesPlate", "#TabHordePlate", "#TabBossesPlate", "#TabPlayersPlate", "#TabSoundsPlate", "#TabRewardsPlate", "#TabHelpPlate", "#TabGeneralActiveBack", "#TabArenasActiveBack", "#TabEnemiesActiveBack", "#TabHordeActiveBack", "#TabBossesActiveBack", "#TabPlayersActiveBack", "#TabSoundsActiveBack", "#TabRewardsActiveBack", "#TabHelpActiveBack", "#TabGeneralActiveTop", "#TabArenasActiveTop", "#TabEnemiesActiveTop", "#TabHordeActiveTop", "#TabBossesActiveTop", "#TabPlayersActiveTop", "#TabSoundsActiveTop", "#TabRewardsActiveTop", "#TabHelpActiveTop", "#TabGeneralActiveNotch", "#TabArenasActiveNotch", "#TabEnemiesActiveNotch", "#TabHordeActiveNotch", "#TabBossesActiveNotch", "#TabPlayersActiveNotch", "#TabSoundsActiveNotch", "#TabRewardsActiveNotch", "#TabHelpActiveNotch");
+        this.setVisible(commandBuilder, false, "#SubTitleLabel", "#TabHintLabel", "#SpawnStateLabel", "#SpawnLabel", "#SpawnX", "#SpawnY", "#SpawnZ", "#SetSpawnButton", "#HordeSelected", "#HordeEditIconItemId", "#HordeIconSelectorLabel", "#HordeIconSelectorCard", "#HordeEditIconPreview", "#HordeEditIconCurrentLabel", "#HordeIconPickerOpenButton", "#HordeIconPickerShade", "#HordeIconPickerFrame", "#HordeIconPickerCloseButton", "#HordeIconPickerTitleLabel", "#HordeIconPickerGrid", "#BossSelectedLabel", "#BossSelected", "#BossEditIconItemId", "#BossIconSelectorLabel", "#BossIconSelectorCard", "#BossEditIconPreview", "#BossEditIconCurrentLabel", "#BossIconPickerOpenButton", "#BossIconPickerShade", "#BossIconPickerFrame", "#BossIconPickerCloseButton", "#BossIconPickerTitleLabel", "#BossIconPickerGrid", "#BossEnemyPickerLabel", "#BossEnemyPickerOpenButton", "#BossEnemyPickerShade", "#BossEnemyPickerFrame", "#BossEnemyPickerCloseButton", "#BossEnemyPickerTitleLabel", "#BossEnemyPickerGrid", "#ArenaSelectedLabel", "#ArenaSelected", "#BossStatusLabel", "#ArenaStatusLabel", "#ArenaEditorTitleLabel", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaIconSelectorLabel", "#ArenaIconSelectorCard", "#ArenaEditIconPreview", "#ArenaEditIconCurrentLabel", "#ArenaIconPickerOpenButton", "#ArenaEditIconItemId", "#ArenaCoordsTitleLabel", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaEditorModalShade", "#ArenaEditorModalFrame", "#ArenaEditorCloseButton", "#ArenaIconPickerShade", "#ArenaIconPickerFrame", "#ArenaIconPickerCloseButton", "#ArenaIconPickerTitleLabel", "#ArenaIconPickerGrid", "#PlayerEditIconItemId", "#PlayerIconPickerOpenButton", "#PlayerIconPickerShade", "#PlayerIconPickerFrame", "#PlayerIconPickerCloseButton", "#PlayerIconPickerTitleLabel", "#PlayerIconPickerGrid", "#RoleHelpLabel", "#RewardCommandsHelpLabel", "#PlayerMultiplierLabel", "#PlayerMultiplier", "#RadiusLabel", "#RoundConfigLabel", "#EnemyLevelRangeLabel", "#EnemyLevelWipLabel", "#EnemyLevelMin", "#EnemyLevelRangeSeparator", "#EnemyLevelMax", "#LanguagePrevButton", "#LanguageNextButton", "#FinalBossPrevButton", "#FinalBossNextButton", "#RewardCategoryPrevButton", "#RewardCategoryNextButton", "#RewardItemPrevButton", "#RewardItemNextButton", "#RewardEveryRoundsLabel", "#RewardEveryRounds", "#RewardCategoryLabel", "#RewardCategory", "#RewardCommandsLabel", "#RewardItemId", "#RewardItemQuantityLabel", "#RewardItemQuantity", "#PlayersListTitle", "#PlayersListHint", "#PlayersRefreshButton", "#AudiencePlayersRows", "#AudiencePlayersEmptyLabel", "#HelpDiscordButton", "#HelpCurseForgeButton", "#CategoryBar", "#CategoryOuterTop", "#CategoryOuterBottom", "#CategoryOuterLeft", "#CategoryOuterRight", "#CategoryInnerTop", "#CategoryInnerBottom", "#CategoryCornerTL", "#CategoryCornerTR", "#CategoryCornerBL", "#CategoryCornerBR", "#CategoryBarInset", "#CategoryBarBottomEdge", "#CategoryLine", "#TabGeneralPlate", "#TabArenasPlate", "#TabEnemiesPlate", "#TabHordePlate", "#TabBossesPlate", "#TabPlayersPlate", "#TabSoundsPlate", "#TabRewardsPlate", "#TabHelpPlate", "#TabGeneralActiveBack", "#TabArenasActiveBack", "#TabEnemiesActiveBack", "#TabHordeActiveBack", "#TabBossesActiveBack", "#TabPlayersActiveBack", "#TabSoundsActiveBack", "#TabRewardsActiveBack", "#TabHelpActiveBack", "#TabGeneralActiveTop", "#TabArenasActiveTop", "#TabEnemiesActiveTop", "#TabHordeActiveTop", "#TabBossesActiveTop", "#TabPlayersActiveTop", "#TabSoundsActiveTop", "#TabRewardsActiveTop", "#TabHelpActiveTop", "#TabGeneralActiveNotch", "#TabArenasActiveNotch", "#TabEnemiesActiveNotch", "#TabHordeActiveNotch", "#TabBossesActiveNotch", "#TabPlayersActiveNotch", "#TabSoundsActiveNotch", "#TabRewardsActiveNotch", "#TabHelpActiveNotch");
         this.applyPlayersEditorModalVisibility(commandBuilder, playersTab);
         this.applyEnemyCategoryEditorModalVisibility(commandBuilder, enemiesTab);
         this.applyRewardCategoryEditorModalVisibility(commandBuilder, rewardsTab);
@@ -3628,18 +3859,22 @@ extends CustomUIPage {
 
     private void applyArenaEditorModalVisibility(UICommandBuilder commandBuilder, boolean arenasTab) {
         boolean visible = arenasTab && this.arenaEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#ArenaEditorModalShade", "#ArenaEditorModalFrame", "#ArenaEditorCloseButton", "#ArenaEditorTitleLabel", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaIconSelectorLabel", "#ArenaIconSelectorCard", "#ArenaEditIconPreview", "#ArenaEditIconCurrentLabel", "#ArenaIconPickerOpenButton", "#ArenaCoordsTitleLabel", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaStatusLabel");
+        this.setVisible(commandBuilder, visible, "#ArenaEditorModalShade", "#ArenaEditorModalFrame", "#ArenaEditorCloseButton", "#ArenaEditorTitleLabel", "#ArenaEditIdLabel", "#ArenaEditId", "#ArenaCoordsTitleLabel", "#ArenaEditXLabel", "#ArenaEditX", "#ArenaEditYLabel", "#ArenaEditY", "#ArenaEditZLabel", "#ArenaEditZ", "#ArenaUseCurrentPositionButton", "#ArenaSaveButton", "#ArenaStatusLabel");
+        boolean pickerVisible = arenasTab && this.arenaIconPickerModalVisible;
+        this.setVisible(commandBuilder, pickerVisible, "#ArenaIconPickerShade", "#ArenaIconPickerFrame", "#ArenaIconPickerCloseButton", "#ArenaIconPickerTitleLabel", "#ArenaIconPickerGrid");
     }
 
     private void applyPlayersEditorModalVisibility(UICommandBuilder commandBuilder, boolean playersTab) {
-        boolean visible = playersTab && this.playerEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#PlayersEditorModalShade", "#PlayersEditorModalFrame", "#PlayersEditorCloseButton", "#PlayersEditorTitleLabel", "#PlayersSaveButton", "#PlayerSelected", "#PlayerEditModeLabel", "#PlayerEditMode", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#PlayersCountLabel", "#PlayersCountValue", "#PlayerStatusLabel");
+        boolean editorVisible = playersTab && this.playerEditorModalVisible;
+        this.setVisible(commandBuilder, editorVisible, "#PlayersEditorModalShade", "#PlayersEditorModalFrame", "#PlayersEditorCloseButton", "#PlayersEditorTitleLabel", "#PlayerPreviewCard", "#PlayerCharacterPreview", "#PlayerPreviewNameLabel", "#PlayerPreviewNameValue", "#PlayerPreviewModeLabel", "#PlayerPreviewModeValue", "#PlayersSaveButton", "#PlayerEditModeLabel", "#PlayerEditMode", "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#PlayersCountLabel", "#PlayersCountValue", "#AudienceInfoLabel", "#AudienceHelpLabel", "#PlayerStatusLabel");
+        boolean pickerVisible = playersTab && this.playerIconPickerModalVisible;
+        this.setVisible(commandBuilder, pickerVisible, "#PlayerIconPickerShade", "#PlayerIconPickerFrame", "#PlayerIconPickerCloseButton", "#PlayerIconPickerTitleLabel", "#PlayerIconPickerGrid");
     }
 
     private void applyEnemyCategoryEditorModalVisibility(UICommandBuilder commandBuilder, boolean enemiesTab) {
         boolean visible = enemiesTab && this.enemyCategoryEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatIconSelectorLabel", "#EnemyCatIconSelectorCard", "#EnemyCatEditIconPreview", "#EnemyCatEditIconCurrentLabel", "#EnemyCatIconPickerOpenButton", "#EnemyCatRolePickerLabel", "#EnemyCatEnemyPickerOpenButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton", "#EnemyCatStatusLabel");
-        boolean pickerVisible = visible && this.enemyCategoryIconPickerModalVisible;
+        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatRolePickerLabel", "#EnemyCatEnemyPickerOpenButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton", "#EnemyCatStatusLabel");
+        boolean pickerVisible = enemiesTab && this.enemyCategoryIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#EnemyCatIconPickerShade", "#EnemyCatIconPickerFrame", "#EnemyCatIconPickerCloseButton", "#EnemyCatIconPickerTitleLabel", "#EnemyCatIconPickerGrid");
         boolean enemyPickerVisible = visible && this.enemyCategoryEnemyPickerModalVisible;
         this.setVisible(commandBuilder, enemyPickerVisible, "#EnemyCatEnemyPickerShade", "#EnemyCatEnemyPickerFrame", "#EnemyCatEnemyPickerCloseButton", "#EnemyCatEnemyPickerTitleLabel", "#EnemyCatEnemyPickerGrid");
@@ -3647,8 +3882,8 @@ extends CustomUIPage {
 
     private void applyRewardCategoryEditorModalVisibility(UICommandBuilder commandBuilder, boolean rewardsTab) {
         boolean visible = rewardsTab && this.rewardCategoryEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#RewardCatEditorModalShade", "#RewardCatEditorModalFrame", "#RewardCatEditorCloseButton", "#RewardCatEditorTitleLabel", "#RewardCatEditIdLabel", "#RewardCatEditId", "#RewardCatIconSelectorLabel", "#RewardCatIconSelectorCard", "#RewardCatEditIconPreview", "#RewardCatEditIconCurrentLabel", "#RewardCatIconPickerOpenButton", "#RewardCatItemPickerLabel", "#RewardCatItemPickerOpenButton", "#RewardCatEditItemsLabel", "#RewardCatItemsListInset", "#RewardCatItemsRowsList", "#RewardCatItemsEmptyLabel", "#RewardCatSaveButton", "#RewardCatStatusLabel");
-        boolean iconPickerVisible = visible && this.rewardCategoryIconPickerModalVisible;
+        this.setVisible(commandBuilder, visible, "#RewardCatEditorModalShade", "#RewardCatEditorModalFrame", "#RewardCatEditorCloseButton", "#RewardCatEditorTitleLabel", "#RewardCatEditIdLabel", "#RewardCatEditId", "#RewardCatItemPickerLabel", "#RewardCatItemPickerOpenButton", "#RewardCatEditItemsLabel", "#RewardCatItemsListInset", "#RewardCatItemsRowsList", "#RewardCatItemsEmptyLabel", "#RewardCatSaveButton", "#RewardCatStatusLabel");
+        boolean iconPickerVisible = rewardsTab && this.rewardCategoryIconPickerModalVisible;
         this.setVisible(commandBuilder, iconPickerVisible, "#RewardCatIconPickerShade", "#RewardCatIconPickerFrame", "#RewardCatIconPickerCloseButton", "#RewardCatIconPickerTitleLabel", "#RewardCatIconPickerGrid");
         boolean itemPickerVisible = visible && this.rewardCategoryItemPickerModalVisible;
         this.setVisible(commandBuilder, itemPickerVisible, "#RewardCatItemPickerShade", "#RewardCatItemPickerFrame", "#RewardCatItemPickerCloseButton", "#RewardCatItemPickerTitleLabel", "#RewardCatItemPickerGrid");
@@ -3656,15 +3891,15 @@ extends CustomUIPage {
 
     private void applyHordeEditorModalVisibility(UICommandBuilder commandBuilder, boolean hordeTab) {
         boolean visible = hordeTab && this.hordeEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#HordeEditorModalShade", "#HordeEditorModalFrame", "#HordeEditorCloseButton", "#HordeEditorTitleLabel", "#HordeEditIdLabel", "#HordeEditId", "#HordeIconSelectorLabel", "#HordeIconSelectorCard", "#HordeEditIconPreview", "#HordeEditIconCurrentLabel", "#HordeIconPickerOpenButton", "#RoleLabel", "#EnemyType", "#RoleHelpLabel", "#MaxRadiusLabel", "#MaxRadius", "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#HordeSaveButton", "#HordeStatusLabel");
-        boolean pickerVisible = visible && this.hordeIconPickerModalVisible;
+        this.setVisible(commandBuilder, visible, "#HordeEditorModalShade", "#HordeEditorModalFrame", "#HordeEditorCloseButton", "#HordeEditorTitleLabel", "#HordeEditIdLabel", "#HordeEditId", "#RoleLabel", "#EnemyType", "#RoleHelpLabel", "#MaxRadiusLabel", "#MaxRadius", "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#HordeSaveButton", "#HordeStatusLabel");
+        boolean pickerVisible = hordeTab && this.hordeIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#HordeIconPickerShade", "#HordeIconPickerFrame", "#HordeIconPickerCloseButton", "#HordeIconPickerTitleLabel", "#HordeIconPickerGrid");
     }
 
     private void applyBossEditorModalVisibility(UICommandBuilder commandBuilder, boolean bossesTab) {
         boolean visible = bossesTab && this.bossEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#BossEditorModalShade", "#BossEditorModalFrame", "#BossEditorCloseButton", "#BossEditorTitleLabel", "#BossEditNameLabel", "#BossEditName", "#BossIconSelectorLabel", "#BossIconSelectorCard", "#BossEditIconPreview", "#BossEditIconCurrentLabel", "#BossIconPickerOpenButton", "#BossEditTierLabel", "#BossEditTier", "#BossEnemyPickerLabel", "#BossEnemyPickerOpenButton", "#BossEditAmountLabel", "#BossEditAmount", "#BossEditHpLabel", "#BossEditHp", "#BossEditDamageLabel", "#BossEditDamage", "#BossEditSizeLabel", "#BossEditSize", "#BossEditAttackRateLabel", "#BossEditAttackRate", "#BossSaveButton", "#BossStatusLabel");
-        boolean pickerVisible = visible && this.bossIconPickerModalVisible;
+        this.setVisible(commandBuilder, visible, "#BossEditorModalShade", "#BossEditorModalFrame", "#BossEditorCloseButton", "#BossEditorTitleLabel", "#BossEditNameLabel", "#BossEditName", "#BossEditTierLabel", "#BossEditTier", "#BossEnemyPickerLabel", "#BossEnemyPickerOpenButton", "#BossEditAmountLabel", "#BossEditAmount", "#BossEditHpLabel", "#BossEditHp", "#BossEditDamageLabel", "#BossEditDamage", "#BossEditSizeLabel", "#BossEditSize", "#BossEditAttackRateLabel", "#BossEditAttackRate", "#BossSaveButton", "#BossStatusLabel");
+        boolean pickerVisible = bossesTab && this.bossIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#BossIconPickerShade", "#BossIconPickerFrame", "#BossIconPickerCloseButton", "#BossIconPickerTitleLabel", "#BossIconPickerGrid");
         boolean enemyPickerVisible = visible && this.bossEnemyPickerModalVisible;
         this.setVisible(commandBuilder, enemyPickerVisible, "#BossEnemyPickerShade", "#BossEnemyPickerFrame", "#BossEnemyPickerCloseButton", "#BossEnemyPickerTitleLabel", "#BossEnemyPickerGrid");

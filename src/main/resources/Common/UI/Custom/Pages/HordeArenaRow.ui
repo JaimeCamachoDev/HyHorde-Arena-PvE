@@ -30,6 +30,13 @@ Group #HordeArenaRow {
     Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
   }
 
+  TextButton #ArenaIconButton {
+    Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
+    Text: "";
+    Visible: false;
+    Style: @ArenaRowHitboxStyle;
+  }
+
   Label #ArenaName {
     Anchor: (Left: 76, Top: 10, Right: 64, Height: 22);
     Text: "";

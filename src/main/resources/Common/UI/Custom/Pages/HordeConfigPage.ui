@@ -51,12 +51,6 @@ $C = "../Common.ui";
   Pressed: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #f3f8ff(0.76)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
 );
 
-@SoftCloseButtonStyle = TextButtonStyle(
-  Default: (Background: #7b3940(0.95), LabelStyle: (FontSize: 16, TextColor: #ffeef0, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Hovered: (Background: #8f4650(0.97), LabelStyle: (FontSize: 16, TextColor: #fff7f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-  Pressed: (Background: #a65761(0.98), LabelStyle: (FontSize: 16, TextColor: #fff7f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-);
-
 @ArenaListRowHitboxStyle = TextButtonStyle(
   Default: (Background: #000000(0), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: #ffffff(0.08), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
@@ -78,60 +72,60 @@ Group {
 
   TabNavigation #CategoryTabs {
     Anchor: (Left: 452, Top: 30, Width: 724, Height: 66);
-    Style: $C.@TopTabsStyle;
+    Style: @OfficialTextTopTabsStyle;
     SelectedTab: "general";
 
     TabButton #TabGeneralButton {
       Id: "general";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "General";
       TooltipText: "General";
     }
 
     TabButton #TabPlayersButton {
       Id: "players";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Jugadores";
       TooltipText: "Jugadores";
     }
 
     TabButton #TabArenasButton {
       Id: "arenas";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Arenas";
       TooltipText: "Arenas";
     }
 
     TabButton #TabEnemiesButton {
       Id: "enemies";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Enemigos";
       TooltipText: "Enemigos";
     }
 
     TabButton #TabHordeButton {
       Id: "horde";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Horda";
       TooltipText: "Horda";
     }
 
     TabButton #TabBossesButton {
       Id: "bosses";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Bosses";
       TooltipText: "Bosses";
     }
 
     TabButton #TabRewardsButton {
       Id: "rewards";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Recomp.";
       TooltipText: "Recompensas";
     }
 
     TabButton #TabSoundsButton {
       Id: "sounds";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Sonidos";
       TooltipText: "Sonidos";
     }
 
     TabButton #TabHelpButton {
       Id: "help";
-      Icon: "../Common/TabSelectedOverlay.png";
+      Text: "Ayuda";
       TooltipText: "Ayuda";
     }
   }
@@ -971,10 +965,10 @@ Group {
   }
 
   TextButton #SoundsEditorCloseButton {
-    Anchor: (Left: 1422, Top: 200, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 200, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #SoundsEditorTitleLabel {
@@ -1080,10 +1074,10 @@ Group {
   }
 
   TextButton #SoundsPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Anchor: (Left: 1458, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #SoundsPickerTitleLabel {
@@ -1249,15 +1243,15 @@ Group {
   }
 
   $C.@DecoratedContainer #PlayersEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
     Visible: false;
   }
 
   TextButton #PlayersEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #PlayersEditorTitleLabel {
@@ -1267,17 +1261,94 @@ Group {
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextButton #PlayersSaveButton { Anchor: (Left: 480, Top: 264, Width: 960, Height: 34); Text: "Guardar modo jugador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
+  Panel #PlayerPreviewCard {
+    Anchor: (Left: 480, Top: 290, Width: 960, Height: 96);
+    Background: #0f1825(0.92);
+    Visible: false;
+  }
+  ItemIcon #PlayerCharacterPreview {
+    Anchor: (Left: 492, Top: 302, Width: 72, Height: 72);
+    Background: #000000(0);
+    Visible: false;
+  }
+  TextButton #PlayerIconPickerOpenButton {
+    Anchor: (Left: 492, Top: 302, Width: 72, Height: 72);
+    Text: "";
+    Visible: false;
+    Style: @ArenaListRowHitboxStyle;
+  }
+  Label #PlayerPreviewNameLabel {
+    Anchor: (Left: 578, Top: 314, Width: 144, Height: 18);
+    Text: "Jugador";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
+  }
+  Label #PlayerPreviewNameValue {
+    Anchor: (Left: 724, Top: 314, Width: 700, Height: 18);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center);
+  }
+  Label #PlayerPreviewModeLabel {
+    Anchor: (Left: 578, Top: 344, Width: 144, Height: 18);
+    Text: "Modo actual";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
+  }
+  Label #PlayerPreviewModeValue {
+    Anchor: (Left: 724, Top: 344, Width: 700, Height: 18);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center);
+  }
+
+  Label #PlayerEditModeLabel { Anchor: (Left: 480, Top: 414, Width: 960, Height: 16); Text: "Modo de audiencia"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #PlayerEditMode { @Anchor = (Left: 480, Top: 436, Width: 960, Height: 34); Value: "player"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
+  Label #ArenaJoinRadiusLabel { Anchor: (Left: 480, Top: 488, Width: 960, Height: 16); Text: "Radio de jugadores de arena"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@SliderNumberField #ArenaJoinRadius { @Anchor = (Left: 480, Top: 510, Width: 960); Value: 32.0; Visible: false; Min: 4.0; Max: 512.0; Step: 1.0; NumberFieldStyle: $C.@DefaultInputFieldStyle; }
+  Label #PlayersCountLabel { Anchor: (Left: 480, Top: 576, Width: 220, Height: 20); Text: "Detectados"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
+  Label #PlayersCountValue { Anchor: (Left: 708, Top: 576, Width: 732, Height: 20); Text: "0"; Visible: false; Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center); }
+  Label #AudienceInfoLabel { Anchor: (Left: 480, Top: 608, Width: 960, Height: 20); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #b5c7df, VerticalAlignment: Center); }
+  Label #AudienceHelpLabel { Anchor: (Left: 480, Top: 636, Width: 960, Height: 36); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  TextButton #PlayersSaveButton { Anchor: (Left: 480, Top: 758, Width: 960, Height: 34); Text: "Guardar modo jugador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
+  Label #PlayerStatusLabel { Anchor: (Left: 480, Top: 804, Width: 960, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
+
   TextField #PlayerSelected { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
-  Label #PlayersCountLabel { Anchor: (Left: 480, Top: 458, Width: 220, Height: 22); Text: "Detectados"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
-  Label #PlayersCountValue { Anchor: (Left: 708, Top: 458, Width: 732, Height: 22); Text: "0"; Visible: false; Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center); }
-  Label #PlayerEditModeLabel { Anchor: (Left: 480, Top: 306, Width: 960, Height: 16); Text: "Modo de audiencia"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #PlayerEditMode { @Anchor = (Left: 480, Top: 328, Width: 960, Height: 34); Value: "player"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #ArenaJoinRadiusLabel { Anchor: (Left: 480, Top: 370, Width: 960, Height: 16); Text: "Radio de jugadores de arena"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@SliderNumberField #ArenaJoinRadius { @Anchor = (Left: 480, Top: 392, Width: 960); Value: 32.0; Visible: false; Min: 4.0; Max: 512.0; Step: 1.0; NumberFieldStyle: $C.@DefaultInputFieldStyle; }
-  Label #AudienceInfoLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 20); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #b5c7df, VerticalAlignment: Center); }
-  Label #PlayerStatusLabel { Anchor: (Left: 480, Top: 636, Width: 960, Height: 56); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
-  Label #AudienceHelpLabel { Anchor: (Left: 480, Top: 584, Width: 960, Height: 36); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  TextField #PlayerEditIconItemId { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: "Ingredient_Bar_Gold"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
+
+  Panel #PlayerIconPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.62);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #PlayerIconPickerFrame {
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
+    Visible: false;
+  }
+
+  TextButton #PlayerIconPickerCloseButton {
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #PlayerIconPickerTitleLabel {
+    Anchor: (Left: 580, Top: 300, Width: 752, Height: 24);
+    Text: "Selecciona un icono";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #PlayerIconPickerGrid {
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 336);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
+  }
 
   Label #PlayersListTitle { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   Label #PlayersListHint { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
@@ -1403,10 +1474,10 @@ Group {
   }
 
   TextButton #RewardCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #RewardCatEditorTitleLabel {
@@ -1450,10 +1521,10 @@ Group {
   }
 
   TextButton #RewardCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #RewardCatIconPickerTitleLabel {
@@ -1484,10 +1555,10 @@ Group {
   }
 
   TextButton #RewardCatItemPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Anchor: (Left: 1458, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #RewardCatItemPickerTitleLabel {
@@ -1732,10 +1803,10 @@ Group {
   }
 
   TextButton #EnemyCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatEditorTitleLabel {
@@ -1826,10 +1897,10 @@ Group {
   }
 
   TextButton #EnemyCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatIconPickerTitleLabel {
@@ -1860,10 +1931,10 @@ Group {
   }
 
   TextButton #EnemyCatEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Anchor: (Left: 1458, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatEnemyPickerTitleLabel {
@@ -2099,10 +2170,10 @@ Group {
   }
 
   TextButton #HordeEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #HordeEditorTitleLabel {
@@ -2162,10 +2233,10 @@ Group {
   }
 
   TextButton #HordeIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #HordeIconPickerTitleLabel {
@@ -2471,10 +2542,10 @@ Group {
   }
 
   TextButton #BossEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #BossEditorTitleLabel {
@@ -2551,10 +2622,10 @@ Group {
   }
 
   TextButton #BossIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #BossIconPickerTitleLabel {
@@ -2585,10 +2656,10 @@ Group {
   }
 
   TextButton #BossEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Anchor: (Left: 1458, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #BossEnemyPickerTitleLabel {
@@ -2661,10 +2732,10 @@ Group {
   }
 
   TextButton #ArenaEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
+    Anchor: (Left: 1430, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #ArenaEditorTitleLabel {
@@ -2773,10 +2844,10 @@ Group {
   }
 
   TextButton #ArenaIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
+    Anchor: (Left: 1346, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 
   Label #ArenaIconPickerTitleLabel {
@@ -2969,9 +3040,9 @@ Group {
   }
 
   TextButton #HordeCloseButton {
-    Anchor: (Left: 1450, Top: 100, Width: 34, Height: 34);
+    Anchor: (Left: 1458, Top: 100, Width: 30, Height: 30);
     Text: "X";
-    Style: @SoftCloseButtonStyle;
+    Style: $C.@CancelTextButtonStyle;
   }
 }
 
