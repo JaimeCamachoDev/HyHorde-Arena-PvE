@@ -121,14 +121,19 @@ public final class HordeService {
     private static final String SOUND_SELECTION_NONE = "none";
     private static final String[] DEFAULT_ROUND_START_SOUND_EVENT_HINTS = new String[]{"warhorn", "war_horn", "horn", "fanfare", "trumpet", "battle_start", "raid_start", "combat", "danger", "warning", "encounter", "start", "begin", "countdown", "ready", "go", "signal", "notification", "event"};
     private static final String[] DEFAULT_ROUND_VICTORY_SOUND_EVENT_HINTS = new String[]{"victory", "win", "success", "sleep_success", "complete", "completed", "quest_complete", "reward", "fanfare", "stinger", "jingle", "clear", "triumph", "level_up"};
+    private static final String[] DEFAULT_ROUND_DEFEAT_SOUND_EVENT_HINTS = new String[]{"defeat", "lose", "loss", "failure", "failed", "down", "wipe", "game_over", "danger", "negative", "death", "dead", "warning", "retreat"};
     private static final String[] DEFAULT_ROUND_START_SOUND_BLOCKED_KEYWORDS = new String[]{"alerted", "squirrel", "antelope", "bird", "sheep", "cow", "goat", "pig", "chicken", "cat", "dog", "wolf"};
     private static final String[] DEFAULT_ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS = new String[0];
+    private static final String[] DEFAULT_ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS = new String[]{"ambient", "loop"};
     private static final String[] DEFAULT_ROUND_SOUND_WEAK_KEYWORDS = new String[]{"step", "foot", "cloth", "equip", "unequip", "swim", "splash", "eat", "drink", "grunt", "breath", "idle", "heartbeat", "swing", "hit", "hurt", "alerted", "squirrel", "antelope", "bird", "sheep", "cow", "goat", "pig", "chicken", "cat", "dog", "wolf"};
     private static String[] ROUND_START_SOUND_EVENT_HINTS = DEFAULT_ROUND_START_SOUND_EVENT_HINTS.clone();
     private static String[] ROUND_VICTORY_SOUND_EVENT_HINTS = DEFAULT_ROUND_VICTORY_SOUND_EVENT_HINTS.clone();
+    private static String[] ROUND_DEFEAT_SOUND_EVENT_HINTS = DEFAULT_ROUND_DEFEAT_SOUND_EVENT_HINTS.clone();
     private static String[] ROUND_START_SOUND_BLOCKED_KEYWORDS = DEFAULT_ROUND_START_SOUND_BLOCKED_KEYWORDS.clone();
     private static String[] ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS = DEFAULT_ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS.clone();
+    private static String[] ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS = DEFAULT_ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS.clone();
     private static String[] ROUND_SOUND_WEAK_KEYWORDS = DEFAULT_ROUND_SOUND_WEAK_KEYWORDS.clone();
+    private static final long MIN_AUDIENCE_SOUND_INTERVAL_MILLIS = 320L;
     private static final int MAX_SOUND_SUGGESTIONS = 48;
     private static final int MAX_SOUND_TOP_SCORE_SUGGESTIONS = 14;
     private static final long SESSION_TICK_INTERVAL_MILLIS = 250L;
@@ -192,6 +197,10 @@ public final class HordeService {
     private Integer cachedRoundVictorySoundEventIndex;
     private String cachedRoundVictorySoundEventId;
     private String cachedRoundVictorySoundSelection;
+    private Integer cachedRoundDefeatSoundEventIndex;
+    private String cachedRoundDefeatSoundEventId;
+    private String cachedRoundDefeatSoundSelection;
+    private long nextAudienceSoundAllowedAtMillis;
     private boolean pluginReloadInProgress;
     private HordeConfig config;
     private HordeSession session;
@@ -219,6 +228,10 @@ public final class HordeService {
         this.cachedRoundVictorySoundEventIndex = null;
         this.cachedRoundVictorySoundEventId = "";
         this.cachedRoundVictorySoundSelection = "";
+        this.cachedRoundDefeatSoundEventIndex = null;
+        this.cachedRoundDefeatSoundEventId = "";
+        this.cachedRoundDefeatSoundSelection = "";
+        this.nextAudienceSoundAllowedAtMillis = 0L;
         this.config = HordeConfig.defaults();
         this.bossRuntimeModifiersByEnemyRef = new HashMap<Ref<EntityStore>, BossRuntimeModifiers>();
         this.nextAutoStartPollAtMillis = 0L;
@@ -847,12 +860,39 @@ public final class HordeService {
         return HordeService.buildRoundSoundOptions(this.config.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
     }
 
+    public synchronized List<String> getRoundDefeatSoundOptions() {
+        return HordeService.buildRoundSoundOptions(this.config.roundDefeatSoundId, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
+    }
+
     public synchronized String getRoundStartSoundSelection() {
         return HordeService.normalizeRoundSoundSelection(this.config.roundStartSoundId);
     }
 
     public synchronized String getRoundVictorySoundSelection() {
         return HordeService.normalizeRoundSoundSelection(this.config.roundVictorySoundId);
+    }
+
+    public synchronized String getRoundDefeatSoundSelection() {
+        return HordeService.normalizeRoundSoundSelection(this.config.roundDefeatSoundId);
+    }
+
+    public synchronized OperationResult previewRoundSound(PlayerRef playerRef, String eventTypeInput, String soundSelectionInput, double volumePercentInput) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (playerRef == null) {
+            return OperationResult.fail(english ? "Could not preview sound: invalid player." : "No se pudo previsualizar el sonido: jugador invalido.");
+        }
+        String eventType = HordeService.normalizeRoundSoundEventType(eventTypeInput);
+        String selection = HordeService.sanitizeRoundSoundSelectionForEvent(eventType, soundSelectionInput, this.config);
+        float volume = (float)HordeService.clamp(HordeService.normalizeUiVolume(volumePercentInput), MIN_SOUND_VOLUME, MAX_SOUND_VOLUME);
+        int soundEventIndex = this.resolveRoundSoundEventIndexByEvent(eventType, selection);
+        if (soundEventIndex < 0) {
+            return OperationResult.fail(english ? "Could not resolve a valid sound for preview." : "No se pudo resolver un sonido valido para previsualizar.");
+        }
+        this.playSoundToPlayer(playerRef, soundEventIndex, volume);
+        if (english) {
+            return OperationResult.ok("Preview played (" + eventType + "): " + selection + ".");
+        }
+        return OperationResult.ok("Preview reproducido (" + eventType + "): " + selection + ".");
     }
 
     public synchronized List<String> getLanguageOptions() {
@@ -1377,6 +1417,12 @@ public final class HordeService {
             updated.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(roundVictorySoundValue, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
         } else {
             updated.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(updated.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
+        }
+        String roundDefeatSoundValue = values.get("roundDefeatSoundId");
+        if (roundDefeatSoundValue != null && !roundDefeatSoundValue.isBlank()) {
+            updated.roundDefeatSoundId = HordeService.sanitizeRoundSoundSelection(roundDefeatSoundValue, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
+        } else {
+            updated.roundDefeatSoundId = HordeService.sanitizeRoundSoundSelection(updated.roundDefeatSoundId, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
         }
         if (!ENEMY_TYPE_OPTIONS.contains(updated.enemyType)) {
             return OperationResult.fail(english ? "enemyType must be one of: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS) : "enemyType debe ser uno de: " + String.join((CharSequence)", ", ENEMY_TYPE_OPTIONS));
@@ -2414,30 +2460,54 @@ public final class HordeService {
     }
 
     private void playRoundStartSound(HordeSession session) {
-        this.playRoundSound(session, this.resolveRoundStartSoundEventIndex(), (float)this.config.roundStartVolume);
+        this.playRoundSound(session, this.resolveRoundStartSoundEventIndex(), (float)this.config.roundStartVolume, true);
     }
 
     private void playRoundVictorySound(HordeSession session) {
-        this.playRoundSound(session, this.resolveRoundVictorySoundEventIndex(), (float)this.config.roundVictoryVolume);
+        this.playRoundSound(session, this.resolveRoundVictorySoundEventIndex(), (float)this.config.roundVictoryVolume, true);
     }
 
-    private void playRoundSound(HordeSession session, int soundEventIndex, float volume) {
+    private void playRoundDefeatSound(HordeSession session) {
+        this.playRoundSound(session, this.resolveRoundDefeatSoundEventIndex(), (float)this.config.roundDefeatVolume, true);
+    }
+
+    private void playRoundSound(HordeSession session, int soundEventIndex, float volume, boolean enforceInterval) {
         if (session == null || session.world == null || soundEventIndex < 0) {
+            return;
+        }
+        if (enforceInterval && !this.tryAcquireAudienceSoundSlot()) {
             return;
         }
         float safeVolume = HordeService.clampSoundVolume(volume);
         for (PlayerRef playerRef : session.world.getPlayerRefs()) {
             if (playerRef == null || playerRef.getUuid() == null || !session.isAudience(playerRef.getUuid())) continue;
-            try {
-                if (PLAY_SOUND_EVENT_2D_TO_PLAYER_WITH_LEVELS_METHOD != null) {
-                    PLAY_SOUND_EVENT_2D_TO_PLAYER_WITH_LEVELS_METHOD.invoke(null, playerRef, soundEventIndex, SoundCategory.SFX, safeVolume, 1.0f);
-                } else {
-                    SoundUtil.playSoundEvent2dToPlayer((PlayerRef)playerRef, (int)soundEventIndex, (SoundCategory)SoundCategory.SFX);
-                }
+            this.playSoundToPlayer(playerRef, soundEventIndex, safeVolume);
+        }
+    }
+
+    private boolean tryAcquireAudienceSoundSlot() {
+        long now = System.currentTimeMillis();
+        if (now < this.nextAudienceSoundAllowedAtMillis) {
+            return false;
+        }
+        this.nextAudienceSoundAllowedAtMillis = now + MIN_AUDIENCE_SOUND_INTERVAL_MILLIS;
+        return true;
+    }
+
+    private void playSoundToPlayer(PlayerRef playerRef, int soundEventIndex, float volume) {
+        if (playerRef == null || soundEventIndex < 0) {
+            return;
+        }
+        float safeVolume = HordeService.clampSoundVolume(volume);
+        try {
+            if (PLAY_SOUND_EVENT_2D_TO_PLAYER_WITH_LEVELS_METHOD != null) {
+                PLAY_SOUND_EVENT_2D_TO_PLAYER_WITH_LEVELS_METHOD.invoke(null, playerRef, soundEventIndex, SoundCategory.SFX, safeVolume, 1.0f);
+            } else {
+                SoundUtil.playSoundEvent2dToPlayer((PlayerRef)playerRef, (int)soundEventIndex, (SoundCategory)SoundCategory.SFX);
             }
-            catch (Exception ignored) {
-                // ignore per-player playback failures
-            }
+        }
+        catch (Exception ignored) {
+            // ignore per-player playback failures
         }
     }
 
@@ -2466,20 +2536,35 @@ public final class HordeService {
     }
 
     private int resolveRoundStartSoundEventIndex() {
-        return this.resolveRoundSoundEventIndex(this.config.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS, true);
+        return this.resolveRoundSoundEventIndexForEvent("start", this.config.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
     }
 
     private int resolveRoundVictorySoundEventIndex() {
-        return this.resolveRoundSoundEventIndex(this.config.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS, false);
+        return this.resolveRoundSoundEventIndexForEvent("victory", this.config.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
     }
 
-    private int resolveRoundSoundEventIndex(String configuredSelectionInput, String[] hintKeywords, String[] blockedKeywords, boolean startSound) {
-        String configuredSelection = HordeService.sanitizeRoundSoundSelection(configuredSelectionInput, hintKeywords, blockedKeywords);
-        if (startSound && this.cachedHordeStartSoundEventIndex != null && configuredSelection.equals(this.cachedHordeStartSoundSelection)) {
-            return this.cachedHordeStartSoundEventIndex.intValue();
+    private int resolveRoundDefeatSoundEventIndex() {
+        return this.resolveRoundSoundEventIndexForEvent("defeat", this.config.roundDefeatSoundId, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
+    }
+
+    private int resolveRoundSoundEventIndexByEvent(String eventTypeInput, String configuredSelectionInput) {
+        String eventType = HordeService.normalizeRoundSoundEventType(eventTypeInput);
+        if ("victory".equals(eventType)) {
+            return this.resolveRoundSoundEventIndexForEvent(eventType, configuredSelectionInput, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
         }
-        if (!startSound && this.cachedRoundVictorySoundEventIndex != null && configuredSelection.equals(this.cachedRoundVictorySoundSelection)) {
-            return this.cachedRoundVictorySoundEventIndex.intValue();
+        if ("defeat".equals(eventType)) {
+            return this.resolveRoundSoundEventIndexForEvent(eventType, configuredSelectionInput, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
+        }
+        return this.resolveRoundSoundEventIndexForEvent("start", configuredSelectionInput, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+    }
+
+    private int resolveRoundSoundEventIndexForEvent(String eventTypeInput, String configuredSelectionInput, String[] hintKeywords, String[] blockedKeywords) {
+        String eventType = HordeService.normalizeRoundSoundEventType(eventTypeInput);
+        String configuredSelection = HordeService.sanitizeRoundSoundSelection(configuredSelectionInput, hintKeywords, blockedKeywords);
+        Integer cachedIndex = this.getCachedRoundSoundEventIndex(eventType);
+        String cachedSelection = this.getCachedRoundSoundSelection(eventType);
+        if (cachedIndex != null && configuredSelection.equals(cachedSelection)) {
+            return cachedIndex.intValue();
         }
         int resolvedIndex = -1;
         String resolvedId = "";
@@ -2497,28 +2582,53 @@ public final class HordeService {
             }
         }
         catch (Exception ex) {
-            this.plugin.getLogger().at(Level.FINE).log("No se pudo resolver sonido de ronda (%s): %s", (Object)(startSound ? "inicio" : "victoria"), (Object)ex.getMessage());
+            this.plugin.getLogger().at(Level.FINE).log("No se pudo resolver sonido de ronda (%s): %s", (Object)eventType, (Object)ex.getMessage());
         }
-        if (startSound) {
-            this.cachedHordeStartSoundSelection = configuredSelection;
-            this.cachedHordeStartSoundEventIndex = resolvedIndex;
-            this.cachedHordeStartSoundEventId = resolvedId;
-            if (resolvedIndex >= 0 && !resolvedId.isBlank()) {
-                this.plugin.getLogger().at(Level.INFO).log("Sonido inicio ronda resuelto: %s (index %d).", (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
-            } else {
-                this.plugin.getLogger().at(Level.WARNING).log("No se pudo resolver sonido valido para inicio de ronda. Seleccion: %s", (Object)configuredSelection);
-            }
+        this.setCachedRoundSoundResolution(eventType, configuredSelection, resolvedIndex, resolvedId);
+        if (resolvedIndex >= 0 && !resolvedId.isBlank()) {
+            this.plugin.getLogger().at(Level.INFO).log("Sonido %s resuelto: %s (index %d).", (Object)eventType, (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
         } else {
-            this.cachedRoundVictorySoundSelection = configuredSelection;
-            this.cachedRoundVictorySoundEventIndex = resolvedIndex;
-            this.cachedRoundVictorySoundEventId = resolvedId;
-            if (resolvedIndex >= 0 && !resolvedId.isBlank()) {
-                this.plugin.getLogger().at(Level.INFO).log("Sonido victoria ronda resuelto: %s (index %d).", (Object)resolvedId, (Object)Integer.valueOf(resolvedIndex));
-            } else {
-                this.plugin.getLogger().at(Level.WARNING).log("No se pudo resolver sonido valido para victoria de ronda. Seleccion: %s", (Object)configuredSelection);
-            }
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo resolver sonido valido para %s. Seleccion: %s", (Object)eventType, (Object)configuredSelection);
         }
         return resolvedIndex;
+    }
+
+    private Integer getCachedRoundSoundEventIndex(String eventType) {
+        if ("victory".equals(eventType)) {
+            return this.cachedRoundVictorySoundEventIndex;
+        }
+        if ("defeat".equals(eventType)) {
+            return this.cachedRoundDefeatSoundEventIndex;
+        }
+        return this.cachedHordeStartSoundEventIndex;
+    }
+
+    private String getCachedRoundSoundSelection(String eventType) {
+        if ("victory".equals(eventType)) {
+            return this.cachedRoundVictorySoundSelection;
+        }
+        if ("defeat".equals(eventType)) {
+            return this.cachedRoundDefeatSoundSelection;
+        }
+        return this.cachedHordeStartSoundSelection;
+    }
+
+    private void setCachedRoundSoundResolution(String eventType, String selection, int resolvedIndex, String resolvedId) {
+        if ("victory".equals(eventType)) {
+            this.cachedRoundVictorySoundSelection = selection;
+            this.cachedRoundVictorySoundEventIndex = resolvedIndex;
+            this.cachedRoundVictorySoundEventId = resolvedId;
+            return;
+        }
+        if ("defeat".equals(eventType)) {
+            this.cachedRoundDefeatSoundSelection = selection;
+            this.cachedRoundDefeatSoundEventIndex = resolvedIndex;
+            this.cachedRoundDefeatSoundEventId = resolvedId;
+            return;
+        }
+        this.cachedHordeStartSoundSelection = selection;
+        this.cachedHordeStartSoundEventIndex = resolvedIndex;
+        this.cachedHordeStartSoundEventId = resolvedId;
     }
 
     private static String resolveSoundSelectionToEventId(Map<String, SoundEvent> soundEvents, String selectionInput, String[] hintKeywords, String[] blockedKeywords) {
@@ -2823,6 +2933,34 @@ public final class HordeService {
         return trimmed;
     }
 
+    private static String normalizeRoundSoundEventType(String input) {
+        if (input == null || input.isBlank()) {
+            return "start";
+        }
+        String normalized = input.trim().toLowerCase(Locale.ROOT).replace('-', '_').replace(' ', '_');
+        if (normalized.contains("victory") || normalized.contains("win") || normalized.contains("victoria")) {
+            return "victory";
+        }
+        if (normalized.contains("defeat") || normalized.contains("lose") || normalized.contains("loss") || normalized.contains("derrota")) {
+            return "defeat";
+        }
+        return "start";
+    }
+
+    private static String sanitizeRoundSoundSelectionForEvent(String eventTypeInput, String selectionInput, HordeConfig fallbackConfig) {
+        String eventType = HordeService.normalizeRoundSoundEventType(eventTypeInput);
+        if ("victory".equals(eventType)) {
+            String fallback = fallbackConfig == null ? SOUND_SELECTION_AUTO : fallbackConfig.roundVictorySoundId;
+            return HordeService.sanitizeRoundSoundSelection(HordeService.firstNonBlankValue(selectionInput, fallback), ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
+        }
+        if ("defeat".equals(eventType)) {
+            String fallback = fallbackConfig == null ? SOUND_SELECTION_AUTO : fallbackConfig.roundDefeatSoundId;
+            return HordeService.sanitizeRoundSoundSelection(HordeService.firstNonBlankValue(selectionInput, fallback), ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
+        }
+        String fallback = fallbackConfig == null ? SOUND_SELECTION_AUTO : fallbackConfig.roundStartSoundId;
+        return HordeService.sanitizeRoundSoundSelection(HordeService.firstNonBlankValue(selectionInput, fallback), ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
+    }
+
     private static boolean isAutoRoundSoundSelection(String value) {
         return SOUND_SELECTION_AUTO.equalsIgnoreCase(value == null ? "" : value.trim());
     }
@@ -2947,14 +3085,36 @@ public final class HordeService {
         try {
             boolean english = HordeService.isEnglishLanguage(this.config.language);
             String normalizedReason = reason == null ? "" : reason.toLowerCase(Locale.ROOT);
-            String titleText = normalizedReason.contains("complet") ? (english ? "HORDE PVE COMPLETED" : "HORDA PVE COMPLETADA") : (english ? "HORDE PVE ENDED" : "HORDA PVE FINALIZADA");
-            String subtitleBase = normalizedReason.contains("complet") ? (english ? "All rounds finished" : "Todas las rondas terminadas") : HordeService.compactText(reason, 64, english);
+            String titleText = HordeService.isCompletionEndReason(normalizedReason) ? (english ? "HORDE PVE COMPLETED" : "HORDA PVE COMPLETADA") : (english ? "HORDE PVE ENDED" : "HORDA PVE FINALIZADA");
+            String subtitleBase = HordeService.isCompletionEndReason(normalizedReason) ? (english ? "All rounds finished" : "Todas las rondas terminadas") : HordeService.compactText(reason, 64, english);
             String subtitleText = subtitleBase + (english ? " | Alive remaining: " : " | Vivos restantes: ") + aliveAtEnd;
             this.sendAudienceTitle(session, titleText, subtitleText);
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo mostrar anuncio de fin de horda: %s", (Object)ex.getMessage());
         }
+    }
+
+    private static boolean isCompletionEndReason(String reason) {
+        String normalized = reason == null ? "" : reason.toLowerCase(Locale.ROOT);
+        return normalized.contains("complet");
+    }
+
+    private static boolean shouldPlayDefeatSoundForReason(String reason) {
+        String normalized = reason == null ? "" : reason.toLowerCase(Locale.ROOT);
+        if (normalized.isBlank() || HordeService.isCompletionEndReason(normalized)) {
+            return false;
+        }
+        if (normalized.contains("manual") || normalized.contains("detenida manual") || normalized.contains("shutdown") || normalized.contains("apagado")) {
+            return false;
+        }
+        return normalized.contains("cancel")
+                || normalized.contains("error")
+                || normalized.contains("failed")
+                || normalized.contains("fall")
+                || normalized.contains("imposible")
+                || normalized.contains("could not")
+                || normalized.contains("no se pudo");
     }
 
     private void endSession(HordeSession trackedSession, String reason, boolean cleanupAliveEnemies) {
@@ -2979,6 +3139,9 @@ public final class HordeService {
         // This has historically looked like a "HUD crash at horde end", but root cause is
         // end-session messaging during world shutdown.
         if (trackedSession.world != null && trackedSession.world.isAlive()) {
+            if (HordeService.shouldPlayDefeatSoundForReason(reason)) {
+                this.playRoundDefeatSound(trackedSession);
+            }
             this.sendAudienceMessage(trackedSession, reason + " (" + aliveLabel + aliveAtEnd + cleanInfo + ").");
             this.broadcastHordeEndAnnouncement(trackedSession, reason, aliveAtEnd);
         }
@@ -4026,16 +4189,20 @@ public final class HordeService {
         REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
     }
 
-    private static void applyRoundSoundCatalogRuntime(List<String> roundStartHints, List<String> roundVictoryHints, List<String> roundStartBlockedKeywords, List<String> roundVictoryBlockedKeywords, List<String> weakKeywords) {
+    private static void applyRoundSoundCatalogRuntime(List<String> roundStartHints, List<String> roundVictoryHints, List<String> roundDefeatHints, List<String> roundStartBlockedKeywords, List<String> roundVictoryBlockedKeywords, List<String> roundDefeatBlockedKeywords, List<String> weakKeywords) {
         List<String> safeStartHints = HordeService.sanitizeKeywordList(roundStartHints);
         List<String> safeVictoryHints = HordeService.sanitizeKeywordList(roundVictoryHints);
+        List<String> safeDefeatHints = HordeService.sanitizeKeywordList(roundDefeatHints);
         List<String> safeStartBlocked = HordeService.sanitizeKeywordList(roundStartBlockedKeywords);
         List<String> safeVictoryBlocked = HordeService.sanitizeKeywordList(roundVictoryBlockedKeywords);
+        List<String> safeDefeatBlocked = HordeService.sanitizeKeywordList(roundDefeatBlockedKeywords);
         List<String> safeWeakKeywords = HordeService.sanitizeKeywordList(weakKeywords);
         ROUND_START_SOUND_EVENT_HINTS = safeStartHints.isEmpty() ? DEFAULT_ROUND_START_SOUND_EVENT_HINTS.clone() : safeStartHints.toArray(new String[0]);
         ROUND_VICTORY_SOUND_EVENT_HINTS = safeVictoryHints.isEmpty() ? DEFAULT_ROUND_VICTORY_SOUND_EVENT_HINTS.clone() : safeVictoryHints.toArray(new String[0]);
+        ROUND_DEFEAT_SOUND_EVENT_HINTS = safeDefeatHints.isEmpty() ? DEFAULT_ROUND_DEFEAT_SOUND_EVENT_HINTS.clone() : safeDefeatHints.toArray(new String[0]);
         ROUND_START_SOUND_BLOCKED_KEYWORDS = safeStartBlocked.isEmpty() ? DEFAULT_ROUND_START_SOUND_BLOCKED_KEYWORDS.clone() : safeStartBlocked.toArray(new String[0]);
         ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS = safeVictoryBlocked.isEmpty() ? DEFAULT_ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS.clone() : safeVictoryBlocked.toArray(new String[0]);
+        ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS = safeDefeatBlocked.isEmpty() ? DEFAULT_ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS.clone() : safeDefeatBlocked.toArray(new String[0]);
         ROUND_SOUND_WEAK_KEYWORDS = safeWeakKeywords.isEmpty() ? DEFAULT_ROUND_SOUND_WEAK_KEYWORDS.clone() : safeWeakKeywords.toArray(new String[0]);
     }
 
@@ -4459,15 +4626,17 @@ public final class HordeService {
         RoundSoundCatalogLoadReport report = new RoundSoundCatalogLoadReport();
         ArrayList<String> startHints = new ArrayList<String>(List.of(DEFAULT_ROUND_START_SOUND_EVENT_HINTS));
         ArrayList<String> victoryHints = new ArrayList<String>(List.of(DEFAULT_ROUND_VICTORY_SOUND_EVENT_HINTS));
+        ArrayList<String> defeatHints = new ArrayList<String>(List.of(DEFAULT_ROUND_DEFEAT_SOUND_EVENT_HINTS));
         ArrayList<String> startBlocked = new ArrayList<String>(List.of(DEFAULT_ROUND_START_SOUND_BLOCKED_KEYWORDS));
         ArrayList<String> victoryBlocked = new ArrayList<String>(List.of(DEFAULT_ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS));
+        ArrayList<String> defeatBlocked = new ArrayList<String>(List.of(DEFAULT_ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS));
         ArrayList<String> weakKeywords = new ArrayList<String>(List.of(DEFAULT_ROUND_SOUND_WEAK_KEYWORDS));
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
         }
         catch (IOException ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo preparar carpeta de datos para horde-sounds.json: %s", (Object)ex.getMessage());
-            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, startBlocked, victoryBlocked, weakKeywords);
+            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, defeatHints, startBlocked, victoryBlocked, defeatBlocked, weakKeywords);
             report.fallbackToDefaults = true;
             return report;
         }
@@ -4482,7 +4651,7 @@ public final class HordeService {
             }
         }
         if (!Files.exists(this.roundSoundsPath, new LinkOption[0])) {
-            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, startBlocked, victoryBlocked, weakKeywords);
+            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, defeatHints, startBlocked, victoryBlocked, defeatBlocked, weakKeywords);
             report.fallbackToDefaults = true;
             return report;
         }
@@ -4492,14 +4661,14 @@ public final class HordeService {
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json invalido. Se usaran sonidos internos: %s", (Object)ex.getMessage());
-            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, startBlocked, victoryBlocked, weakKeywords);
+            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, defeatHints, startBlocked, victoryBlocked, defeatBlocked, weakKeywords);
             report.fallbackToDefaults = true;
             report.parseError = true;
             return report;
         }
         if (external == null) {
             this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json vacio o invalido. Se usaran sonidos internos.");
-            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, startBlocked, victoryBlocked, weakKeywords);
+            HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, defeatHints, startBlocked, victoryBlocked, defeatBlocked, weakKeywords);
             report.fallbackToDefaults = true;
             report.parseError = true;
             return report;
@@ -4527,6 +4696,16 @@ public final class HordeService {
                 this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json: roundVictoryHints vacio/invalido. Se mantienen hints internos.");
             }
         }
+        if (external.roundDefeatHints != null) {
+            List<String> cleaned = HordeService.sanitizeKeywordList(external.roundDefeatHints);
+            if (!cleaned.isEmpty()) {
+                defeatHints.clear();
+                defeatHints.addAll(cleaned);
+                report.customDefeatHints = cleaned.size();
+            } else {
+                this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json: roundDefeatHints vacio/invalido. Se mantienen hints internos.");
+            }
+        }
         if (external.roundStartBlockedKeywords != null) {
             List<String> cleaned = HordeService.sanitizeKeywordList(external.roundStartBlockedKeywords);
             if (!cleaned.isEmpty()) {
@@ -4547,6 +4726,16 @@ public final class HordeService {
                 this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json: roundVictoryBlockedKeywords vacio/invalido. Se mantienen bloqueos internos.");
             }
         }
+        if (external.roundDefeatBlockedKeywords != null) {
+            List<String> cleaned = HordeService.sanitizeKeywordList(external.roundDefeatBlockedKeywords);
+            if (!cleaned.isEmpty()) {
+                defeatBlocked.clear();
+                defeatBlocked.addAll(cleaned);
+                report.customDefeatBlocked = cleaned.size();
+            } else {
+                this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json: roundDefeatBlockedKeywords vacio/invalido. Se mantienen bloqueos internos.");
+            }
+        }
         if (external.weakKeywords != null) {
             List<String> cleaned = HordeService.sanitizeKeywordList(external.weakKeywords);
             if (!cleaned.isEmpty()) {
@@ -4557,7 +4746,7 @@ public final class HordeService {
                 this.plugin.getLogger().at(Level.WARNING).log("horde-sounds.json: weakKeywords vacio/invalido. Se mantienen keywords internas.");
             }
         }
-        HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, startBlocked, victoryBlocked, weakKeywords);
+        HordeService.applyRoundSoundCatalogRuntime(startHints, victoryHints, defeatHints, startBlocked, victoryBlocked, defeatBlocked, weakKeywords);
         return report;
     }
 
@@ -5725,6 +5914,7 @@ public final class HordeService {
         updated.finalBossEnabled = HordeService.parseBoolean(values.get("finalBossEnabled"), updated.finalBossEnabled, "finalBossEnabled", english);
         updated.roundStartVolume = HordeService.parseUiVolume(values.get("roundStartVolume"), updated.roundStartVolume, "roundStartVolume", english);
         updated.roundVictoryVolume = HordeService.parseUiVolume(values.get("roundVictoryVolume"), updated.roundVictoryVolume, "roundVictoryVolume", english);
+        updated.roundDefeatVolume = HordeService.parseUiVolume(values.get("roundDefeatVolume"), updated.roundDefeatVolume, "roundDefeatVolume", english);
     }
 
     private static int parseInt(String input, int currentValue, String name, boolean english) {
@@ -6071,8 +6261,10 @@ public final class HordeService {
         }
         sanitized.roundStartSoundId = HordeService.sanitizeRoundSoundSelection(sanitized.roundStartSoundId, ROUND_START_SOUND_EVENT_HINTS, ROUND_START_SOUND_BLOCKED_KEYWORDS);
         sanitized.roundVictorySoundId = HordeService.sanitizeRoundSoundSelection(sanitized.roundVictorySoundId, ROUND_VICTORY_SOUND_EVENT_HINTS, ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS);
+        sanitized.roundDefeatSoundId = HordeService.sanitizeRoundSoundSelection(sanitized.roundDefeatSoundId, ROUND_DEFEAT_SOUND_EVENT_HINTS, ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS);
         sanitized.roundStartVolume = HordeService.clamp(HordeService.normalizeUiVolume(sanitized.roundStartVolume), MIN_SOUND_VOLUME, MAX_SOUND_VOLUME);
         sanitized.roundVictoryVolume = HordeService.clamp(HordeService.normalizeUiVolume(sanitized.roundVictoryVolume), MIN_SOUND_VOLUME, MAX_SOUND_VOLUME);
+        sanitized.roundDefeatVolume = HordeService.clamp(HordeService.normalizeUiVolume(sanitized.roundDefeatVolume), MIN_SOUND_VOLUME, MAX_SOUND_VOLUME);
         sanitized.minSpawnRadius = HordeService.clamp(sanitized.minSpawnRadius, MIN_RADIUS, MAX_RADIUS);
         sanitized.maxSpawnRadius = HordeService.clamp(sanitized.maxSpawnRadius, MIN_RADIUS, MAX_RADIUS);
         if (sanitized.maxSpawnRadius < sanitized.minSpawnRadius) {
@@ -6221,8 +6413,10 @@ public final class HordeService {
         private Integer version;
         private List<String> roundStartHints;
         private List<String> roundVictoryHints;
+        private List<String> roundDefeatHints;
         private List<String> roundStartBlockedKeywords;
         private List<String> roundVictoryBlockedKeywords;
+        private List<String> roundDefeatBlockedKeywords;
         private List<String> weakKeywords;
 
         private static RoundSoundsConfig fromDefaults() {
@@ -6230,8 +6424,10 @@ public final class HordeService {
             defaults.version = 1;
             defaults.roundStartHints = new ArrayList<String>(List.of(DEFAULT_ROUND_START_SOUND_EVENT_HINTS));
             defaults.roundVictoryHints = new ArrayList<String>(List.of(DEFAULT_ROUND_VICTORY_SOUND_EVENT_HINTS));
+            defaults.roundDefeatHints = new ArrayList<String>(List.of(DEFAULT_ROUND_DEFEAT_SOUND_EVENT_HINTS));
             defaults.roundStartBlockedKeywords = new ArrayList<String>(List.of(DEFAULT_ROUND_START_SOUND_BLOCKED_KEYWORDS));
             defaults.roundVictoryBlockedKeywords = new ArrayList<String>(List.of(DEFAULT_ROUND_VICTORY_SOUND_BLOCKED_KEYWORDS));
+            defaults.roundDefeatBlockedKeywords = new ArrayList<String>(List.of(DEFAULT_ROUND_DEFEAT_SOUND_BLOCKED_KEYWORDS));
             defaults.weakKeywords = new ArrayList<String>(List.of(DEFAULT_ROUND_SOUND_WEAK_KEYWORDS));
             return defaults;
         }
@@ -6243,8 +6439,10 @@ public final class HordeService {
         private boolean templateCreated;
         private int customStartHints;
         private int customVictoryHints;
+        private int customDefeatHints;
         private int customStartBlocked;
         private int customVictoryBlocked;
+        private int customDefeatBlocked;
         private int customWeakKeywords;
 
         private String toUserMessage(boolean english) {
@@ -6256,9 +6454,9 @@ public final class HordeService {
             }
             String templateSuffix = this.templateCreated ? (english ? " Template created." : " Plantilla creada.") : "";
             if (english) {
-                return String.format(Locale.ROOT, "Sounds loaded | start hints: %d | victory hints: %d | start blocked: %d | victory blocked: %d | weak keywords: %d.%s", this.customStartHints, this.customVictoryHints, this.customStartBlocked, this.customVictoryBlocked, this.customWeakKeywords, templateSuffix);
+                return String.format(Locale.ROOT, "Sounds loaded | start hints: %d | victory hints: %d | defeat hints: %d | start blocked: %d | victory blocked: %d | defeat blocked: %d | weak keywords: %d.%s", this.customStartHints, this.customVictoryHints, this.customDefeatHints, this.customStartBlocked, this.customVictoryBlocked, this.customDefeatBlocked, this.customWeakKeywords, templateSuffix);
             }
-            return String.format(Locale.ROOT, "Sonidos cargados | hints inicio: %d | hints victoria: %d | bloqueos inicio: %d | bloqueos victoria: %d | weak keywords: %d.%s", this.customStartHints, this.customVictoryHints, this.customStartBlocked, this.customVictoryBlocked, this.customWeakKeywords, templateSuffix);
+            return String.format(Locale.ROOT, "Sonidos cargados | hints inicio: %d | hints victoria: %d | hints derrota: %d | bloqueos inicio: %d | bloqueos victoria: %d | bloqueos derrota: %d | weak keywords: %d.%s", this.customStartHints, this.customVictoryHints, this.customDefeatHints, this.customStartBlocked, this.customVictoryBlocked, this.customDefeatBlocked, this.customWeakKeywords, templateSuffix);
         }
     }
 
@@ -6291,6 +6489,8 @@ public final class HordeService {
         public double roundStartVolume = 1.0;
         public String roundVictorySoundId;
         public double roundVictoryVolume = 1.0;
+        public String roundDefeatSoundId;
+        public double roundDefeatVolume = 1.0;
         public boolean finalBossEnabled;
         public int enemyLevelMin;
         public int enemyLevelMax;
@@ -6325,6 +6525,8 @@ public final class HordeService {
             defaults.roundStartVolume = 1.0;
             defaults.roundVictorySoundId = SOUND_SELECTION_AUTO;
             defaults.roundVictoryVolume = 1.0;
+            defaults.roundDefeatSoundId = SOUND_SELECTION_AUTO;
+            defaults.roundDefeatVolume = 1.0;
             defaults.finalBossEnabled = false;
             defaults.enemyLevelMin = HordeConfigRules.DEFAULT_ENEMY_LEVEL_MIN;
             defaults.enemyLevelMax = HordeConfigRules.DEFAULT_ENEMY_LEVEL_MAX;
@@ -6361,6 +6563,8 @@ public final class HordeService {
             copy.roundStartVolume = this.roundStartVolume;
             copy.roundVictorySoundId = this.roundVictorySoundId;
             copy.roundVictoryVolume = this.roundVictoryVolume;
+            copy.roundDefeatSoundId = this.roundDefeatSoundId;
+            copy.roundDefeatVolume = this.roundDefeatVolume;
             copy.finalBossEnabled = this.finalBossEnabled;
             copy.enemyLevelMin = this.enemyLevelMin;
             copy.enemyLevelMax = this.enemyLevelMax;

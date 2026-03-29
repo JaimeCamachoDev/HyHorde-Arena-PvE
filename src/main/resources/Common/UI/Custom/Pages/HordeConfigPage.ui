@@ -51,6 +51,12 @@ $C = "../Common.ui";
   Pressed: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #f3f8ff(0.76)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
 );
 
+@SoftCloseButtonStyle = TextButtonStyle(
+  Default: (Background: #7b3940(0.95), LabelStyle: (FontSize: 16, TextColor: #ffeef0, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Hovered: (Background: #8f4650(0.97), LabelStyle: (FontSize: 16, TextColor: #fff7f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+  Pressed: (Background: #a65761(0.98), LabelStyle: (FontSize: 16, TextColor: #fff7f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+);
+
 @ArenaListRowHitboxStyle = TextButtonStyle(
   Default: (Background: #000000(0), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: #ffffff(0.08), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
@@ -71,53 +77,62 @@ Group {
   }
 
   TabNavigation #CategoryTabs {
-    Anchor: (Left: 452, Top: 32, Width: 724, Height: 64);
-    Style: @OfficialTextTopTabsStyle;
+    Anchor: (Left: 452, Top: 30, Width: 724, Height: 66);
+    Style: $C.@TopTabsStyle;
     SelectedTab: "general";
 
     TabButton #TabGeneralButton {
       Id: "general";
-      Text: "General";
-    }
-
-    TabButton #TabArenasButton {
-      Id: "arenas";
-      Text: "Arenas";
-    }
-
-    TabButton #TabEnemiesButton {
-      Id: "enemies";
-      Text: "Enemigos";
-    }
-
-    TabButton #TabHordeButton {
-      Id: "horde";
-      Text: "Horda";
-    }
-
-    TabButton #TabBossesButton {
-      Id: "bosses";
-      Text: "Bosses";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "General";
     }
 
     TabButton #TabPlayersButton {
       Id: "players";
-      Text: "Jugadores";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Jugadores";
+    }
+
+    TabButton #TabArenasButton {
+      Id: "arenas";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Arenas";
+    }
+
+    TabButton #TabEnemiesButton {
+      Id: "enemies";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Enemigos";
+    }
+
+    TabButton #TabHordeButton {
+      Id: "horde";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Horda";
+    }
+
+    TabButton #TabBossesButton {
+      Id: "bosses";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Bosses";
     }
 
     TabButton #TabRewardsButton {
       Id: "rewards";
-      Text: "Recomp.";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Recompensas";
     }
 
     TabButton #TabSoundsButton {
       Id: "sounds";
-      Text: "Sonidos";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Sonidos";
     }
 
     TabButton #TabHelpButton {
       Id: "help";
-      Text: "Ayuda";
+      Icon: "../Common/TabSelectedOverlay.png";
+      TooltipText: "Ayuda";
     }
   }
 
@@ -580,7 +595,8 @@ Group {
   Label #TitleLabel {
     Anchor: (Left: 456, Top: 154, Width: 1008, Height: 40);
     Text: "Horda PVE Config";
-    Style: (FontSize: 30, TextColor: #f1f7ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+    Style: (FontSize: 30, TextColor: $C.@ColorDefault, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
+    MaskTexturePath: $C.@TextHighlightGradientMask;
   }
 
   Label #SubTitleLabel {
@@ -933,6 +949,16 @@ Group {
     Label #SoundRowVictoryVolume { Anchor: (Left: 398, Top: 6, Width: 92, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, VerticalAlignment: Center); }
   }
 
+  Panel #SoundRowDefeat {
+    Anchor: (Left: 456, Top: 412, Width: 1008, Height: 34);
+    Background: #000000(0);
+    Visible: false;
+    TextButton #SoundRowDefeatOpen { Anchor: (Left: 0, Top: 0, Width: 1008, Height: 34); Text: ""; Style: @ListRowHitboxButtonStyle; }
+    Label #SoundRowDefeatEvent { Anchor: (Left: 10, Top: 6, Width: 120, Height: 22); Text: "Derrota ronda"; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+    Label #SoundRowDefeatId { Anchor: (Left: 136, Top: 6, Width: 256, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+    Label #SoundRowDefeatVolume { Anchor: (Left: 398, Top: 6, Width: 92, Height: 22); Text: ""; Style: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, VerticalAlignment: Center); }
+  }
+
   Panel #SoundsEditorModalShade {
     Anchor: (Full: 0);
     Background: #02060f(0.48);
@@ -940,130 +966,140 @@ Group {
   }
 
   $C.@DecoratedContainer #SoundsEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 192, Width: 1008, Height: 640);
     Visible: false;
   }
 
   TextButton #SoundsEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 200, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #SoundsEditorTitleLabel {
-    Anchor: (Left: 480, Top: 232, Width: 936, Height: 24);
+    Anchor: (Left: 480, Top: 200, Width: 936, Height: 24);
     Text: "Editor de sonidos";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
+  $C.@TextField #SoundsEditorEvent { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "start"; Visible: false; }
+  $C.@TextField #SoundsEditorSoundId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "auto"; Visible: false; }
+  $C.@TextField #RoundStartSoundId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "auto"; Visible: false; }
+  $C.@TextField #RoundVictorySoundId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "auto"; Visible: false; }
+  $C.@TextField #RoundDefeatSoundId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "auto"; Visible: false; }
+  $C.@TextField #RoundStartVolume { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "100"; Visible: false; }
+  $C.@TextField #RoundVictoryVolume { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "100"; Visible: false; }
+  $C.@TextField #RoundDefeatVolume { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "100"; Visible: false; }
+
+  Label #SoundsEditorEventLabel {
+    Anchor: (Left: 480, Top: 242, Width: 960, Height: 22);
+    Text: "Evento";
+    Visible: false;
+    Style: (FontSize: 13, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #SoundsEditorSoundCard {
+    Anchor: (Left: 480, Top: 272, Width: 960, Height: 126);
+    Background: #0f1825(0.92);
+    Visible: false;
+  }
+
+  ItemIcon #SoundsEditorSoundIcon {
+    Anchor: (Left: 496, Top: 287, Width: 56, Height: 56);
+    Visible: false;
+  }
+
+  Label #SoundsEditorSoundValue {
+    Anchor: (Left: 566, Top: 289, Width: 848, Height: 22);
+    Text: "auto";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center);
+  }
+
+  TextButton #SoundsEditorSoundPickerOpenButton {
+    Anchor: (Left: 566, Top: 321, Width: 416, Height: 34);
+    Text: "Elegir sonido";
+    Visible: false;
+    Style: $C.@SmallSecondaryTextButtonStyle;
+  }
+
+  TextButton #SoundsEditorPreviewButton {
+    Anchor: (Left: 998, Top: 321, Width: 416, Height: 34);
+    Text: "Probar sonido";
+    Visible: false;
+    Style: $C.@SmallSecondaryTextButtonStyle;
+  }
+
+  Label #SoundsEditorVolumeLabel {
+    Anchor: (Left: 480, Top: 422, Width: 960, Height: 16);
+    Text: "Volumen (%)";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@Slider #SoundsEditorVolumeSlider {
+    @Anchor = (Left: 480, Top: 444, Width: 960);
+    Min: 0;
+    Max: 100;
+    Value: 100;
+    Visible: false;
+  }
+
+  Label #RoundSoundHelpLabel {
+    Anchor: (Left: 480, Top: 500, Width: 960, Height: 26);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
+  }
+
   TextButton #SoundsSaveButton {
-    Anchor: (Left: 480, Top: 264, Width: 960, Height: 34);
-    Text: "Guardar sonidos";
+    Anchor: (Left: 480, Top: 740, Width: 960, Height: 34);
+    Text: "Guardar sonido";
     Visible: false;
     Style: $C.@SecondaryTextButtonStyle;
   }
 
-  Label #RoundStartSoundLabel {
-    Anchor: (Left: 480, Top: 306, Width: 960, Height: 16);
-    Text: "Sonido inicio ronda";
-    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
-  }
-
-  TextButton #RoundStartSoundPrevButton {
-    Anchor: (Left: 642, Top: 230, Width: 46, Height: 34);
-    Text: "<";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
-  }
-
-  $C.@DropdownBox #RoundStartSoundId {
-    @Anchor = (Left: 480, Top: 328, Width: 960);
-    Value: "auto";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960);
-  }
-
-  TextButton #RoundStartSoundNextButton {
-    Anchor: (Left: 1232, Top: 230, Width: 46, Height: 34);
-    Text: ">";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
-  }
-
-  Label #RoundStartVolumeLabel {
-    Anchor: (Left: 480, Top: 370, Width: 960, Height: 16);
-    Text: "Volumen inicio (%)";
-    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
-  }
-
-  $C.@SliderNumberField #RoundStartVolume {
-    @Anchor = (Left: 480, Top: 392, Width: 960);
-    Value: 100;
-    Min: 0.0;
-    Max: 100.0;
-    Step: 1.0;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
-
-  Label #RoundVictorySoundLabel {
-    Anchor: (Left: 480, Top: 444, Width: 960, Height: 16);
-    Text: "Sonido victoria ronda";
-    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
-  }
-
-  TextButton #RoundVictorySoundPrevButton {
-    Anchor: (Left: 642, Top: 330, Width: 46, Height: 34);
-    Text: "<";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
-  }
-
-  $C.@DropdownBox #RoundVictorySoundId {
-    @Anchor = (Left: 480, Top: 466, Width: 960);
-    Value: "auto";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960);
-  }
-
-  TextButton #RoundVictorySoundNextButton {
-    Anchor: (Left: 1232, Top: 330, Width: 46, Height: 34);
-    Text: ">";
-    Style: TextButtonStyle(
-      Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
-    );
-  }
-
-  Label #RoundVictoryVolumeLabel {
-    Anchor: (Left: 480, Top: 508, Width: 960, Height: 16);
-    Text: "Volumen victoria (%)";
-    Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center);
-  }
-
-  $C.@SliderNumberField #RoundVictoryVolume {
-    @Anchor = (Left: 480, Top: 530, Width: 960);
-    Value: 100;
-    Min: 0.0;
-    Max: 100.0;
-    Step: 1.0;
-    NumberFieldStyle: $C.@DefaultInputFieldStyle;
-  }
-
-  Label #RoundSoundHelpLabel {
-    Anchor: (Left: 480, Top: 574, Width: 960, Height: 24);
+  Label #SoundsEditorStatusLabel {
+    Anchor: (Left: 480, Top: 780, Width: 960, Height: 28);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Panel #SoundsPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.52);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #SoundsPickerFrame {
+    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Visible: false;
+  }
+
+  TextButton #SoundsPickerCloseButton {
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Text: "X";
+    Visible: false;
+    Style: @SoftCloseButtonStyle;
+  }
+
+  Label #SoundsPickerTitleLabel {
+    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Text: "Selecciona sonido";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #SoundsPickerGrid {
+    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
+    Background: #000000(0);
+    Visible: false;
   }
 
   Label #EnemyLevelRangeLabel {
@@ -1218,10 +1254,10 @@ Group {
   }
 
   TextButton #PlayersEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #PlayersEditorTitleLabel {
@@ -1367,10 +1403,10 @@ Group {
   }
 
   TextButton #RewardCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #RewardCatEditorTitleLabel {
@@ -1390,8 +1426,8 @@ Group {
   Label #RewardCatEditIconCurrentLabel { Anchor: (Left: 556, Top: 360, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
   TextButton #RewardCatIconPickerOpenButton { Anchor: (Left: 1192, Top: 352, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #RewardCatItemPickerLabel { Anchor: (Left: 480, Top: 420, Width: 960, Height: 16); Text: "Reward item ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@DropdownBox #RewardCatItemPicker { @Anchor = (Left: 480, Top: 442, Width: 700, Height: 34); Value: ""; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 700); }
-  TextButton #RewardCatItemAddButton { Anchor: (Left: 1192, Top: 442, Width: 248, Height: 34); Text: "Anadir item"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #RewardCatItemPickerOpenButton { Anchor: (Left: 480, Top: 442, Width: 960, Height: 34); Text: "Anadir item"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  $C.@DropdownBox #RewardCatItemPicker { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 1); }
   Label #RewardCatEditItemsLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 16); Text: "Items en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   Panel #RewardCatItemsListInset { Anchor: (Left: 480, Top: 508, Width: 960, Height: 248); Background: #000000(0); Visible: false; }
   Panel #RewardCatItemsRowsList { Anchor: (Left: 492, Top: 516, Width: 936, Height: 232); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Padding: (Top: 8, Left: 10, Right: 10, Bottom: 8); Background: #000000(0); Visible: false; }
@@ -1414,10 +1450,10 @@ Group {
   }
 
   TextButton #RewardCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #RewardCatIconPickerTitleLabel {
@@ -1432,6 +1468,40 @@ Group {
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
+  }
+
+  Panel #RewardCatItemPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.52);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #RewardCatItemPickerFrame {
+    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Visible: false;
+  }
+
+  TextButton #RewardCatItemPickerCloseButton {
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
+    Text: "X";
+    Visible: false;
+    Style: @SoftCloseButtonStyle;
+  }
+
+  Label #RewardCatItemPickerTitleLabel {
+    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Text: "Selecciona items de recompensa";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #RewardCatItemPickerGrid {
+    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
     Background: #000000(0);
     Visible: false;
   }
@@ -1662,10 +1732,10 @@ Group {
   }
 
   TextButton #EnemyCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #EnemyCatEditorTitleLabel {
@@ -1756,10 +1826,10 @@ Group {
   }
 
   TextButton #EnemyCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #EnemyCatIconPickerTitleLabel {
@@ -1790,10 +1860,10 @@ Group {
   }
 
   TextButton #EnemyCatEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 28);
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #EnemyCatEnemyPickerTitleLabel {
@@ -2029,10 +2099,10 @@ Group {
   }
 
   TextButton #HordeEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #HordeEditorTitleLabel {
@@ -2092,10 +2162,10 @@ Group {
   }
 
   TextButton #HordeIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #HordeIconPickerTitleLabel {
@@ -2401,10 +2471,10 @@ Group {
   }
 
   TextButton #BossEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #BossEditorTitleLabel {
@@ -2481,10 +2551,10 @@ Group {
   }
 
   TextButton #BossIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #BossIconPickerTitleLabel {
@@ -2515,10 +2585,10 @@ Group {
   }
 
   TextButton #BossEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 28);
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #BossEnemyPickerTitleLabel {
@@ -2591,10 +2661,10 @@ Group {
   }
 
   TextButton #ArenaEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #ArenaEditorTitleLabel {
@@ -2703,10 +2773,10 @@ Group {
   }
 
   TextButton #ArenaIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 34);
     Text: "X";
     Visible: false;
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 
   Label #ArenaIconPickerTitleLabel {
@@ -2729,112 +2799,113 @@ Group {
     Anchor: (Left: 456, Top: 232, Width: 1008, Height: 28);
     Text: "";
     Visible: false;
-    Style: (FontSize: 18, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 18, TextColor: $C.@ColorDefault, RenderBold: true, VerticalAlignment: Center);
+    MaskTexturePath: $C.@TextHighlightGradientMask;
   }
 
   Label #HelpCommandsLabel {
     Anchor: (Left: 456, Top: 268, Width: 1008, Height: 24);
     Text: "";
     Visible: false;
-    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #HelpCommandsLine1 {
     Anchor: (Left: 456, Top: 294, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpCommandsLine2 {
     Anchor: (Left: 456, Top: 318, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpCommandsLine3 {
     Anchor: (Left: 456, Top: 342, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpConfigLabel {
     Anchor: (Left: 456, Top: 378, Width: 1008, Height: 24);
     Text: "";
     Visible: false;
-    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #HelpConfigLine1 {
     Anchor: (Left: 456, Top: 404, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpConfigLine2 {
     Anchor: (Left: 456, Top: 428, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpConfigLine3 {
     Anchor: (Left: 456, Top: 452, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpExternalLabel {
     Anchor: (Left: 456, Top: 488, Width: 1008, Height: 24);
     Text: "";
     Visible: false;
-    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #HelpExternalLine1 {
     Anchor: (Left: 456, Top: 514, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpExternalLine2 {
     Anchor: (Left: 456, Top: 538, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpExternalLine3 {
     Anchor: (Left: 456, Top: 562, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpReloadLabel {
     Anchor: (Left: 456, Top: 598, Width: 1008, Height: 24);
     Text: "";
     Visible: false;
-    Style: (FontSize: 14, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 14, TextColor: $C.@ColorDefault, RenderBold: true, VerticalAlignment: Center);
   }
 
   Label #HelpReloadLine1 {
     Anchor: (Left: 456, Top: 624, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   Label #HelpReloadLine2 {
     Anchor: (Left: 456, Top: 648, Width: 1008, Height: 22);
     Text: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+    Style: (FontSize: 12, TextColor: $C.@ColorDefaultLabel, VerticalAlignment: Center);
   }
 
   TextButton #HelpDiscordButton {
@@ -2898,9 +2969,9 @@ Group {
   }
 
   TextButton #HordeCloseButton {
-    Anchor: (Left: 1450, Top: 100, Width: 34, Height: 28);
+    Anchor: (Left: 1450, Top: 100, Width: 34, Height: 34);
     Text: "X";
-    Style: $C.@CancelTextButtonStyle;
+    Style: @SoftCloseButtonStyle;
   }
 }
 

@@ -14,6 +14,13 @@
     "fanfare",
     "triumph"
   ],
+  "roundDefeatHints": [
+    "defeat",
+    "loss",
+    "failure",
+    "game_over",
+    "warning"
+  ],
   "roundStartBlockedKeywords": [
     "alerted",
     "squirrel",
@@ -25,6 +32,11 @@
   "roundVictoryBlockedKeywords": [
     "ambient",
     "loop"
+  ],
+  "roundDefeatBlockedKeywords": [
+    "ambient",
+    "loop",
+    "music"
   ],
   "weakKeywords": [
     "step",
