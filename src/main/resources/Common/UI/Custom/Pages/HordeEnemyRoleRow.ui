@@ -7,9 +7,9 @@ $C = "../Common.ui";
 );
 
 @TrashDeleteButtonStyle = TextButtonStyle(
-  Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
 );
 
 Group #HordeEnemyRoleRow {

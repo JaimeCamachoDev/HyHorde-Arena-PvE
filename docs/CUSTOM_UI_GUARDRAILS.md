@@ -189,6 +189,16 @@ Solucion:
   - copiar los iconos necesarios a `src/main/resources/Common/UI/Custom/Icons/...`
   - referenciar con `../Icons/...` desde `Pages/HordeConfigPage.ui`.
 
+4.b Iconos de estilo inconsistente (tabs mas oscuros)
+- Causa: mezclar iconos 88x88 (`Items.png`, `Natural.png`) con el set de categorias 48x48.
+- Firma visual: algunos tabs se ven mas oscuros o con distinto estilo.
+- Regla: para tabs/top-tabs/header-tabs usar solo iconos 48x48 del set `ItemCategories` (ej: `Builder Tools.png`, `Build-Roofs.png`, `Items-Armor.png`, `Natural-Fire.png`).
+
+4.c `Trash@2x` mostrando cruz roja en listas
+- Causa real: en esta build, la ruta con `@` en `TexturePath` provoca fallback de textura faltante en algunos contextos de Custom UI.
+- Firma visual: boton de borrar muestra una `X` roja sobre fondo blanco (placeholder de textura missing).
+- Regla: usar alias local sin `@` (`../Icons/AssetNotifications/Trash.png`) para `@TrashDeleteButtonStyle`.
+
 5. Listas `TopScrolling` con filas desalineadas
 - Firma visual: mas padding a derecha que a izquierda, filas "finas/largas", boton `X` deformado.
 - Causa: filas append con `Width` fijo dentro de un contenedor con scrollbar/padding.

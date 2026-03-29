@@ -32,9 +32,9 @@ $C = "../Common.ui";
 );
 
 @TrashDeleteButtonStyle = TextButtonStyle(
-  Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash@2x.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
 );
 
 @ArenaNameLabelStyle = (...$C.@DefaultLabelStyle, FontSize: 13, TextColor: #ecf4ff, RenderBold: true, VerticalAlignment: Center);
@@ -57,21 +57,21 @@ Group {
 
     TabButton #TabGeneralButton {
       Id: "general";
-      Icon: "../Icons/ItemCategories/Items.png";
+      Icon: "../Icons/ItemCategories/Builder Tools.png";
       Text: "";
       TooltipText: "General";
     }
 
     TabButton #TabPlayersButton {
       Id: "players";
-      Icon: "../Icons/ItemCategories/Items-Clothes.png";
+      Icon: "../Icons/ItemCategories/Items-Armor.png";
       Text: "";
       TooltipText: "Jugadores";
     }
 
     TabButton #TabArenasButton {
       Id: "arenas";
-      Icon: "../Icons/ItemCategories/Natural.png";
+      Icon: "../Icons/ItemCategories/Build-Roofs.png";
       Text: "";
       TooltipText: "Arenas";
     }
@@ -92,7 +92,7 @@ Group {
 
     TabButton #TabBossesButton {
       Id: "bosses";
-      Icon: "../Icons/ItemCategories/Items-Shields.png";
+      Icon: "../Icons/ItemCategories/Natural-Fire.png";
       Text: "";
       TooltipText: "Bosses";
     }
@@ -1335,7 +1335,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #PlayerIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #PlayerIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #PlayerIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #PlayerIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #PlayerIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
@@ -1545,7 +1545,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #RewardCatIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #RewardCatIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #RewardCatIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #RewardCatIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #RewardCatIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
@@ -1938,7 +1938,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #EnemyCatIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #EnemyCatIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #EnemyCatIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #EnemyCatIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #EnemyCatIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
@@ -2291,7 +2291,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #HordeIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #HordeIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #HordeIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #HordeIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #HordeIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
@@ -2697,7 +2697,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #BossIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #BossIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #BossIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #BossIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #BossIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
@@ -2936,7 +2936,7 @@ Group {
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
-    TabButton #ArenaIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Items.png"; TooltipText: "Todos"; }
+    TabButton #ArenaIconPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
     TabButton #ArenaIconPickerTabResourcesButton { Id: "resource"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Recursos"; }
     TabButton #ArenaIconPickerTabWeaponsButton { Id: "weapon"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Armas"; }
     TabButton #ArenaIconPickerTabArmorButton { Id: "armor"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Armadura"; }
