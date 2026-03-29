@@ -1627,19 +1627,19 @@ Group {
   }
 
   $C.@DecoratedContainer #EnemyCatEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 704);
     Visible: false;
   }
 
   TextButton #EnemyCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 28);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatEditorTitleLabel {
-    Anchor: (Left: 480, Top: 232, Width: 936, Height: 24);
+    Anchor: (Left: 480, Top: 192, Width: 936, Height: 24);
     Text: "Editor de categoria de enemigos";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
@@ -1661,21 +1661,22 @@ Group {
     Background: #0f1825;
   }
 
-  Label #EnemyCatEditIdLabel { Anchor: (Left: 480, Top: 300, Width: 960, Height: 16); Text: "Categoria ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #EnemyCatEditId { @Anchor = (Left: 480, Top: 322, Width: 960); Value: ""; }
+  Label #EnemyCatEditIdLabel { Anchor: (Left: 480, Top: 248, Width: 960, Height: 16); Text: "Categoria ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #EnemyCatEditId { @Anchor = (Left: 480, Top: 270, Width: 960); Value: ""; }
   $C.@TextField #EnemyCatEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Weapon_Wand_Wood"; Visible: false; }
-  Label #EnemyCatIconSelectorLabel { Anchor: (Left: 480, Top: 364, Width: 960, Height: 16); Text: "Icono de categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  Panel #EnemyCatIconSelectorCard { Anchor: (Left: 480, Top: 386, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
-  ItemIcon #EnemyCatEditIconPreview { Anchor: (Left: 492, Top: 396, Width: 52, Height: 52); Visible: false; }
-  Label #EnemyCatEditIconCurrentLabel { Anchor: (Left: 556, Top: 410, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
-  TextButton #EnemyCatIconPickerOpenButton { Anchor: (Left: 1192, Top: 402, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  Label #EnemyCatRolePickerLabel { Anchor: (Left: 480, Top: 470, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #EnemyCatRolePicker { @Anchor = (Left: 480, Top: 492, Width: 730, Height: 34); Value: ""; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 730); }
-  TextButton #EnemyCatRoleAddButton { Anchor: (Left: 1220, Top: 492, Width: 220, Height: 34); Text: "Anadir"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  Label #EnemyCatEditRolesLabel { Anchor: (Left: 480, Top: 536, Width: 960, Height: 16); Text: "Enemy IDs en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  Panel #EnemyCatRolesListInset { Anchor: (Left: 480, Top: 558, Width: 960, Height: 178); Background: #122238(0.92); Visible: false; }
-  Panel #EnemyCatRolesRowsList { Anchor: (Left: 492, Top: 566, Width: 936, Height: 162); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Padding: (Top: 10, Left: 12, Right: 12, Bottom: 10); Background: #000000(0); Visible: false; }
-  Label #EnemyCatRolesEmptyLabel { Anchor: (Left: 492, Top: 626, Width: 936, Height: 22); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
+  Label #EnemyCatIconSelectorLabel { Anchor: (Left: 480, Top: 314, Width: 960, Height: 16); Text: "Icono de categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #EnemyCatIconSelectorCard { Anchor: (Left: 480, Top: 336, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
+  ItemIcon #EnemyCatEditIconPreview { Anchor: (Left: 492, Top: 346, Width: 52, Height: 52); Visible: false; }
+  Label #EnemyCatEditIconCurrentLabel { Anchor: (Left: 556, Top: 360, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+  TextButton #EnemyCatIconPickerOpenButton { Anchor: (Left: 1192, Top: 352, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #EnemyCatRolePickerLabel { Anchor: (Left: 480, Top: 420, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #EnemyCatRolePicker { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 1); }
+  TextButton #EnemyCatRoleAddButton { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "Anadir"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyCatEnemyPickerOpenButton { Anchor: (Left: 480, Top: 442, Width: 960, Height: 34); Text: "Anadir enemigo"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #EnemyCatEditRolesLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 16); Text: "Enemy IDs en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #EnemyCatRolesListInset { Anchor: (Left: 480, Top: 508, Width: 960, Height: 248); Background: #122238(0.92); Visible: false; }
+  Panel #EnemyCatRolesRowsList { Anchor: (Left: 492, Top: 516, Width: 936, Height: 232); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Padding: (Top: 8, Left: 10, Right: 10, Bottom: 8); Background: #000000(0); Visible: false; }
+  Label #EnemyCatRolesEmptyLabel { Anchor: (Left: 492, Top: 620, Width: 936, Height: 22); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
   $C.@TextField #EnemyCatEditRoles { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; }
   Panel #EnemyCatRoleRow1 { Anchor: (Left: 480, Top: 498, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #EnemyCatRoleName1 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #EnemyCatRoleDelete1 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
   Panel #EnemyCatRoleRow2 { Anchor: (Left: 480, Top: 526, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #EnemyCatRoleName2 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #EnemyCatRoleDelete2 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
@@ -1693,21 +1694,21 @@ Group {
   Label #EnemyCatRolesOverflowLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
 
   Label #EnemyCatEditRolesHelpLabel {
-    Anchor: (Left: 480, Top: 732, Width: 960, Height: 28);
-    Text: "Usa desplegable para anadir Enemy IDs";
+    Anchor: (Left: 480, Top: 758, Width: 960, Height: 24);
+    Text: "Pulsa elegir Enemy ID para anadir enemigos";
     Visible: false;
     Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center);
   }
 
   TextButton #EnemyCatSaveButton {
-    Anchor: (Left: 480, Top: 264, Width: 960, Height: 34);
+    Anchor: (Left: 480, Top: 792, Width: 960, Height: 34);
     Text: "Guardar categoria";
     Visible: false;
     Style: $C.@SecondaryTextButtonStyle;
   }
 
   Label #EnemyCatStatusLabel {
-    Anchor: (Left: 480, Top: 742, Width: 960, Height: 40);
+    Anchor: (Left: 480, Top: 840, Width: 960, Height: 30);
     Text: "";
     Visible: false;
     Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
@@ -1715,31 +1716,65 @@ Group {
 
   Panel #EnemyCatIconPickerShade {
     Anchor: (Full: 0);
-    Background: #02060f(0.52);
+    Background: #02060f(0.62);
     Visible: false;
   }
 
   $C.@DecoratedContainer #EnemyCatIconPickerFrame {
-    Anchor: (Left: 448, Top: 146, Width: 1024, Height: 738);
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
     Visible: false;
   }
 
   TextButton #EnemyCatIconPickerCloseButton {
-    Anchor: (Left: 1428, Top: 154, Width: 34, Height: 28);
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatIconPickerTitleLabel {
-    Anchor: (Left: 480, Top: 154, Width: 944, Height: 24);
+    Anchor: (Left: 580, Top: 300, Width: 752, Height: 24);
     Text: "Selecciona un icono";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   Panel #EnemyCatIconPickerGrid {
-    Anchor: (Left: 484, Top: 196, Width: 952, Height: 664);
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 336);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
+  }
+
+  Panel #EnemyCatEnemyPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.52);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #EnemyCatEnemyPickerFrame {
+    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Visible: false;
+  }
+
+  TextButton #EnemyCatEnemyPickerCloseButton {
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 28);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #EnemyCatEnemyPickerTitleLabel {
+    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Text: "Selecciona Enemy IDs";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #EnemyCatEnemyPickerGrid {
+    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);

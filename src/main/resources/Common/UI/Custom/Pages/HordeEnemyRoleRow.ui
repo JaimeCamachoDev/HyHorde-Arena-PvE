@@ -1,0 +1,50 @@
+$C = "../Common.ui";
+
+@EnemyRoleRowHitboxStyle = TextButtonStyle(
+  Default: (Background: #000000(0), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Hovered: (Background: #ffffff(0.07), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Pressed: (Background: #ffffff(0.12), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+);
+
+Group #HordeEnemyRoleRow {
+  Anchor: (Left: 0, Right: 0, Height: 46, Bottom: 6);
+  Background: #2f4c6f(0.96);
+
+  Panel #RoleAccent {
+    Anchor: (Left: 0, Top: 0, Width: 5, Height: 46);
+    Background: #e0b84a;
+  }
+
+  TextButton #RoleOpenButton {
+    Anchor: (Left: 0, Top: 0, Right: 0, Height: 46);
+    Text: "";
+    Style: @EnemyRoleRowHitboxStyle;
+  }
+
+  Panel #RoleIconBack {
+    Anchor: (Left: 10, Top: 6, Width: 34, Height: 34);
+    Background: #223854(0.95);
+  }
+
+  ItemIcon #RoleIcon {
+    Anchor: (Left: 10, Top: 6, Width: 34, Height: 34);
+  }
+
+  Label #RoleName {
+    Anchor: (Left: 56, Top: 6, Right: 50, Height: 18);
+    Text: "";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #ecf4ff, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Label #RoleMeta {
+    Anchor: (Left: 56, Top: 23, Right: 50, Height: 15);
+    Text: "";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 10, TextColor: #b8cbe5, VerticalAlignment: Center);
+  }
+
+  TextButton #RoleDeleteButton {
+    Anchor: (Right: 0, Top: 6, Width: 34, Height: 34);
+    Text: "X";
+    Style: $C.@CancelTextButtonStyle;
+  }
+}

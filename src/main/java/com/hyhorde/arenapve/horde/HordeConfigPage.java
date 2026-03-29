@@ -51,6 +51,9 @@ extends CustomUIPage {
     private static final int MAX_REWARD_CATEGORY_EDITOR_ITEM_ROWS = 10;
     private static final int MAX_BOSS_ROWS = 11;
     private static final String COMMON_LIST_ROW_LAYOUT = "Pages/HordeArenaRow.ui";
+    private static final String ENEMY_ROLE_ROW_LAYOUT = "Pages/HordeEnemyRoleRow.ui";
+    private static final String ENEMY_PICKER_ROW_LAYOUT = "Pages/HordeEnemyPickerRow.ui";
+    private static final int ENEMY_PICKER_COLUMNS = 4;
     private static final int ARENA_ICON_PICKER_COLUMNS = 7;
     private static final String ARENA_ICON_PICKER_ROW_LAYOUT = "Pages/HordeArenaIconPickerRow.ui";
     private static final String DEFAULT_ARENA_ITEM_ICON_ID = "Ingredient_Bar_Gold";
@@ -136,6 +139,7 @@ extends CustomUIPage {
     private boolean bossEditorModalVisible;
     private boolean soundsEditorModalVisible;
     private boolean arenaEditorModalVisible;
+    private boolean enemyCategoryEnemyPickerModalVisible;
     private boolean enemyCategoryIconPickerModalVisible;
     private boolean arenaIconPickerModalVisible;
 
@@ -164,6 +168,7 @@ extends CustomUIPage {
         this.bossEditorModalVisible = false;
         this.soundsEditorModalVisible = false;
         this.arenaEditorModalVisible = false;
+        this.enemyCategoryEnemyPickerModalVisible = false;
         this.enemyCategoryIconPickerModalVisible = false;
         this.arenaIconPickerModalVisible = false;
     }
@@ -377,7 +382,8 @@ extends CustomUIPage {
             this.populatePlayerRows(commandBuilder, eventBuilder, audienceRows, language, english);
         }
         if (TAB_ENEMIES.equals(tab)) {
-            this.populateEnemyCategoryRows(commandBuilder, eventBuilder, enemyCategoryRows, language, english);
+            this.populateEnemyCategoryRows(commandBuilder, eventBuilder, enemyCategoryRows, language, english, rewardItemCatalogOptions);
+            this.populateEnemyCategoryEnemyPicker(commandBuilder, eventBuilder, enemyRoleOptions, language, english, rewardItemCatalogOptions);
             this.populateEnemyCategoryIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
         }
         if (TAB_REWARDS.equals(tab)) {
@@ -415,6 +421,8 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatAddButton", this.buildConfigSnapshotEvent("enemycat_add"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatSaveButton", this.buildConfigSnapshotEvent("enemycat_save"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatRoleAddButton", this.buildConfigSnapshotEvent("enemycat_role_add"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatEnemyPickerOpenButton", this.buildConfigSnapshotEvent("enemycat_enemy_picker_open"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatEnemyPickerCloseButton", this.buildConfigSnapshotEvent("enemycat_enemy_picker_close"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatIconPickerOpenButton", this.buildConfigSnapshotEvent("enemycat_icon_picker_open"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#EnemyCatIconPickerCloseButton", this.buildConfigSnapshotEvent("enemycat_icon_picker_close"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#RewardCatAddButton", this.buildConfigSnapshotEvent("rewardcat_add"))
@@ -464,6 +472,7 @@ extends CustomUIPage {
         this.bossEditorModalVisible = false;
         this.soundsEditorModalVisible = false;
         this.arenaEditorModalVisible = false;
+        this.enemyCategoryEnemyPickerModalVisible = false;
         this.enemyCategoryIconPickerModalVisible = false;
         this.arenaIconPickerModalVisible = false;
     }
@@ -786,6 +795,7 @@ extends CustomUIPage {
         }
         if ("enemycat_close_editor".equals(action)) {
             this.enemyCategoryEditorModalVisible = false;
+            this.enemyCategoryEnemyPickerModalVisible = false;
             this.enemyCategoryIconPickerModalVisible = false;
             return null;
         }
@@ -799,10 +809,20 @@ extends CustomUIPage {
         }
         if ("enemycat_icon_picker_open".equals(action)) {
             this.enemyCategoryIconPickerModalVisible = true;
+            this.enemyCategoryEnemyPickerModalVisible = false;
             return null;
         }
         if ("enemycat_icon_picker_close".equals(action)) {
             this.enemyCategoryIconPickerModalVisible = false;
+            return null;
+        }
+        if ("enemycat_enemy_picker_open".equals(action)) {
+            this.enemyCategoryEnemyPickerModalVisible = true;
+            this.enemyCategoryIconPickerModalVisible = false;
+            return null;
+        }
+        if ("enemycat_enemy_picker_close".equals(action)) {
+            this.enemyCategoryEnemyPickerModalVisible = false;
             return null;
         }
         if ("enemycat_add".equals(action)) {
@@ -810,6 +830,7 @@ extends CustomUIPage {
             if (result != null && result.isSuccess()) {
                 this.selectEnemyCategoryForEditing("");
                 this.enemyCategoryEditorModalVisible = true;
+                this.enemyCategoryEnemyPickerModalVisible = false;
                 this.enemyCategoryIconPickerModalVisible = false;
             }
             this.enemyCategoryStatusText = result == null ? "" : result.getMessage();
@@ -835,6 +856,27 @@ extends CustomUIPage {
             this.enemyCategoryStatusText = result.getMessage();
             return result;
         }
+        if (action.startsWith("enemycat_enemy_pick:")) {
+            String pickedRoleId = HordeConfigPage.extractActionArgument(action);
+            if (pickedRoleId == null || pickedRoleId.isBlank()) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid Enemy ID." : "Enemy ID invalido.");
+                this.enemyCategoryStatusText = result.getMessage();
+                return result;
+            }
+            List<String> roles = HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("enemyCategoryEditRoles", ""));
+            if (HordeConfigPage.containsIgnoreCase(roles, pickedRoleId)) {
+                HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "That Enemy ID is already in the category." : "Ese Enemy ID ya esta en la categoria.");
+                this.enemyCategoryStatusText = result.getMessage();
+                return result;
+            }
+            roles.add(pickedRoleId.trim());
+            this.draftValues.put("enemyCategoryEditRoles", HordeConfigPage.buildRolesCsv(roles));
+            this.draftValues.put("enemyCategoryRolePicker", pickedRoleId.trim());
+            this.enemyCategoryEnemyPickerModalVisible = false;
+            HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Enemy ID added to category." : "Enemy ID anadido a la categoria.");
+            this.enemyCategoryStatusText = result.getMessage();
+            return result;
+        }
         if (action.startsWith("enemycat_icon_pick:")) {
             String pickedItemId = HordeConfigPage.extractActionArgument(action);
             if (pickedItemId == null || pickedItemId.isBlank()) {
@@ -852,6 +894,7 @@ extends CustomUIPage {
             HordeService.OperationResult result = this.hordeService.saveEnemyCategoryFromUi(this.extractEnemyCategoryValuesForSave());
             if (result != null && result.isSuccess()) {
                 this.selectEnemyCategoryForEditing(this.getDraftValue("enemyCategoryEditId", this.getDraftValue("enemyCategorySelected", "")));
+                this.enemyCategoryEnemyPickerModalVisible = false;
                 this.enemyCategoryIconPickerModalVisible = false;
             }
             this.enemyCategoryStatusText = result == null ? "" : result.getMessage();
@@ -874,6 +917,7 @@ extends CustomUIPage {
             String categoryId = HordeConfigPage.extractActionArgument(action);
             this.selectEnemyCategoryForEditing(categoryId);
             this.enemyCategoryEditorModalVisible = true;
+            this.enemyCategoryEnemyPickerModalVisible = false;
             this.enemyCategoryIconPickerModalVisible = false;
             return null;
         }
@@ -1789,7 +1833,7 @@ extends CustomUIPage {
                 .set("#PlayersCountValue.Text", Integer.toString(total));
     }
 
-    private void populateEnemyCategoryRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.EnemyCategorySnapshot> rows, String language, boolean english) {
+    private void populateEnemyCategoryRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.EnemyCategorySnapshot> rows, String language, boolean english, List<String> rewardItemCatalogOptions) {
         commandBuilder.clear("#EnemyCatRowsList");
         int renderedRows = 0;
         if (rows != null) {
@@ -1817,10 +1861,10 @@ extends CustomUIPage {
                 .set("#EnemyCatEmptyLabel.Text", renderedRows == 0 ? HordeConfigPage.t(language, english, "No enemy categories yet. Press Add category to create one.", "Aun no hay categorias de enemigos. Pulsa Anadir categoria para crear una.") : "")
                 .set("#EnemyCatOverflowLabel.Visible", false)
                 .set("#EnemyCatOverflowLabel.Text", "");
-        this.populateEnemyCategoryEditorRoles(commandBuilder, eventBuilder, HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("enemyCategoryEditRoles", "")), language, english, this.enemyCategoryEditorModalVisible);
+        this.populateEnemyCategoryEditorRoles(commandBuilder, eventBuilder, HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("enemyCategoryEditRoles", "")), language, english, this.enemyCategoryEditorModalVisible, rewardItemCatalogOptions);
     }
 
-    private void populateEnemyCategoryEditorRoles(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> roles, String language, boolean english, boolean editorVisible) {
+    private void populateEnemyCategoryEditorRoles(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> roles, String language, boolean english, boolean editorVisible, List<String> rewardItemCatalogOptions) {
         commandBuilder.clear("#EnemyCatRolesRowsList");
         int renderedRows = 0;
         if (editorVisible && roles != null) {
@@ -1829,13 +1873,13 @@ extends CustomUIPage {
                     continue;
                 }
                 String rowSelector = "#EnemyCatRolesRowsList[" + renderedRows + "]";
-                String iconItemId = HordeConfigPage.resolveListIconCandidate(roleId);
-                commandBuilder.append("#EnemyCatRolesRowsList", COMMON_LIST_ROW_LAYOUT)
-                        .set(rowSelector + " #ArenaName.Text", HordeConfigPage.compactName(roleId, 40))
-                        .set(rowSelector + " #ArenaCoords.Text", HordeConfigPage.t(language, english, "Enemy ID in category", "Enemy ID en categoria"))
-                        .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
-                        .set(rowSelector + " #ArenaDeleteButton.Visible", true);
-                eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent("enemycat_role_remove:" + HordeConfigPage.firstNonEmpty(roleId, "")));
+                String iconItemId = HordeConfigPage.resolveEnemyRoleIcon(roleId, rewardItemCatalogOptions);
+                commandBuilder.append("#EnemyCatRolesRowsList", ENEMY_ROLE_ROW_LAYOUT)
+                        .set(rowSelector + " #RoleName.Text", HordeConfigPage.compactName(roleId, 44))
+                        .set(rowSelector + " #RoleMeta.Text", HordeConfigPage.t(language, english, "Enemy ID in category", "Enemy ID en categoria"))
+                        .set(rowSelector + " #RoleIcon.ItemId", iconItemId)
+                        .set(rowSelector + " #RoleDeleteButton.Visible", true);
+                eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #RoleDeleteButton", this.buildConfigSnapshotEvent("enemycat_role_remove:" + HordeConfigPage.firstNonEmpty(roleId, "")));
                 ++renderedRows;
             }
         }
@@ -1887,6 +1931,47 @@ extends CustomUIPage {
                 }
                 commandBuilder.set(buttonSelector + ".Visible", false)
                         .set(iconSelector + ".Visible", false);
+            }
+        }
+    }
+
+    private void populateEnemyCategoryEnemyPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> enemyRoleOptions, String language, boolean english, List<String> rewardItemCatalogOptions) {
+        boolean pickerVisible = this.enemyCategoryEditorModalVisible && this.enemyCategoryEnemyPickerModalVisible;
+        commandBuilder.set("#EnemyCatEnemyPickerShade.Visible", pickerVisible)
+                .set("#EnemyCatEnemyPickerFrame.Visible", pickerVisible)
+                .set("#EnemyCatEnemyPickerCloseButton.Visible", pickerVisible)
+                .set("#EnemyCatEnemyPickerTitleLabel.Visible", pickerVisible)
+                .set("#EnemyCatEnemyPickerGrid.Visible", pickerVisible);
+        commandBuilder.clear("#EnemyCatEnemyPickerGrid");
+        if (!pickerVisible) {
+            return;
+        }
+
+        List<String> options = HordeConfigPage.buildEnemyRolePickerOptions(enemyRoleOptions);
+        int rows = (options.size() + ENEMY_PICKER_COLUMNS - 1) / ENEMY_PICKER_COLUMNS;
+        for (int rowIndex = 0; rowIndex < rows; ++rowIndex) {
+            commandBuilder.append("#EnemyCatEnemyPickerGrid", ENEMY_PICKER_ROW_LAYOUT);
+            String rowSelector = "#EnemyCatEnemyPickerGrid[" + rowIndex + "]";
+            for (int column = 0; column < ENEMY_PICKER_COLUMNS; ++column) {
+                int optionIndex = rowIndex * ENEMY_PICKER_COLUMNS + column;
+                int slot = column + 1;
+                String buttonSelector = rowSelector + " #EnemyPickButton" + slot;
+                String iconSelector = rowSelector + " #EnemyPickIcon" + slot;
+                String labelSelector = rowSelector + " #EnemyPickLabel" + slot;
+                if (optionIndex < options.size()) {
+                    String enemyRoleId = options.get(optionIndex);
+                    commandBuilder.set(buttonSelector + ".Visible", true)
+                            .set(iconSelector + ".Visible", true)
+                            .set(labelSelector + ".Visible", true)
+                            .set(iconSelector + ".ItemId", HordeConfigPage.resolveEnemyRoleIcon(enemyRoleId, rewardItemCatalogOptions))
+                            .set(labelSelector + ".Text", HordeConfigPage.compactName(enemyRoleId, 22));
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, buttonSelector, this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("enemy_pick", enemyRoleId)));
+                    continue;
+                }
+                commandBuilder.set(buttonSelector + ".Visible", false)
+                        .set(iconSelector + ".Visible", false)
+                        .set(labelSelector + ".Visible", false)
+                        .set(labelSelector + ".Text", "");
             }
         }
     }
@@ -2129,6 +2214,76 @@ extends CustomUIPage {
             options.add(DEFAULT_ARENA_ITEM_ICON_ID);
         }
         return options;
+    }
+
+    private static List<String> buildEnemyRolePickerOptions(List<String> rawOptions) {
+        ArrayList<String> options = new ArrayList<String>();
+        if (rawOptions != null) {
+            for (String rawOption : rawOptions) {
+                if (rawOption == null) {
+                    continue;
+                }
+                String cleaned = rawOption.trim();
+                if (cleaned.isBlank() || HordeConfigPage.containsIgnoreCase(options, cleaned)) {
+                    continue;
+                }
+                options.add(cleaned);
+            }
+        }
+        return options;
+    }
+
+    private static String resolveEnemyRoleIcon(String roleId) {
+        return HordeConfigPage.resolveEnemyRoleIcon(roleId, null);
+    }
+
+    private static String resolveEnemyRoleIcon(String roleId, List<String> rewardItemCatalogOptions) {
+        String cleaned = HordeConfigPage.firstNonEmpty(roleId, "").trim();
+        String fallbackIcon = HordeConfigPage.firstAvailableIcon(
+                rewardItemCatalogOptions,
+                DEFAULT_ARENA_ITEM_ICON_ID,
+                "Ingredient_Bar_Iron",
+                "Ingredient_Crystal_Purple",
+                "Ingredient_Crystal_Green",
+                "Ingredient_Bar_Gold"
+        );
+        if (cleaned.isBlank()) {
+            return fallbackIcon;
+        }
+        String lower = cleaned.toLowerCase(Locale.ROOT);
+        if (lower.contains("dragon") || lower.contains("wyvern") || lower.contains("drake") || lower.contains("wizard") || lower.contains("mage") || lower.contains("void") || lower.contains("spectre") || lower.contains("spirit") || lower.contains("elemental")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Crystal_Purple", "Ingredient_Crystal_Blue", "Ingredient_Voidheart", fallbackIcon);
+        }
+        if (lower.contains("skeleton") || lower.contains("zombie") || lower.contains("ghoul") || lower.contains("lich") || lower.contains("wraith") || lower.contains("knight") || lower.contains("lancer") || lower.contains("praetorian")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Bar_Iron", "Weapon_Sword_Mithril", "Weapon_Sword_Onyxium", fallbackIcon);
+        }
+        if (lower.contains("goblin") || lower.contains("trork") || lower.contains("trooper") || lower.contains("orbis") || lower.contains("miner") || lower.contains("scrapper") || lower.contains("bandit")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Weapon_Sword_Mithril", "Tool_Pickaxe_Iron", "Ingredient_Bar_Copper", fallbackIcon);
+        }
+        if (lower.contains("spider") || lower.contains("scarak") || lower.contains("insect") || lower.contains("beetle") || lower.contains("larva") || lower.contains("roach")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Fabric_Scrap_Silk", "Ingredient_Bolt_Silk", "Ingredient_Crystal_Green", fallbackIcon);
+        }
+        if (lower.contains("wolf") || lower.contains("crocodile") || lower.contains("raptor") || lower.contains("rex") || lower.contains("saurian") || lower.contains("beast")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Leather_Scaled", "Ingredient_Hide_Scaled", "Ingredient_Leather_Heavy", fallbackIcon);
+        }
+        if (lower.contains("slime") || lower.contains("frog") || lower.contains("toad") || lower.contains("mushroom")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Crystal_Green", "Potion_Signature_Lesser", fallbackIcon);
+        }
+        return fallbackIcon;
+    }
+
+    private static String firstAvailableIcon(List<String> rewardItemCatalogOptions, String ... candidates) {
+        if (candidates != null) {
+            for (String candidate : candidates) {
+                if (candidate == null || candidate.isBlank()) {
+                    continue;
+                }
+                if (rewardItemCatalogOptions == null || rewardItemCatalogOptions.isEmpty() || HordeConfigPage.containsIgnoreCase(rewardItemCatalogOptions, candidate)) {
+                    return candidate;
+                }
+            }
+        }
+        return DEFAULT_ARENA_ITEM_ICON_ID;
     }
 
     private void populateAudienceRows(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<HordeService.AudiencePlayerSnapshot> rows, String language, boolean english) {
@@ -2534,8 +2689,10 @@ extends CustomUIPage {
                 .set("#EnemyCatIconPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose icon", "Elegir icono"))
                 .set("#EnemyCatIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
                 .set("#EnemyCatRolePickerLabel.Text", HordeConfigPage.t(language, english, "Enemy ID", "Enemy ID"))
+                .set("#EnemyCatEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Add enemy", "Anadir enemigo"))
                 .set("#EnemyCatRoleAddButton.Text", HordeConfigPage.t(language, english, "Add", "Anadir"))
                 .set("#EnemyCatEditRolesLabel.Text", HordeConfigPage.t(language, english, "Enemy IDs in category", "Enemy IDs en categoria"))
+                .set("#EnemyCatEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy IDs", "Selecciona Enemy IDs"))
                 .set("#EnemyCatEditRolesHelpLabel.Text", "")
                 .set("#EnemyCatRolesOverflowLabel.Text", "")
                 .set("#EnemyCatPagePrevButton.Text", "<")
@@ -2713,9 +2870,11 @@ extends CustomUIPage {
 
     private void applyEnemyCategoryEditorModalVisibility(UICommandBuilder commandBuilder, boolean enemiesTab) {
         boolean visible = enemiesTab && this.enemyCategoryEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatIconSelectorLabel", "#EnemyCatIconSelectorCard", "#EnemyCatEditIconPreview", "#EnemyCatEditIconCurrentLabel", "#EnemyCatIconPickerOpenButton", "#EnemyCatRolePickerLabel", "#EnemyCatRolePicker", "#EnemyCatRoleAddButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton", "#EnemyCatStatusLabel");
+        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatIconSelectorLabel", "#EnemyCatIconSelectorCard", "#EnemyCatEditIconPreview", "#EnemyCatEditIconCurrentLabel", "#EnemyCatIconPickerOpenButton", "#EnemyCatRolePickerLabel", "#EnemyCatEnemyPickerOpenButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton", "#EnemyCatStatusLabel");
         boolean pickerVisible = visible && this.enemyCategoryIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#EnemyCatIconPickerShade", "#EnemyCatIconPickerFrame", "#EnemyCatIconPickerCloseButton", "#EnemyCatIconPickerTitleLabel", "#EnemyCatIconPickerGrid");
+        boolean enemyPickerVisible = visible && this.enemyCategoryEnemyPickerModalVisible;
+        this.setVisible(commandBuilder, enemyPickerVisible, "#EnemyCatEnemyPickerShade", "#EnemyCatEnemyPickerFrame", "#EnemyCatEnemyPickerCloseButton", "#EnemyCatEnemyPickerTitleLabel", "#EnemyCatEnemyPickerGrid");
     }
 
     private void applyRewardCategoryEditorModalVisibility(UICommandBuilder commandBuilder, boolean rewardsTab) {
