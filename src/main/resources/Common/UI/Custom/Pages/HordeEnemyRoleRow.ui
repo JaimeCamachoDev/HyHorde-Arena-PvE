@@ -43,7 +43,7 @@ Group #HordeEnemyRoleRow {
   }
 
   TextButton #RoleDeleteButton {
-    Anchor: (Right: 0, Top: 6, Width: 34, Height: 34);
+    Anchor: (Right: 8, Top: 6, Width: 34, Height: 34);
     Text: "X";
     Style: $C.@CancelTextButtonStyle;
   }

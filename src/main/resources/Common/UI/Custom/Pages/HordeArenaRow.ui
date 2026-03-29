@@ -43,7 +43,7 @@ Group #HordeArenaRow {
   }
 
   TextButton #ArenaDeleteButton {
-    Anchor: (Right: 0, Top: 11, Width: 40, Height: 40);
+    Anchor: (Right: 8, Top: 11, Width: 40, Height: 40);
     Text: "X";
     Style: $C.@CancelTextButtonStyle;
   }

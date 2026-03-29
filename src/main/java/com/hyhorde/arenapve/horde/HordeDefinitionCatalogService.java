@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.logging.Level;
 
 final class HordeDefinitionCatalogService {
+    private static final String DEFAULT_HORDE_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private final PluginBase plugin;
     private final Gson gson;
     private final Path definitionsPath;
@@ -125,6 +126,10 @@ final class HordeDefinitionCatalogService {
         target.enemyType = HordeDefinitionCatalogService.clean(HordeDefinitionCatalogService.firstNonBlank(values.get("enemyType"), target.enemyType, fallbackConfig.enemyType));
         if (target.enemyType.isBlank()) {
             target.enemyType = HordeService.HordeConfig.defaults().enemyType;
+        }
+        target.iconItemId = HordeDefinitionCatalogService.clean(HordeDefinitionCatalogService.firstNonBlank(values.get("hordeEditIconItemId"), target.iconItemId, HordeDefinitionCatalogService.resolveDefaultIconItemId(target.enemyType)));
+        if (target.iconItemId.isBlank()) {
+            target.iconItemId = HordeDefinitionCatalogService.resolveDefaultIconItemId(target.enemyType);
         }
         target.minRadius = HordeDefinitionCatalogService.clamp(HordeDefinitionCatalogService.parseDouble(values.get("minRadius"), target.minRadius), HordeConfigRules.MIN_RADIUS, HordeConfigRules.MAX_RADIUS);
         target.maxRadius = HordeDefinitionCatalogService.clamp(HordeDefinitionCatalogService.parseDouble(values.get("maxRadius"), target.maxRadius), HordeConfigRules.MIN_RADIUS, HordeConfigRules.MAX_RADIUS);
@@ -271,9 +276,21 @@ final class HordeDefinitionCatalogService {
         return Math.max(min, Math.min(max, value));
     }
 
+    private static String resolveDefaultIconItemId(String enemyType) {
+        String normalized = HordeDefinitionCatalogService.clean(enemyType).toLowerCase(Locale.ROOT);
+        if ("random".equals(normalized) || "random-all".equals(normalized)) {
+            return "Potion_Signature_Greater";
+        }
+        if ("void".equals(normalized) || "scarak".equals(normalized) || "elementals".equals(normalized)) {
+            return "Weapon_Wand_Wood";
+        }
+        return DEFAULT_HORDE_ICON_ITEM_ID;
+    }
+
     static final class HordeDefinitionSnapshot {
         final String hordeId;
         final String enemyType;
+        final String iconItemId;
         final double minRadius;
         final double maxRadius;
         final int rounds;
@@ -282,9 +299,10 @@ final class HordeDefinitionCatalogService {
         final int waveDelay;
         final boolean finalBossEnabled;
 
-        private HordeDefinitionSnapshot(String hordeId, String enemyType, double minRadius, double maxRadius, int rounds, int baseEnemies, int enemiesPerRound, int waveDelay, boolean finalBossEnabled) {
+        private HordeDefinitionSnapshot(String hordeId, String enemyType, String iconItemId, double minRadius, double maxRadius, int rounds, int baseEnemies, int enemiesPerRound, int waveDelay, boolean finalBossEnabled) {
             this.hordeId = hordeId;
             this.enemyType = enemyType;
+            this.iconItemId = iconItemId;
             this.minRadius = minRadius;
             this.maxRadius = maxRadius;
             this.rounds = rounds;
@@ -296,7 +314,7 @@ final class HordeDefinitionCatalogService {
 
         private static HordeDefinitionSnapshot from(HordeDefinition source) {
             HordeDefinition clean = HordeDefinition.sanitize(source, HordeService.HordeConfig.defaults());
-            return new HordeDefinitionSnapshot(clean.hordeId, clean.enemyType, clean.minRadius, clean.maxRadius, clean.rounds, clean.baseEnemies, clean.enemiesPerRound, clean.waveDelay, clean.finalBossEnabled);
+            return new HordeDefinitionSnapshot(clean.hordeId, clean.enemyType, clean.iconItemId, clean.minRadius, clean.maxRadius, clean.rounds, clean.baseEnemies, clean.enemiesPerRound, clean.waveDelay, clean.finalBossEnabled);
         }
     }
 
@@ -307,6 +325,7 @@ final class HordeDefinitionCatalogService {
     private static final class HordeDefinition {
         private String hordeId;
         private String enemyType;
+        private String iconItemId;
         private double minRadius;
         private double maxRadius;
         private int rounds;
@@ -320,6 +339,7 @@ final class HordeDefinitionCatalogService {
             HordeDefinition row = new HordeDefinition();
             row.hordeId = HordeDefinitionCatalogService.clean(hordeId);
             row.enemyType = HordeDefinitionCatalogService.clean(config.enemyType);
+            row.iconItemId = HordeDefinitionCatalogService.resolveDefaultIconItemId(row.enemyType);
             row.minRadius = config.minSpawnRadius;
             row.maxRadius = config.maxSpawnRadius;
             row.rounds = config.rounds;
@@ -334,6 +354,7 @@ final class HordeDefinitionCatalogService {
             HordeDefinition copy = new HordeDefinition();
             copy.hordeId = this.hordeId;
             copy.enemyType = this.enemyType;
+            copy.iconItemId = this.iconItemId;
             copy.minRadius = this.minRadius;
             copy.maxRadius = this.maxRadius;
             copy.rounds = this.rounds;
@@ -360,6 +381,10 @@ final class HordeDefinitionCatalogService {
             }
             if (clean.enemyType.isBlank()) {
                 clean.enemyType = HordeService.HordeConfig.defaults().enemyType;
+            }
+            clean.iconItemId = HordeDefinitionCatalogService.clean(clean.iconItemId);
+            if (clean.iconItemId.isBlank()) {
+                clean.iconItemId = HordeDefinitionCatalogService.resolveDefaultIconItemId(clean.enemyType);
             }
             clean.minRadius = HordeDefinitionCatalogService.clamp(clean.minRadius, HordeConfigRules.MIN_RADIUS, HordeConfigRules.MAX_RADIUS);
             clean.maxRadius = HordeDefinitionCatalogService.clamp(clean.maxRadius, HordeConfigRules.MIN_RADIUS, HordeConfigRules.MAX_RADIUS);

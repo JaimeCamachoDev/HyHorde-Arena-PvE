@@ -95,11 +95,14 @@ public final class HordeService {
     private static final String[] DEFAULT_FINAL_BOSS_ROLE_HINTS = new String[]{"Dragon_Fire", "Dragon_Frost"};
     private static final String[] DEFAULT_BLOCKED_ENEMY_ROLE_HINTS = new String[]{"kitten", "feline", "civilian", "merchant", "vendor", "villager", "windwalker", "cub", "pet", "companion", "dummy", "training", "blanktemplate", "blank_template", "template", "friendly", "nonhostile", "feran"};
     private static final String DEFAULT_ENEMY_CATEGORY_ICON_ITEM_ID = "Weapon_Wand_Wood";
+    private static final String DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private static final Map<String, List<String>> DEFAULT_REWARD_CATEGORY_ITEMS = HordeService.buildRewardCategoryItems();
+    private static final Map<String, String> DEFAULT_REWARD_CATEGORY_ICONS = HordeService.buildRewardCategoryIcons(DEFAULT_REWARD_CATEGORY_ITEMS);
     private static Map<String, String[]> ENEMY_TYPE_HINTS = HordeService.copyEnemyTypeHints(DEFAULT_ENEMY_TYPE_HINTS);
     private static String[] FINAL_BOSS_ROLE_HINTS = DEFAULT_FINAL_BOSS_ROLE_HINTS.clone();
     private static List<String> ENEMY_TYPE_OPTIONS = HordeService.buildEnemyTypeOptions();
     private static Map<String, List<String>> REWARD_CATEGORY_ITEMS = HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS);
+    private static Map<String, String> REWARD_CATEGORY_ICONS = HordeService.copyRewardCategoryIcons(DEFAULT_REWARD_CATEGORY_ICONS);
     private static List<String> REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
     private static List<String> RANDOM_ENEMY_TYPE_OPTIONS = HordeService.buildRandomEnemyTypePool();
     private static final int MAX_REWARD_SUGGESTIONS = 160;
@@ -544,6 +547,7 @@ public final class HordeService {
 
     public synchronized List<RewardCategorySnapshot> getRewardCategoryDefinitionsSnapshot() {
         ArrayList<RewardCategorySnapshot> rows = new ArrayList<RewardCategorySnapshot>();
+        Map<String, String> categoryIcons = HordeService.sanitizeRewardCategoryIconMap(REWARD_CATEGORY_ICONS);
         for (Map.Entry<String, List<String>> entry : REWARD_CATEGORY_ITEMS.entrySet()) {
             if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
                 continue;
@@ -556,7 +560,8 @@ public final class HordeService {
             if (cleanedItems.isEmpty()) {
                 continue;
             }
-            rows.add(new RewardCategorySnapshot(categoryId, cleanedItems));
+            String iconItemId = HordeService.firstNonBlankValue(categoryIcons.get(categoryId), HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, cleanedItems));
+            rows.add(new RewardCategorySnapshot(categoryId, cleanedItems, iconItemId));
         }
         return rows;
     }
@@ -672,6 +677,9 @@ public final class HordeService {
         if (editableConfig.categories == null) {
             editableConfig.categories = new LinkedHashMap<String, List<String>>();
         }
+        if (editableConfig.categoryIcons == null) {
+            editableConfig.categoryIcons = new LinkedHashMap<String, String>();
+        }
         String baseCategoryId = HordeService.normalizeRewardCategoryKey(requestedCategoryId == null ? "" : requestedCategoryId.trim());
         if (baseCategoryId.isBlank()) {
             baseCategoryId = "reward_category";
@@ -686,7 +694,9 @@ public final class HordeService {
         if (fallbackItemId == null || fallbackItemId.isBlank()) {
             fallbackItemId = "Item_Misc_Mushroom";
         }
-        editableConfig.categories.put(uniqueCategoryId, List.of(fallbackItemId));
+        List<String> defaultItems = List.of(fallbackItemId);
+        editableConfig.categories.put(uniqueCategoryId, defaultItems);
+        editableConfig.categoryIcons.put(uniqueCategoryId, HordeService.resolveDefaultRewardCategoryIconItemId(uniqueCategoryId, defaultItems));
         this.saveRewardItemsEditorConfig(editableConfig);
         this.loadRewardItemsFromDisk(false);
         return OperationResult.ok(english ? "Reward category created: " + uniqueCategoryId + "." : "Categoria de recompensa creada: " + uniqueCategoryId + ".");
@@ -706,6 +716,7 @@ public final class HordeService {
         String selectedCategoryId = HordeService.normalizeRewardCategoryKey(selectedRaw);
         String itemsRaw = HordeService.trimToEmpty(values == null ? "" : values.get("rewardCatEditItems"));
         List<String> cleanedItems = HordeService.parseRewardCategoryItems(itemsRaw);
+        String requestedIconItemId = HordeService.normalizeRewardCategoryIconItemId(values == null ? "" : values.get("rewardCatEditIconItemId"), requestedCategoryId, cleanedItems);
         if (cleanedItems.isEmpty()) {
             return OperationResult.fail(english ? "Reward items list cannot be empty." : "La lista de items de recompensa no puede estar vacia.");
         }
@@ -713,14 +724,19 @@ public final class HordeService {
         if (editableConfig.categories == null) {
             editableConfig.categories = new LinkedHashMap<String, List<String>>();
         }
+        if (editableConfig.categoryIcons == null) {
+            editableConfig.categoryIcons = new LinkedHashMap<String, String>();
+        }
         boolean creating = selectedCategoryId.isBlank() || !editableConfig.categories.containsKey(selectedCategoryId);
         if (!selectedCategoryId.equals(requestedCategoryId) && editableConfig.categories.containsKey(requestedCategoryId)) {
             return OperationResult.fail(english ? "A reward category with that ID already exists." : "Ya existe una categoria de recompensa con ese ID.");
         }
         if (!selectedCategoryId.isBlank() && !selectedCategoryId.equals(requestedCategoryId)) {
             editableConfig.categories.remove(selectedCategoryId);
+            editableConfig.categoryIcons.remove(selectedCategoryId);
         }
         editableConfig.categories.put(requestedCategoryId, cleanedItems);
+        editableConfig.categoryIcons.put(requestedCategoryId, requestedIconItemId);
         this.saveRewardItemsEditorConfig(editableConfig);
         this.loadRewardItemsFromDisk(false);
         return OperationResult.ok(english ? (creating ? "Reward category saved: " : "Reward category updated: ") + requestedCategoryId + "." : (creating ? "Categoria de recompensa guardada: " : "Categoria de recompensa actualizada: ") + requestedCategoryId + ".");
@@ -742,6 +758,9 @@ public final class HordeService {
         List<String> removed = editableConfig.categories.remove(normalizedCategoryId);
         if (removed == null) {
             return OperationResult.ok(english ? "Reward category already removed: " + normalizedCategoryId + "." : "Categoria de recompensa ya eliminada: " + normalizedCategoryId + ".");
+        }
+        if (editableConfig.categoryIcons != null) {
+            editableConfig.categoryIcons.remove(normalizedCategoryId);
         }
         this.saveRewardItemsEditorConfig(editableConfig);
         this.loadRewardItemsFromDisk(false);
@@ -3719,6 +3738,66 @@ public final class HordeService {
         return sanitized;
     }
 
+    private static String resolveDefaultRewardCategoryIconItemId(String categoryId, List<String> categoryItems) {
+        String normalizedCategory = HordeService.normalizeRewardCategoryKey(categoryId);
+        if ("mithril".equals(normalizedCategory)) {
+            return "Ingredient_Bar_Mithril";
+        }
+        if ("onyxium".equals(normalizedCategory)) {
+            return "Ingredient_Bar_Onyxium";
+        }
+        if ("metales".equals(normalizedCategory)) {
+            return "Ingredient_Bar_Gold";
+        }
+        if ("gemas".equals(normalizedCategory)) {
+            return "Rock_Gem_Diamond";
+        }
+        if ("materiales_raros".equals(normalizedCategory)) {
+            return "Ingredient_Voidheart";
+        }
+        if ("armas_especiales".equals(normalizedCategory)) {
+            return "Weapon_Sword_Runic";
+        }
+        if ("items_especiales".equals(normalizedCategory)) {
+            return "Potion_Signature_Greater";
+        }
+        List<String> cleanedItems = HordeService.sanitizeRoleIdList(categoryItems);
+        if (!cleanedItems.isEmpty()) {
+            return HordeService.normalizeRewardCategoryIconItemId(cleanedItems.get(0), normalizedCategory, cleanedItems);
+        }
+        return DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID;
+    }
+
+    private static String normalizeRewardCategoryIconItemId(String iconItemId, String categoryId, List<String> categoryItems) {
+        String selected = HordeService.trimToEmpty(iconItemId);
+        if (selected.isBlank()) {
+            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+        }
+        String lower = selected.toLowerCase(Locale.ROOT);
+        if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
+            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+        }
+        return selected;
+    }
+
+    private static Map<String, String> sanitizeRewardCategoryIconMap(Map<String, String> categoryIcons) {
+        LinkedHashMap<String, String> sanitized = new LinkedHashMap<String, String>();
+        if (categoryIcons == null || categoryIcons.isEmpty()) {
+            return sanitized;
+        }
+        for (Map.Entry<String, String> entry : categoryIcons.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String categoryId = HordeService.normalizeRewardCategoryKey(entry.getKey());
+            if (categoryId.isBlank()) {
+                continue;
+            }
+            sanitized.put(categoryId, HordeService.normalizeRewardCategoryIconItemId(entry.getValue(), categoryId, null));
+        }
+        return sanitized;
+    }
+
     private static List<String> sanitizeRoleIdList(List<String> candidates) {
         LinkedHashSet<String> cleaned = new LinkedHashSet<String>();
         if (candidates == null || candidates.isEmpty()) {
@@ -3848,6 +3927,24 @@ public final class HordeService {
         return copy;
     }
 
+    private static Map<String, String> copyRewardCategoryIcons(Map<String, String> source) {
+        LinkedHashMap<String, String> copy = new LinkedHashMap<String, String>();
+        if (source == null || source.isEmpty()) {
+            return copy;
+        }
+        for (Map.Entry<String, String> entry : source.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String categoryId = HordeService.normalizeRewardCategoryKey(entry.getKey());
+            if (categoryId.isBlank()) {
+                continue;
+            }
+            copy.put(categoryId, HordeService.normalizeRewardCategoryIconItemId(entry.getValue(), categoryId, null));
+        }
+        return copy;
+    }
+
     private static void applyEnemyCatalogRuntime(Map<String, String[]> categories, List<String> finalBossRoles, List<String> blockedRoleHints) {
         LinkedHashMap<String, String[]> safeCategories = new LinkedHashMap<String, String[]>();
         if (categories != null && !categories.isEmpty()) {
@@ -3889,8 +3986,10 @@ public final class HordeService {
         RANDOM_ENEMY_TYPE_OPTIONS = HordeService.buildRandomEnemyTypePool();
     }
 
-    private static void applyRewardCatalogRuntime(Map<String, List<String>> categories) {
+    private static void applyRewardCatalogRuntime(Map<String, List<String>> categories, Map<String, String> categoryIcons) {
         LinkedHashMap<String, List<String>> safeCategories = new LinkedHashMap<String, List<String>>();
+        LinkedHashMap<String, String> safeIcons = new LinkedHashMap<String, String>();
+        Map<String, String> sanitizedIcons = HordeService.sanitizeRewardCategoryIconMap(categoryIcons);
         if (categories != null && !categories.isEmpty()) {
             for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
                 if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
@@ -3905,12 +4004,25 @@ public final class HordeService {
                     continue;
                 }
                 safeCategories.put(normalizedCategory, cleanedItems);
+                String iconItemId = HordeService.normalizeRewardCategoryIconItemId(sanitizedIcons.get(normalizedCategory), normalizedCategory, cleanedItems);
+                safeIcons.put(normalizedCategory, iconItemId);
             }
         }
         if (safeCategories.isEmpty()) {
             safeCategories.putAll(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
+            safeIcons.putAll(HordeService.copyRewardCategoryIcons(DEFAULT_REWARD_CATEGORY_ICONS));
+        } else {
+            for (Map.Entry<String, List<String>> entry : safeCategories.entrySet()) {
+                if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                    continue;
+                }
+                String categoryId = entry.getKey();
+                List<String> items = entry.getValue();
+                safeIcons.put(categoryId, HordeService.firstNonBlankValue(safeIcons.get(categoryId), HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, items)));
+            }
         }
         REWARD_CATEGORY_ITEMS = safeCategories;
+        REWARD_CATEGORY_ICONS = safeIcons;
         REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
     }
 
@@ -4109,6 +4221,17 @@ public final class HordeService {
         if (sanitized.categories.isEmpty()) {
             sanitized.categories.putAll(RewardItemsConfig.fromDefaults().categories);
         }
+        sanitized.categoryIcons = new LinkedHashMap<String, String>();
+        Map<String, String> loadedIcons = HordeService.sanitizeRewardCategoryIconMap(loaded.categoryIcons);
+        for (Map.Entry<String, List<String>> entry : sanitized.categories.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String categoryId = entry.getKey();
+            List<String> categoryItems = entry.getValue();
+            String iconItemId = HordeService.firstNonBlankValue(loadedIcons.get(categoryId), HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems));
+            sanitized.categoryIcons.put(categoryId, iconItemId);
+        }
         return sanitized;
     }
 
@@ -4116,6 +4239,8 @@ public final class HordeService {
         RewardItemsConfig payload = new RewardItemsConfig();
         payload.version = 1;
         payload.categories = new LinkedHashMap<String, List<String>>();
+        payload.categoryIcons = new LinkedHashMap<String, String>();
+        Map<String, String> sanitizedIcons = HordeService.sanitizeRewardCategoryIconMap(config == null ? null : config.categoryIcons);
         if (config != null && config.categories != null) {
             for (Map.Entry<String, List<String>> entry : config.categories.entrySet()) {
                 if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
@@ -4130,10 +4255,12 @@ public final class HordeService {
                     continue;
                 }
                 payload.categories.put(normalizedCategory, cleanedItems);
+                payload.categoryIcons.put(normalizedCategory, HordeService.firstNonBlankValue(sanitizedIcons.get(normalizedCategory), HordeService.resolveDefaultRewardCategoryIconItemId(normalizedCategory, cleanedItems)));
             }
         }
         if (payload.categories.isEmpty()) {
             payload.categories.putAll(RewardItemsConfig.fromDefaults().categories);
+            payload.categoryIcons.putAll(RewardItemsConfig.fromDefaults().categoryIcons);
         }
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
@@ -4255,12 +4382,13 @@ public final class HordeService {
     private RewardCatalogLoadReport loadRewardItemsFromDisk(boolean createTemplateIfMissing) {
         RewardCatalogLoadReport report = new RewardCatalogLoadReport();
         LinkedHashMap<String, List<String>> mergedCategories = new LinkedHashMap<String, List<String>>();
+        LinkedHashMap<String, String> mergedCategoryIcons = new LinkedHashMap<String, String>();
         try {
             Files.createDirectories(this.plugin.getDataDirectory(), new FileAttribute[0]);
         }
         catch (IOException ex) {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo preparar carpeta de datos para reward-items.json: %s", (Object)ex.getMessage());
-            HordeService.applyRewardCatalogRuntime(mergedCategories);
+            HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
             report.fallbackToDefaults = true;
             return report;
         }
@@ -4275,7 +4403,7 @@ public final class HordeService {
             }
         }
         if (!Files.exists(this.rewardItemsPath, new LinkOption[0])) {
-            HordeService.applyRewardCatalogRuntime(mergedCategories);
+            HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
             report.fallbackToDefaults = true;
             return report;
         }
@@ -4285,14 +4413,14 @@ public final class HordeService {
         }
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("reward-items.json invalido. Se usaran recompensas internas: %s", (Object)ex.getMessage());
-            HordeService.applyRewardCatalogRuntime(mergedCategories);
+            HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
             report.fallbackToDefaults = true;
             report.parseError = true;
             return report;
         }
         if (external == null || external.categories == null || external.categories.isEmpty()) {
             this.plugin.getLogger().at(Level.WARNING).log("reward-items.json vacio o invalido. Se usaran recompensas internas.");
-            HordeService.applyRewardCatalogRuntime(mergedCategories);
+            HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
             report.fallbackToDefaults = true;
             report.parseError = true;
             return report;
@@ -4300,6 +4428,7 @@ public final class HordeService {
         if (external.version != null && external.version.intValue() != 1) {
             this.plugin.getLogger().at(Level.WARNING).log("reward-items.json usa version %s (esperada: 1). Se intentara cargar igualmente.", (Object)external.version);
         }
+        Map<String, String> loadedCategoryIcons = HordeService.sanitizeRewardCategoryIconMap(external.categoryIcons);
         for (Map.Entry<String, List<String>> entry : external.categories.entrySet()) {
             if (entry == null) {
                 continue;
@@ -4318,9 +4447,10 @@ public final class HordeService {
                 continue;
             }
             mergedCategories.put(normalizedCategory, cleanedItems);
+            mergedCategoryIcons.put(normalizedCategory, HordeService.normalizeRewardCategoryIconItemId(loadedCategoryIcons.get(normalizedCategory), normalizedCategory, cleanedItems));
             ++report.appliedCategories;
         }
-        HordeService.applyRewardCatalogRuntime(mergedCategories);
+        HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
         report.totalActiveCategories = REWARD_CATEGORY_ITEMS.size();
         return report;
     }
@@ -4616,6 +4746,25 @@ public final class HordeService {
                 "Food_Fish_Raw_Legendary"
         ));
         return categories;
+    }
+
+    private static Map<String, String> buildRewardCategoryIcons(Map<String, List<String>> categories) {
+        LinkedHashMap<String, String> icons = new LinkedHashMap<String, String>();
+        if (categories == null || categories.isEmpty()) {
+            return icons;
+        }
+        for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
+            if (entry == null || entry.getKey() == null || entry.getKey().isBlank()) {
+                continue;
+            }
+            String categoryId = HordeService.normalizeRewardCategoryKey(entry.getKey());
+            if (categoryId.isBlank()) {
+                continue;
+            }
+            List<String> cleanedItems = HordeService.sanitizeRoleIdList(entry.getValue());
+            icons.put(categoryId, HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, cleanedItems));
+        }
+        return icons;
     }
 
     private static List<String> buildRewardCategoryOptions() {
@@ -6034,11 +6183,13 @@ public final class HordeService {
     private static final class RewardItemsConfig {
         private Integer version;
         private Map<String, List<String>> categories;
+        private Map<String, String> categoryIcons;
 
         private static RewardItemsConfig fromDefaults() {
             RewardItemsConfig defaults = new RewardItemsConfig();
             defaults.version = 1;
             defaults.categories = new LinkedHashMap<String, List<String>>(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
+            defaults.categoryIcons = new LinkedHashMap<String, String>(HordeService.copyRewardCategoryIcons(DEFAULT_REWARD_CATEGORY_ICONS));
             return defaults;
         }
     }
@@ -6425,14 +6576,16 @@ public final class HordeService {
         public final String itemsCsv;
         public final String itemsPreview;
         public final int itemCount;
+        public final String iconItemId;
 
-        private RewardCategorySnapshot(String categoryId, List<String> items) {
+        private RewardCategorySnapshot(String categoryId, List<String> items, String iconItemId) {
             this.categoryId = categoryId == null ? "" : categoryId;
             List<String> safeItems = items == null ? List.of() : List.copyOf(items);
             this.items = safeItems;
             this.itemCount = safeItems.size();
             this.itemsCsv = String.join(", ", safeItems);
             this.itemsPreview = this.itemCount <= 3 ? this.itemsCsv : String.join(", ", safeItems.subList(0, 3)) + " ...";
+            this.iconItemId = iconItemId == null || iconItemId.isBlank() ? HordeService.resolveDefaultRewardCategoryIconItemId(this.categoryId, safeItems) : iconItemId;
         }
     }
 

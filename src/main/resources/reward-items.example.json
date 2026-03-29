@@ -177,5 +177,14 @@
       "Potion_Regen_Mana_Large",
       "Food_Fish_Raw_Legendary"
     ]
+  },
+  "categoryIcons": {
+    "mithril": "Ingredient_Bar_Mithril",
+    "onyxium": "Ingredient_Bar_Onyxium",
+    "gemas": "Rock_Gem_Diamond",
+    "metales": "Ingredient_Bar_Gold",
+    "materiales_raros": "Ingredient_Voidheart",
+    "armas_especiales": "Weapon_Sword_Runic",
+    "items_especiales": "Potion_Signature_Greater"
   }
 }

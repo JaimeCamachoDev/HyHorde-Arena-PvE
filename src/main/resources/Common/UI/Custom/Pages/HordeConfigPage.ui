@@ -865,7 +865,7 @@ Group {
 
   Panel #SoundsListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -1116,7 +1116,7 @@ Group {
 
   Panel #PlayersListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -1265,7 +1265,7 @@ Group {
 
   Panel #RewardCatListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -1362,49 +1362,79 @@ Group {
   }
 
   $C.@DecoratedContainer #RewardCatEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 704);
     Visible: false;
   }
 
   TextButton #RewardCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 34, Height: 28);
+    Anchor: (Left: 1422, Top: 192, Width: 34, Height: 28);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   Label #RewardCatEditorTitleLabel {
-    Anchor: (Left: 480, Top: 232, Width: 936, Height: 24);
+    Anchor: (Left: 480, Top: 192, Width: 936, Height: 24);
     Text: "Editor de categoria de recompensa";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
-  TextButton #RewardCatSaveButton { Anchor: (Left: 480, Top: 264, Width: 960, Height: 34); Text: "Guardar categoria"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
   TextField #RewardCatSelected { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
-  Label #RewardCatEditIdLabel { Anchor: (Left: 480, Top: 306, Width: 960, Height: 16); Text: "Categoria ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #RewardCatEditId { @Anchor = (Left: 480, Top: 328, Width: 960); Value: ""; }
-  Label #RewardCatItemPickerLabel { Anchor: (Left: 480, Top: 370, Width: 960, Height: 16); Text: "Reward item ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #RewardCatItemPicker { @Anchor = (Left: 480, Top: 392, Width: 960, Height: 34); Value: ""; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  TextButton #RewardCatItemAddButton { Anchor: (Left: 480, Top: 434, Width: 960, Height: 34); Text: "Anadir"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  Label #RewardCatEditItemsLabel { Anchor: (Left: 480, Top: 476, Width: 960, Height: 16); Text: "Items en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
+  Label #RewardCatEditIdLabel { Anchor: (Left: 480, Top: 248, Width: 960, Height: 16); Text: "Categoria ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #RewardCatEditId { @Anchor = (Left: 480, Top: 270, Width: 960); Value: ""; }
+  $C.@TextField #RewardCatEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Ingredient_Bar_Gold"; Visible: false; }
+  Label #RewardCatIconSelectorLabel { Anchor: (Left: 480, Top: 314, Width: 960, Height: 16); Text: "Icono de categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #RewardCatIconSelectorCard { Anchor: (Left: 480, Top: 336, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
+  ItemIcon #RewardCatEditIconPreview { Anchor: (Left: 492, Top: 346, Width: 52, Height: 52); Visible: false; }
+  Label #RewardCatEditIconCurrentLabel { Anchor: (Left: 556, Top: 360, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+  TextButton #RewardCatIconPickerOpenButton { Anchor: (Left: 1192, Top: 352, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #RewardCatItemPickerLabel { Anchor: (Left: 480, Top: 420, Width: 960, Height: 16); Text: "Reward item ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #RewardCatItemPicker { @Anchor = (Left: 480, Top: 442, Width: 700, Height: 34); Value: ""; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 700); }
+  TextButton #RewardCatItemAddButton { Anchor: (Left: 1192, Top: 442, Width: 248, Height: 34); Text: "Anadir item"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #RewardCatEditItemsLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 16); Text: "Items en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #RewardCatItemsListInset { Anchor: (Left: 480, Top: 508, Width: 960, Height: 248); Background: #000000(0); Visible: false; }
+  Panel #RewardCatItemsRowsList { Anchor: (Left: 492, Top: 516, Width: 936, Height: 232); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Padding: (Top: 8, Left: 10, Right: 10, Bottom: 8); Background: #000000(0); Visible: false; }
+  Label #RewardCatItemsEmptyLabel { Anchor: (Left: 492, Top: 620, Width: 936, Height: 22); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
   $C.@TextField #RewardCatEditItems { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; }
-  Panel #RewardCatItemRow1 { Anchor: (Left: 480, Top: 498, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName1 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete1 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow2 { Anchor: (Left: 480, Top: 526, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName2 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete2 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow3 { Anchor: (Left: 480, Top: 554, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName3 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete3 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow4 { Anchor: (Left: 480, Top: 582, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName4 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete4 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow5 { Anchor: (Left: 480, Top: 610, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName5 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete5 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow6 { Anchor: (Left: 480, Top: 638, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName6 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete6 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow7 { Anchor: (Left: 480, Top: 666, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName7 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete7 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow8 { Anchor: (Left: 480, Top: 694, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName8 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete8 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow9 { Anchor: (Left: 480, Top: 722, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName9 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete9 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  Panel #RewardCatItemRow10 { Anchor: (Left: 480, Top: 750, Width: 960, Height: 26); Background: #000000(0); Visible: false; Label #RewardCatItemName10 { Anchor: (Left: 8, Top: 3, Width: 914, Height: 20); Text: ""; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); } TextButton #RewardCatItemDelete10 { Anchor: (Left: 928, Top: 1, Width: 30, Height: 24); Text: "X"; Style: $C.@CancelTextButtonStyle; } }
-  TextButton #RewardCatItemsPagePrevButton { Anchor: (Left: 888, Top: 780, Width: 32, Height: 28); Text: "<"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  Label #RewardCatItemsPageLabel { Anchor: (Left: 924, Top: 782, Width: 104, Height: 24); Text: "0/0"; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  TextButton #RewardCatItemsPageNextButton { Anchor: (Left: 1032, Top: 780, Width: 32, Height: 28); Text: ">"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #RewardCatItemsOverflowLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
-  Label #RewardCatEditItemsHelpLabel { Anchor: (Left: 480, Top: 732, Width: 960, Height: 28); Text: "Usa desplegable para anadir item IDs"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
-  Label #RewardCatStatusLabel { Anchor: (Left: 480, Top: 770, Width: 960, Height: 40); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
+  Label #RewardCatEditItemsHelpLabel { Anchor: (Left: 480, Top: 758, Width: 960, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  TextButton #RewardCatSaveButton { Anchor: (Left: 480, Top: 792, Width: 960, Height: 34); Text: "Guardar categoria"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
+  Label #RewardCatStatusLabel { Anchor: (Left: 480, Top: 840, Width: 960, Height: 30); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
+
+  Panel #RewardCatIconPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.62);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #RewardCatIconPickerFrame {
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
+    Visible: false;
+  }
+
+  TextButton #RewardCatIconPickerCloseButton {
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #RewardCatIconPickerTitleLabel {
+    Anchor: (Left: 580, Top: 300, Width: 752, Height: 24);
+    Text: "Selecciona un icono";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #RewardCatIconPickerGrid {
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 336);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
+  }
 
   Label #RewardEveryRoundsLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   $C.@NumberField #RewardEveryRounds { @Anchor = (Left: 0, Top: 0, Width: 1); Value: 2; Visible: false; }
@@ -1443,7 +1473,7 @@ Group {
 
   Panel #EnemyCatListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -1674,7 +1704,7 @@ Group {
   TextButton #EnemyCatRoleAddButton { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "Anadir"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   TextButton #EnemyCatEnemyPickerOpenButton { Anchor: (Left: 480, Top: 442, Width: 960, Height: 34); Text: "Anadir enemigo"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #EnemyCatEditRolesLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 16); Text: "Enemy IDs en categoria"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  Panel #EnemyCatRolesListInset { Anchor: (Left: 480, Top: 508, Width: 960, Height: 248); Background: #122238(0.92); Visible: false; }
+  Panel #EnemyCatRolesListInset { Anchor: (Left: 480, Top: 508, Width: 960, Height: 248); Background: #000000(0); Visible: false; }
   Panel #EnemyCatRolesRowsList { Anchor: (Left: 492, Top: 516, Width: 936, Height: 232); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Padding: (Top: 8, Left: 10, Right: 10, Bottom: 8); Background: #000000(0); Visible: false; }
   Label #EnemyCatRolesEmptyLabel { Anchor: (Left: 492, Top: 620, Width: 936, Height: 22); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
   $C.@TextField #EnemyCatEditRoles { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; }
@@ -1798,7 +1828,7 @@ Group {
 
   Panel #HordeListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -1994,7 +2024,7 @@ Group {
   }
 
   $C.@DecoratedContainer #HordeEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
     Visible: false;
   }
 
@@ -2013,34 +2043,75 @@ Group {
   }
 
   TextButton #HordeSaveButton {
-    Anchor: (Left: 480, Top: 264, Width: 960, Height: 34);
+    Anchor: (Left: 480, Top: 758, Width: 960, Height: 34);
     Text: "Guardar horda";
     Visible: false;
     Style: $C.@SecondaryTextButtonStyle;
   }
 
-  Label #HordeEditIdLabel { Anchor: (Left: 480, Top: 306, Width: 960, Height: 16); Text: "Horde ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #HordeEditId { @Anchor = (Left: 480, Top: 328, Width: 960); Value: ""; }
+  Label #HordeEditIdLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Horde ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #HordeEditId { @Anchor = (Left: 480, Top: 312, Width: 960); Value: ""; }
+  $C.@TextField #HordeEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Ingredient_Bar_Gold"; Visible: false; }
 
-  Label #RoleLabel { Anchor: (Left: 480, Top: 370, Width: 960, Height: 16); Text: "Categoria de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #EnemyType { @Anchor = (Left: 480, Top: 392, Width: 960, Height: 34); Value: "undead"; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 430, Width: 960, Height: 20); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
-  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 454, Width: 960, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 476, Width: 960); Value: "12.0"; Visible: false; }
-  Label #RoundLabel { Anchor: (Left: 480, Top: 518, Width: 960, Height: 16); Text: "Cantidad de rondas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #Rounds { @Anchor = (Left: 480, Top: 540, Width: 960); Value: "5"; Visible: false; }
-  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 582, Width: 960, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 604, Width: 960); Value: "8"; Visible: false; }
-  Label #EnemiesPerRoundLabel { Anchor: (Left: 480, Top: 646, Width: 960, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 480, Top: 668, Width: 960); Value: "2"; Visible: false; }
-  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 710, Width: 960, Height: 16); Text: "Tiempo de espera entre rondas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 732, Width: 960); Value: "8"; Visible: false; }
+  Label #HordeIconSelectorLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Icono de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #HordeIconSelectorCard { Anchor: (Left: 480, Top: 378, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
+  ItemIcon #HordeEditIconPreview { Anchor: (Left: 492, Top: 388, Width: 52, Height: 52); Visible: false; }
+  Label #HordeEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+  TextButton #HordeIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+
+  Label #RoleLabel { Anchor: (Left: 480, Top: 464, Width: 960, Height: 16); Text: "Categoria de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #EnemyType { @Anchor = (Left: 480, Top: 486, Width: 960, Height: 34); Value: "undead"; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
+  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 524, Width: 960, Height: 16); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 540, Width: 468, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 562, Width: 468); Value: "12.0"; Visible: false; }
+  Label #RoundLabel { Anchor: (Left: 972, Top: 540, Width: 468, Height: 16); Text: "Cantidad de rondas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #Rounds { @Anchor = (Left: 972, Top: 562, Width: 468); Value: "5"; Visible: false; }
+  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 614, Width: 468, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 636, Width: 468); Value: "8"; Visible: false; }
+  Label #EnemiesPerRoundLabel { Anchor: (Left: 972, Top: 614, Width: 468, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 972, Top: 636, Width: 468); Value: "2"; Visible: false; }
+  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 688, Width: 960, Height: 16); Text: "Tiempo de espera entre rondas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 710, Width: 960); Value: "8"; Visible: false; }
 
   Label #HordeStatusLabel {
-    Anchor: (Left: 480, Top: 756, Width: 960, Height: 40);
+    Anchor: (Left: 480, Top: 804, Width: 960, Height: 24);
     Text: "";
     Visible: false;
     Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Panel #HordeIconPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.62);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #HordeIconPickerFrame {
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
+    Visible: false;
+  }
+
+  TextButton #HordeIconPickerCloseButton {
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #HordeIconPickerTitleLabel {
+    Anchor: (Left: 580, Top: 300, Width: 752, Height: 24);
+    Text: "Selecciona un icono";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #HordeIconPickerGrid {
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 336);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
   }
 
   Label #BossesTitleLabel {
@@ -2059,7 +2130,7 @@ Group {
 
   Panel #BossListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 
@@ -2325,7 +2396,7 @@ Group {
   }
 
   $C.@DecoratedContainer #BossEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
     Visible: false;
   }
 
@@ -2344,50 +2415,126 @@ Group {
   }
 
   Label #BossSelectedLabel {
-    Anchor: (Left: 480, Top: 266, Width: 180, Height: 22);
+    Anchor: (Left: 0, Top: 0, Width: 1, Height: 1);
     Text: "Boss seleccionado";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center);
+    Style: (FontSize: 1, TextColor: #000000(0));
   }
 
   TextField #BossSelected {
-    Anchor: (Left: 668, Top: 262, Width: 772, Height: 30);
+    Anchor: (Left: 0, Top: 0, Width: 1, Height: 1);
     Value: "";
     Visible: false;
-    Style: (FontSize: 12, TextColor: #9cb4d1);
-    Padding: (Left: 8);
-    Background: #0f1825;
+    Style: (FontSize: 1, TextColor: #000000(0));
+    Padding: (Left: 0);
+    Background: #000000(0);
   }
 
-  Label #BossEditNameLabel { Anchor: (Left: 480, Top: 306, Width: 960, Height: 16); Text: "Boss ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditName { @Anchor = (Left: 480, Top: 328, Width: 960); Value: ""; }
-  Label #BossEditAmountLabel { Anchor: (Left: 480, Top: 366, Width: 960, Height: 16); Text: "Cantidad"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditAmount { @Anchor = (Left: 480, Top: 388, Width: 960); Value: "1"; }
-  Label #BossEditNpcIdLabel { Anchor: (Left: 480, Top: 426, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #BossEditNpcId { @Anchor = (Left: 480, Top: 448, Width: 960, Height: 34); Value: ""; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #BossEditTierLabel { Anchor: (Left: 480, Top: 486, Width: 960, Height: 16); Text: "Tier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@DropdownBox #BossEditTier { @Anchor = (Left: 480, Top: 508, Width: 960, Height: 34); Value: "common"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #BossEditHpLabel { Anchor: (Left: 480, Top: 546, Width: 960, Height: 16); Text: "HP multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditHp { @Anchor = (Left: 480, Top: 568, Width: 960); Value: "1"; }
-  Label #BossEditDamageLabel { Anchor: (Left: 480, Top: 606, Width: 960, Height: 16); Text: "Damage multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditDamage { @Anchor = (Left: 480, Top: 628, Width: 960); Value: "1"; }
-  Label #BossEditSizeLabel { Anchor: (Left: 480, Top: 666, Width: 960, Height: 16); Text: "Size multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditSize { @Anchor = (Left: 480, Top: 688, Width: 960); Value: "1"; }
-  Label #BossEditAttackRateLabel { Anchor: (Left: 480, Top: 726, Width: 960, Height: 16); Text: "Attack rate x"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center); }
-  $C.@TextField #BossEditAttackRate { @Anchor = (Left: 480, Top: 748, Width: 960); Value: "1"; }
+  Label #BossEditNameLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Boss ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditName { @Anchor = (Left: 480, Top: 312, Width: 960); Value: ""; }
+  Label #BossEditNpcIdLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "Enemy ID"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
+  $C.@DropdownBox #BossEditNpcId { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 1); }
+  $C.@TextField #BossEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Ingredient_Bar_Gold"; Visible: false; }
+  Label #BossIconSelectorLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Icono"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #BossIconSelectorCard { Anchor: (Left: 480, Top: 378, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
+  ItemIcon #BossEditIconPreview { Anchor: (Left: 492, Top: 388, Width: 52, Height: 52); Visible: false; }
+  Label #BossEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+  TextButton #BossIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #BossEditTierLabel { Anchor: (Left: 480, Top: 464, Width: 960, Height: 16); Text: "Tier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #BossEditTier { @Anchor = (Left: 480, Top: 486, Width: 960, Height: 34); Value: "common"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
+  Label #BossEnemyPickerLabel { Anchor: (Left: 480, Top: 530, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  TextButton #BossEnemyPickerOpenButton { Anchor: (Left: 480, Top: 552, Width: 960, Height: 34); Text: "Elegir Enemy ID"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  Label #BossEditAmountLabel { Anchor: (Left: 480, Top: 596, Width: 304, Height: 16); Text: "Cantidad"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditAmount { @Anchor = (Left: 480, Top: 618, Width: 304); Value: "1"; }
+  Label #BossEditHpLabel { Anchor: (Left: 808, Top: 596, Width: 304, Height: 16); Text: "HP multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditHp { @Anchor = (Left: 808, Top: 618, Width: 304); Value: "1"; }
+  Label #BossEditDamageLabel { Anchor: (Left: 1136, Top: 596, Width: 304, Height: 16); Text: "Damage multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditDamage { @Anchor = (Left: 1136, Top: 618, Width: 304); Value: "1"; }
+  Label #BossEditSizeLabel { Anchor: (Left: 480, Top: 662, Width: 468, Height: 16); Text: "Size multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditSize { @Anchor = (Left: 480, Top: 684, Width: 468); Value: "1"; }
+  Label #BossEditAttackRateLabel { Anchor: (Left: 972, Top: 662, Width: 468, Height: 16); Text: "Attack rate x"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BossEditAttackRate { @Anchor = (Left: 972, Top: 684, Width: 468); Value: "1"; }
 
   TextButton #BossSaveButton {
-    Anchor: (Left: 480, Top: 264, Width: 960, Height: 34);
+    Anchor: (Left: 480, Top: 758, Width: 960, Height: 34);
     Text: "Guardar boss";
     Visible: false;
     Style: $C.@SecondaryTextButtonStyle;
   }
 
   Label #BossStatusLabel {
-    Anchor: (Left: 480, Top: 722, Width: 960, Height: 56);
+    Anchor: (Left: 480, Top: 804, Width: 960, Height: 24);
     Text: "";
     Visible: false;
     Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center);
+  }
+
+  Panel #BossIconPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.62);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #BossIconPickerFrame {
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
+    Visible: false;
+  }
+
+  TextButton #BossIconPickerCloseButton {
+    Anchor: (Left: 1338, Top: 300, Width: 34, Height: 28);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #BossIconPickerTitleLabel {
+    Anchor: (Left: 580, Top: 300, Width: 752, Height: 24);
+    Text: "Selecciona un icono";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #BossIconPickerGrid {
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 336);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 4, Right: 2, Bottom: 4);
+    Background: #000000(0);
+    Visible: false;
+  }
+
+  Panel #BossEnemyPickerShade {
+    Anchor: (Full: 0);
+    Background: #02060f(0.52);
+    Visible: false;
+  }
+
+  $C.@DecoratedContainer #BossEnemyPickerFrame {
+    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Visible: false;
+  }
+
+  TextButton #BossEnemyPickerCloseButton {
+    Anchor: (Left: 1450, Top: 132, Width: 34, Height: 28);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+
+  Label #BossEnemyPickerTitleLabel {
+    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Text: "Selecciona Enemy IDs";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  Panel #BossEnemyPickerGrid {
+    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
+    Background: #000000(0);
+    Visible: false;
   }
 
   Label #ArenasTitleLabel {
@@ -2406,13 +2553,13 @@ Group {
 
   Panel #ArenaListBackdrop {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #0a1421(0.95);
+    Background: #000000(0);
     Visible: false;
   }
 
   Panel #ArenaListInset {
     Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
-    Background: #122238(0.92);
+    Background: #000000(0);
     Visible: false;
   }
 

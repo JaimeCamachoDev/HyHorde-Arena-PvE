@@ -28,6 +28,7 @@ final class BossArenaCatalogService {
     private static final int MAX_NOTIFICATION_RADIUS = 500;
     private static final int DEFAULT_NOTIFICATION_RADIUS = 100;
     private static final String DEFAULT_ARENA_ICON_ITEM_ID = "Ingredient_Bar_Gold";
+    private static final String DEFAULT_BOSS_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private static final int MAX_LEVEL_OVERRIDE = 300;
     private static final Set<String> BOSS_SPAWN_TRIGGERS = Set.of("before_boss", "on_spawn", "after_spawn_seconds", "since_last_wave", "boss_hp_percent");
     private static final List<String> BOSS_TIER_OPTIONS = List.of("common", "uncommon", "rare", "epic", "legendary");
@@ -121,6 +122,10 @@ final class BossArenaCatalogService {
         target.bossId = requested;
         target.npcId = BossArenaCatalogService.clean(BossArenaCatalogService.firstNonBlank(values.get("bossEditNpcId"), target.npcId));
         target.tier = BossArenaCatalogService.normalizeTier(BossArenaCatalogService.firstNonBlank(values.get("bossEditTier"), target.tier));
+        target.iconItemId = BossArenaCatalogService.clean(BossArenaCatalogService.firstNonBlank(values.get("bossEditIconItemId"), target.iconItemId, DEFAULT_BOSS_ICON_ITEM_ID));
+        if (target.iconItemId.isBlank()) {
+            target.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
+        }
         if (target.npcId.isBlank()) {
             return HordeService.OperationResult.fail(english ? "NPC ID is required." : "El NPC ID es obligatorio.");
         }
@@ -472,6 +477,7 @@ final class BossArenaCatalogService {
         final String bossId;
         final String npcId;
         final String tier;
+        final String iconItemId;
         final int amount;
         final int levelOverride;
         final double lootRadius;
@@ -486,10 +492,11 @@ final class BossArenaCatalogService {
         final double timedProximityRadius;
         final int timedProximityCooldownSeconds;
 
-        private BossDefinitionSnapshot(String bossId, String npcId, String tier, int amount, int levelOverride, double lootRadius, ScalersSnapshot modifiers, ScalersSnapshot perPlayerIncrease, String bossSpawnTrigger, double bossSpawnTriggerValue, boolean useRandomSpawnLocations, double randomSpawnRadius, boolean timedProximityEnabled, String timedProximityArenaId, double timedProximityRadius, int timedProximityCooldownSeconds) {
+        private BossDefinitionSnapshot(String bossId, String npcId, String tier, String iconItemId, int amount, int levelOverride, double lootRadius, ScalersSnapshot modifiers, ScalersSnapshot perPlayerIncrease, String bossSpawnTrigger, double bossSpawnTriggerValue, boolean useRandomSpawnLocations, double randomSpawnRadius, boolean timedProximityEnabled, String timedProximityArenaId, double timedProximityRadius, int timedProximityCooldownSeconds) {
             this.bossId = bossId;
             this.npcId = npcId;
             this.tier = tier;
+            this.iconItemId = iconItemId;
             this.amount = amount;
             this.levelOverride = levelOverride;
             this.lootRadius = lootRadius;
@@ -507,7 +514,7 @@ final class BossArenaCatalogService {
 
         private static BossDefinitionSnapshot from(BossDefinition source) {
             BossDefinition clean = BossDefinition.sanitize(source);
-            return new BossDefinitionSnapshot(clean.bossId, clean.npcId, clean.tier, clean.amount, clean.levelOverride, clean.lootRadius, ScalersSnapshot.from(clean.modifiers), ScalersSnapshot.from(clean.perPlayerIncrease), clean.bossSpawnTrigger, clean.bossSpawnTriggerValue, clean.useRandomSpawnLocations, clean.randomSpawnRadius, clean.timedProximityEnabled, clean.timedProximityArenaId, clean.timedProximityRadius, clean.timedProximityCooldownSeconds);
+            return new BossDefinitionSnapshot(clean.bossId, clean.npcId, clean.tier, clean.iconItemId, clean.amount, clean.levelOverride, clean.lootRadius, ScalersSnapshot.from(clean.modifiers), ScalersSnapshot.from(clean.perPlayerIncrease), clean.bossSpawnTrigger, clean.bossSpawnTriggerValue, clean.useRandomSpawnLocations, clean.randomSpawnRadius, clean.timedProximityEnabled, clean.timedProximityArenaId, clean.timedProximityRadius, clean.timedProximityCooldownSeconds);
         }
     }
 
@@ -581,6 +588,7 @@ final class BossArenaCatalogService {
         private String bossId;
         private String npcId;
         private String tier;
+        private String iconItemId;
         private int amount;
         private int levelOverride;
         private double lootRadius;
@@ -600,6 +608,7 @@ final class BossArenaCatalogService {
             row.bossId = BossArenaCatalogService.clean(bossId);
             row.npcId = "enemy";
             row.tier = "common";
+            row.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
             row.amount = 1;
             row.levelOverride = 0;
             row.lootRadius = 24.0;
@@ -621,6 +630,7 @@ final class BossArenaCatalogService {
             copy.bossId = this.bossId;
             copy.npcId = this.npcId;
             copy.tier = this.tier;
+            copy.iconItemId = this.iconItemId;
             copy.amount = this.amount;
             copy.levelOverride = this.levelOverride;
             copy.lootRadius = this.lootRadius;
@@ -645,6 +655,10 @@ final class BossArenaCatalogService {
             clean.bossId = BossArenaCatalogService.clean(clean.bossId);
             clean.npcId = BossArenaCatalogService.clean(clean.npcId);
             clean.tier = BossArenaCatalogService.normalizeTier(clean.tier);
+            clean.iconItemId = BossArenaCatalogService.clean(clean.iconItemId);
+            if (clean.iconItemId.isBlank()) {
+                clean.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
+            }
             clean.amount = BossArenaCatalogService.clamp(clean.amount, 1, 250);
             clean.levelOverride = BossArenaCatalogService.clamp(clean.levelOverride, 0, MAX_LEVEL_OVERRIDE);
             clean.lootRadius = BossArenaCatalogService.clamp(clean.lootRadius, 0.0, 4096.0);
