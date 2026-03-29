@@ -42,6 +42,11 @@ Group #HordeArenaRow {
     Background: #000000(0);
   }
 
+  $C.@DefaultSpinner #ArenaFaceSpinner {
+    Anchor: (Left: 21, Top: 15, Width: 32, Height: 32);
+    Visible: false;
+  }
+
   TextButton #ArenaIconButton {
     Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
     Text: "";

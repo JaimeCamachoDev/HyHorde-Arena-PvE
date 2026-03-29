@@ -399,7 +399,7 @@ public final class HordeI18n {
         map.put("Player audience definitions", "Definicoes de audiencia de jogadores");
         map.put("Player editor", "Editor de jogador");
         map.put("Player deaths", "Mortes de jogadores");
-        map.put("Quick guide for Horde PVE Config (v1.4.0)", "Guia rapida para Horde PVE Config (v1.4.0)");
+        map.put("Quick guide for Horde PVE Config (v1.5.0)", "Guia rapida para Horde PVE Config (v1.5.0)");
         map.put("Refresh players", "Atualizar jogadores");
         map.put("Reload and deployment", "Recarga e deploy");
         map.put("Reward category definitions", "Definicoes de categorias de recompensa");
@@ -711,7 +711,7 @@ public final class HordeI18n {
         map.put("Player audience definitions", "Definitions d audience des joueurs");
         map.put("Player editor", "Editeur de joueur");
         map.put("Player deaths", "Morts des joueurs");
-        map.put("Quick guide for Horde PVE Config (v1.4.0)", "Guide rapide pour Horde PVE Config (v1.4.0)");
+        map.put("Quick guide for Horde PVE Config (v1.5.0)", "Guide rapide pour Horde PVE Config (v1.5.0)");
         map.put("Refresh players", "Actualiser joueurs");
         map.put("Reload and deployment", "Rechargement et deploiement");
         map.put("Reward category definitions", "Definitions de categories de recompense");
@@ -1023,7 +1023,7 @@ public final class HordeI18n {
         map.put("Player audience definitions", "Publikumsdefinitionen fur Spieler");
         map.put("Player editor", "Spieler-Editor");
         map.put("Player deaths", "Spieler-Tode");
-        map.put("Quick guide for Horde PVE Config (v1.4.0)", "Kurzanleitung fur Horde PVE Config (v1.4.0)");
+        map.put("Quick guide for Horde PVE Config (v1.5.0)", "Kurzanleitung fur Horde PVE Config (v1.5.0)");
         map.put("Refresh players", "Spieler aktualisieren");
         map.put("Reload and deployment", "Reload und Deployment");
         map.put("Reward category definitions", "Belohnungskategorie-Definitionen");

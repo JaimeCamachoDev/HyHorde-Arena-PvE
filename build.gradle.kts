@@ -7,7 +7,7 @@ plugins {
 }
 
 group = (findProperty("maven_group") as String? ?: "com.hyhorde.arenapve")
-version = (findProperty("version") as String? ?: "1.4.0")
+version = (findProperty("version") as String? ?: "1.5.0")
 
 val javaVersion = (findProperty("java_version") as String? ?: "25").toInt()
 val patchline = (findProperty("patchline") as String? ?: "release")
