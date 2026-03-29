@@ -20,6 +20,24 @@ Solucion aplicada:
 - Quitar `Min/Max/Step` del `NumberField`.
 - Validar rango en Java (clamp en `HordeConfigPage`/`HordeService`) al leer/guardar.
 
+## Error actual (2026-03-29 - apertura del mod con `hordeconfig`)
+
+Firma en cliente (`C:\Users\Jaime\AppData\Roaming\Hytale\UserData\Logs\2026-03-29_12-08-22_client.log`):
+
+- `CustomUI Set command couldn't set value. Selector: #ArenaJoinRadius.Value`
+- `Failed to convert JSON value (String) to specified type (Int32)`
+
+Causa:
+
+- `#ArenaJoinRadius` es `$C.@SliderNumberField` y en esta build valida `Value` como `Int32`.
+- Se estaba enviando string desde Java (`"32.00"`) en `build()`.
+
+Solucion aplicada:
+
+- Enviar entero en el `set`:
+  - `set("#ArenaJoinRadius.Value", arenaJoinRadiusUiValue)`
+- `arenaJoinRadiusUiValue` se calcula con `getDraftInt(...)` + `clamp(4..512)`.
+
 ## Error actual (2026-03-29 - sonidos al abrir categoria)
 
 Firma en cliente (`C:\Users\Jaime\AppData\Roaming\Hytale\UserData\Logs\2026-03-29_12-08-22_client.log`):
@@ -226,6 +244,22 @@ Y tambien:
 - `Skipping pack at <pack>: missing or invalid manifest.json`
 
 Esto es un problema de `manifest.json` de otro pack/mod, no del parser de Custom UI.
+
+Tambien visto (2026-03-29):
+
+- `HyHorde:ArenaPVE: java.lang.StackOverflowError` al abrir el mod.
+- Traza repetida en:
+  - `HordeService.resolveDefaultRewardCategoryIconItemId(...)`
+  - `HordeService.normalizeRewardCategoryIconItemId(...)`
+
+Causa:
+
+- Fallback recursivo circular de iconos de recompensa (si icono invalido -> default -> vuelve a normalize -> default ...).
+
+Regla:
+
+- Evitar fallback circular entre helpers `resolveDefault...` y `normalize...`.
+- `resolveDefault...` debe devolver un valor final validado (sin llamar a `normalize...` del mismo dominio).
 
 ## Reglas de referencia (docs oficiales + repo guia)
 

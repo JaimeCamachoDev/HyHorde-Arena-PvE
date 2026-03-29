@@ -8,6 +8,7 @@ import com.hyhorde.arenapve.commands.HordeCommand;
 import com.hyhorde.arenapve.commands.HordeHelpCommand;
 import com.hyhorde.arenapve.commands.HordePveCommand;
 import com.hyhorde.arenapve.commands.HordeReloadCommand;
+import com.hyhorde.arenapve.commands.HordeTeleportCommand;
 import com.hyhorde.arenapve.horde.HordeBossDamageScalingSystem;
 import com.hyhorde.arenapve.horde.HordeDamageTrackerSystem;
 import com.hyhorde.arenapve.horde.HordeHudSystem;
@@ -40,6 +41,8 @@ extends JavaPlugin {
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("hordepve", "alias legacy de hordeconfig", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("spawnve", "alias legacy de hordeconfig", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordePveCommand("spawnpve", "alias legacy de hordeconfig", this.hordeService));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeTeleportCommand("hordetp", "teletransporta a la arena seleccionada en hordeconfig", this.hordeService));
+        this.getCommandRegistry().registerCommand((AbstractCommand)new HordeTeleportCommand("htp", "alias de hordetp", this.hordeService));
         this.getCommandRegistry().registerCommand((AbstractCommand)new HordeReloadCommand("hordareload", "recarga config/mod de horda", (PluginBase)this, this.hordeService));
     }
 

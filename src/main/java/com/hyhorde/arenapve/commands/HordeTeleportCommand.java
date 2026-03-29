@@ -11,27 +11,21 @@ import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hyhorde.arenapve.horde.HordeService;
 import javax.annotation.Nonnull;
 
-public final class HordeHelpCommand
+public final class HordeTeleportCommand
 extends AbstractPlayerCommand {
     private final HordeService hordeService;
 
-    public HordeHelpCommand(@Nonnull String name, @Nonnull String description, HordeService hordeService) {
+    public HordeTeleportCommand(@Nonnull String name, @Nonnull String description, HordeService hordeService) {
         super(name, description);
         this.hordeService = hordeService;
     }
 
     protected void execute(@Nonnull CommandContext commandContext, @Nonnull Store<EntityStore> store, @Nonnull Ref<EntityStore> ref, @Nonnull PlayerRef playerRef, @Nonnull World world) {
-        this.sendLocalized(playerRef, "[Horde PVE] Help", "[Horda PVE] Ayuda");
-        this.sendLocalized(playerRef, "/hordahelp -> show this help", "/hordahelp -> muestra esta ayuda");
-        this.sendLocalized(playerRef, "/hordeconfig -> open configuration (aliases: /hconfig /hordecfg /hordepve /spawnve /spawnpve)", "/hordeconfig -> abre la configuracion (alias: /hconfig /hordecfg /hordepve /spawnve /spawnpve)");
-        this.sendLocalized(playerRef, "/hordeconfig start | stop | status | logs | setspawn | reload");
-        this.sendLocalized(playerRef, "/hordeconfig enemy <category> | enemytypes", "/hordeconfig enemy <categoria> | tipos");
-        this.sendLocalized(playerRef, "/hordeconfig role <npcRole|auto> | roles", "/hordeconfig role <rolNpc|auto> | roles");
-        this.sendLocalized(playerRef, "/hordeconfig reward <rounds>", "/hordeconfig reward <rondas>");
-        this.sendLocalized(playerRef, "/hordeconfig spectator <on|off> | player", "/hordeconfig spectator <on|off> | jugador");
-        this.sendLocalized(playerRef, "/hordeconfig arearadius <blocks>", "/hordeconfig arearadius <bloques>");
-        this.sendLocalized(playerRef, "/hordetp (alias: /htp) | /hordeconfig tp", "/hordetp (alias: /htp) | /hordeconfig tp");
-        this.sendLocalized(playerRef, "/hordareload [config] (mod/jar requires restart)", "/hordareload [config] (mod/jar requiere reinicio)");
+        if (this.hordeService.isPluginReloadInProgress()) {
+            this.sendLocalized(playerRef, "Plugin reload in progress. Try again in a few seconds.", "Recarga del plugin en progreso. Prueba de nuevo en unos segundos.");
+            return;
+        }
+        this.sendLocalized(playerRef, this.hordeService.teleportPlayerToSelectedArena(playerRef, world).getMessage());
     }
 
     private void sendLocalized(PlayerRef playerRef, String text) {
@@ -48,3 +42,4 @@ extends AbstractPlayerCommand {
         playerRef.sendMessage(Message.raw((String)com.hyhorde.arenapve.horde.HordeI18n.translateUi(this.hordeService.getLanguage(), englishText, spanishText)));
     }
 }
+

@@ -1046,6 +1046,14 @@ public final class HordeService {
         return OperationResult.ok(english ? "You will be locked as PLAYER if you are inside the arena area when the horde starts." : "Quedaras bloqueado como JUGADOR si estas dentro del area de arena al iniciar la horda.");
     }
 
+    public synchronized OperationResult teleportPlayerToSelectedArena(PlayerRef playerRef, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (playerRef == null || playerRef.getUuid() == null) {
+            return OperationResult.fail(english ? "Could not resolve your player identity." : "No se pudo resolver tu identidad de jugador.");
+        }
+        return this.teleportAudiencePlayerToArena(playerRef.getUuid(), this.config.selectedArenaId, world);
+    }
+
     public synchronized List<AudiencePlayerSnapshot> getArenaAudiencePlayers(World world) {
         if (world == null) {
             return List.of();
@@ -1099,6 +1107,54 @@ public final class HordeService {
             return OperationResult.ok("Modo de audiencia para " + username + ": ESPECTADOR.");
         }
         return OperationResult.ok("Modo de audiencia para " + username + ": SALIR.");
+    }
+
+    public synchronized OperationResult teleportAudiencePlayerToArena(UUID playerId, String selectedArenaIdInput, World world) {
+        boolean english = HordeService.isEnglishLanguage(this.config.language);
+        if (playerId == null) {
+            return OperationResult.fail(english ? "Could not resolve target player." : "No se pudo resolver el jugador objetivo.");
+        }
+        if (world == null) {
+            return OperationResult.fail(english ? "Could not resolve active world." : "No se pudo resolver el mundo activo.");
+        }
+        PlayerRef target = this.findPlayerRefById(world, playerId);
+        if (target == null) {
+            String username = this.resolveAudiencePlayerName(world, playerId);
+            return OperationResult.fail(english ? "Player is not in this world: " + username + "." : "El jugador no esta en este mundo: " + username + ".");
+        }
+        String targetArenaId = HordeService.cleanArenaSelectionValue(HordeService.firstNonBlankValue(selectedArenaIdInput, this.config.selectedArenaId));
+        if (targetArenaId.isBlank()) {
+            return OperationResult.fail(english ? "Select an arena in General first." : "Primero selecciona una arena en General.");
+        }
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedArena = HordeService.findArenaById(this.bossArenaCatalogService.getArenaDefinitionsSnapshot(), targetArenaId);
+        if (selectedArena == null) {
+            return OperationResult.fail(english ? "Selected arena was not found: " + targetArenaId + "." : "No se encontro la arena seleccionada: " + targetArenaId + ".");
+        }
+        String arenaWorldName = HordeService.firstNonBlankValue(HordeService.trimToEmpty(selectedArena.worldName), HordeService.trimToEmpty(this.config.worldName), world.getName());
+        if (!arenaWorldName.equalsIgnoreCase(world.getName())) {
+            return OperationResult.fail(english ? "Selected arena belongs to another world (" + arenaWorldName + ")." : "La arena seleccionada pertenece a otro mundo (" + arenaWorldName + ").");
+        }
+        try {
+            Transform current = target.getTransform();
+            Vector3f bodyRotation = current != null && current.getRotation() != null ? new Vector3f(current.getRotation()) : new Vector3f(0.0f, 0.0f, 0.0f);
+            Vector3f headRotation = target.getHeadRotation();
+            if (headRotation == null) {
+                headRotation = new Vector3f(bodyRotation);
+            } else {
+                headRotation = new Vector3f(headRotation);
+            }
+            Transform destination = new Transform(new Vector3d(selectedArena.x, selectedArena.y, selectedArena.z), bodyRotation);
+            target.updatePosition(world, destination, headRotation);
+            String username = this.resolveAudiencePlayerName(world, playerId);
+            if (english) {
+                return OperationResult.ok(String.format(Locale.ROOT, "Teleported %s to arena %s (%.1f, %.1f, %.1f).", username, selectedArena.arenaId, selectedArena.x, selectedArena.y, selectedArena.z));
+            }
+            return OperationResult.ok(String.format(Locale.ROOT, "Teletransportado %s a la arena %s (%.1f, %.1f, %.1f).", username, selectedArena.arenaId, selectedArena.x, selectedArena.y, selectedArena.z));
+        }
+        catch (Exception ex) {
+            this.plugin.getLogger().at(Level.WARNING).log("No se pudo teletransportar jugador a arena seleccionada: %s", (Object)ex.getMessage());
+            return OperationResult.fail(english ? "Could not teleport player to the selected arena." : "No se pudo teletransportar al jugador a la arena seleccionada.");
+        }
     }
 
     public synchronized boolean isSpectatorPreferenceEnabled(PlayerRef playerRef) {
@@ -3966,19 +4022,19 @@ public final class HordeService {
         String normalizedCategory = HordeService.normalizeEnemyType(categoryId);
         switch (normalizedCategory) {
             case "undead":
-                return "Weapon_Sword_Basic";
+                return HordeService.firstUsableIconItemId("Weapon_Sword_Basic", "Weapon_Sword_Iron", "Ingredient_Bar_Iron", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
             case "goblins":
-                return "Tool_Pickaxe_Wood";
+                return HordeService.firstUsableIconItemId("Tool_Pickaxe_Wood", "Tool_Pickaxe_Iron", "Ingredient_Bar_Copper", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
             case "scarak":
-                return "Item_Misc_Mushroom";
+                return HordeService.firstUsableIconItemId("Item_Misc_Mushroom", "Ingredient_Crystal_Yellow", "Ingredient_Bar_Thorium", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
             case "void":
-                return "Potion_Signature_Greater";
+                return HordeService.firstUsableIconItemId("Potion_Signature_Greater", "Ingredient_Crystal_Purple", "Ingredient_Voidheart", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
             case "wild":
-                return "Tool_Hatchet_Wood";
+                return HordeService.firstUsableIconItemId("Tool_Hatchet_Wood", "Tool_Hatchet_Iron", "Ingredient_Leather_Heavy", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
             case "elementals":
-                return "Weapon_Wand_Wood";
+                return HordeService.firstUsableIconItemId("Weapon_Wand_Wood", "Ingredient_Crystal_Blue", "Ingredient_Crystal_Red", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        return DEFAULT_ENEMY_CATEGORY_ICON_ITEM_ID;
+        return HordeService.firstUsableIconItemId(DEFAULT_ENEMY_CATEGORY_ICON_ITEM_ID, DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
     }
 
     private static String normalizeEnemyCategoryIconItemId(String iconItemId, String categoryId) {
@@ -3990,7 +4046,11 @@ public final class HordeService {
         if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
             return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
         }
-        return selected;
+        String normalized = HordeService.normalizeRewardItemId(selected);
+        if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized) || !HordeService.isUsableRewardItemId(normalized, 1)) {
+            return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
+        }
+        return normalized;
     }
 
     private static Map<String, String> sanitizeEnemyCategoryIconMap(Map<String, String> categoryIcons) {
@@ -4014,31 +4074,39 @@ public final class HordeService {
     private static String resolveDefaultRewardCategoryIconItemId(String categoryId, List<String> categoryItems) {
         String normalizedCategory = HordeService.normalizeRewardCategoryKey(categoryId);
         if ("mithril".equals(normalizedCategory)) {
-            return "Ingredient_Bar_Mithril";
+            return HordeService.firstUsableIconItemId("Ingredient_Bar_Mithril", "Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("onyxium".equals(normalizedCategory)) {
-            return "Ingredient_Bar_Onyxium";
+            return HordeService.firstUsableIconItemId("Ingredient_Bar_Onyxium", "Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("metales".equals(normalizedCategory)) {
-            return "Ingredient_Bar_Gold";
+            return HordeService.firstUsableIconItemId("Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("gemas".equals(normalizedCategory)) {
-            return "Rock_Gem_Diamond";
+            return HordeService.firstUsableIconItemId("Rock_Gem_Diamond", "Ingredient_Crystal_Blue", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("materiales_raros".equals(normalizedCategory)) {
-            return "Ingredient_Voidheart";
+            return HordeService.firstUsableIconItemId("Ingredient_Voidheart", "Ingredient_Bar_Thorium", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("armas_especiales".equals(normalizedCategory)) {
-            return "Weapon_Sword_Runic";
+            return HordeService.firstUsableIconItemId("Weapon_Sword_Runic", "Weapon_Sword_Iron", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         if ("items_especiales".equals(normalizedCategory)) {
-            return "Potion_Signature_Greater";
+            return HordeService.firstUsableIconItemId("Potion_Signature_Greater", "Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         List<String> cleanedItems = HordeService.sanitizeRoleIdList(categoryItems);
         if (!cleanedItems.isEmpty()) {
-            return HordeService.normalizeRewardCategoryIconItemId(cleanedItems.get(0), normalizedCategory, cleanedItems);
+            for (String itemId : cleanedItems) {
+                String normalizedItemId = HordeService.normalizeRewardItemId(itemId);
+                if (normalizedItemId.isBlank() || HordeService.isRandomRewardMode(normalizedItemId)) {
+                    continue;
+                }
+                if (HordeService.isUsableRewardItemId(normalizedItemId, 1)) {
+                    return normalizedItemId;
+                }
+            }
         }
-        return DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID;
+        return HordeService.firstUsableIconItemId(DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID, "Ingredient_Bar_Gold");
     }
 
     private static String normalizeRewardCategoryIconItemId(String iconItemId, String categoryId, List<String> categoryItems) {
@@ -4050,7 +4118,30 @@ public final class HordeService {
         if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
             return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
         }
-        return selected;
+        String normalized = HordeService.normalizeRewardItemId(selected);
+        if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized) || !HordeService.isUsableRewardItemId(normalized, 1)) {
+            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+        }
+        return normalized;
+    }
+
+    private static String firstUsableIconItemId(String ... candidates) {
+        if (candidates != null) {
+            for (String candidate : candidates) {
+                String normalized = HordeService.normalizeRewardItemId(candidate);
+                if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                    continue;
+                }
+                if (HordeService.isUsableRewardItemId(normalized, 1)) {
+                    return normalized;
+                }
+            }
+        }
+        String guaranteed = HordeService.resolveGuaranteedRewardTestItemId(1);
+        if (!guaranteed.isBlank()) {
+            return guaranteed;
+        }
+        return "Ingredient_Bar_Gold";
     }
 
     private static Map<String, String> sanitizeRewardCategoryIconMap(Map<String, String> categoryIcons) {

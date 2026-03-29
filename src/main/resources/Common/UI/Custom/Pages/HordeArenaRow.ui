@@ -36,6 +36,12 @@ Group #HordeArenaRow {
     Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
   }
 
+  AssetImage #ArenaFacePreview {
+    Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
+    Visible: false;
+    Background: #000000(0);
+  }
+
   TextButton #ArenaIconButton {
     Anchor: (Left: 12, Top: 6, Width: 50, Height: 50);
     Text: "";

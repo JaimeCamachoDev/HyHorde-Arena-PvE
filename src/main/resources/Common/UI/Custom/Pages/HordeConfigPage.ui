@@ -1076,8 +1076,32 @@ Group {
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
+  TabNavigation #SoundsPickerCategoryTabs {
+    Anchor: (Left: 468, Top: 170, Width: 516, Height: 34);
+    Style: $C.@HeaderTabsStyle;
+    SelectedTab: "all";
+    Visible: false;
+    TabButton #SoundsPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
+    TabButton #SoundsPickerTabStartButton { Id: "start"; Icon: "../Icons/ItemCategories/Build-Roofs.png"; TooltipText: "Inicio"; }
+    TabButton #SoundsPickerTabVictoryButton { Id: "victory"; Icon: "../Icons/ItemCategories/Natural-Fire.png"; TooltipText: "Victoria"; }
+    TabButton #SoundsPickerTabDefeatButton { Id: "defeat"; Icon: "../Icons/ItemCategories/Misc.png"; TooltipText: "Derrota"; }
+    TabButton #SoundsPickerTabUiButton { Id: "ui"; Icon: "../Icons/ItemCategories/Items-Tools.png"; TooltipText: "UI"; }
+  }
+
+  $C.@HeaderSearch #SoundsPickerSearch {
+    Anchor: (Left: 1002, Top: 170, Width: 450, Height: 34);
+    Visible: false;
+  }
+
+  Label #SoundsPickerStatusLabel {
+    Anchor: (Left: 468, Top: 210, Width: 984, Height: 16);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 11, TextColor: #9cb4d1, VerticalAlignment: Center);
+  }
+
   Panel #SoundsPickerGrid {
-    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    Anchor: (Left: 468, Top: 232, Width: 984, Height: 660);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
@@ -1260,6 +1284,11 @@ Group {
     Background: #000000(0);
     Visible: false;
   }
+  AssetImage #PlayerCharacterFacePreview {
+    Anchor: (Left: 492, Top: 302, Width: 72, Height: 72);
+    Background: #000000(0);
+    Visible: false;
+  }
   TextButton #PlayerIconPickerOpenButton {
     Anchor: (Left: 492, Top: 302, Width: 72, Height: 72);
     Text: "";
@@ -1293,14 +1322,14 @@ Group {
 
   Label #PlayerEditModeLabel { Anchor: (Left: 480, Top: 414, Width: 960, Height: 16); Text: "Modo de audiencia"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@DropdownBox #PlayerEditMode { @Anchor = (Left: 480, Top: 436, Width: 960, Height: 34); Value: "player"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #ArenaJoinRadiusLabel { Anchor: (Left: 480, Top: 488, Width: 960, Height: 16); Text: "Radio de jugadores de arena"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@SliderNumberField #ArenaJoinRadius { @Anchor = (Left: 480, Top: 510, Width: 960); Value: 32.0; Visible: false; Min: 4.0; Max: 512.0; Step: 1.0; NumberFieldStyle: $C.@DefaultInputFieldStyle; }
+  Label #ArenaJoinRadiusLabel { Anchor: (Left: 456, Top: 514, Width: 500, Height: 22); Text: "Radio global de jugadores de arena"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
+  $C.@SliderNumberField #ArenaJoinRadius { @Anchor = (Left: 456, Top: 542, Width: 500); Value: 32.0; Visible: false; Min: 4.0; Max: 512.0; Step: 1.0; NumberFieldStyle: $C.@DefaultInputFieldStyle; }
   Label #PlayersCountLabel { Anchor: (Left: 480, Top: 576, Width: 220, Height: 20); Text: "Detectados"; Visible: false; Style: (FontSize: 13, TextColor: #a9bed9, RenderBold: true, VerticalAlignment: Center); }
   Label #PlayersCountValue { Anchor: (Left: 708, Top: 576, Width: 732, Height: 20); Text: "0"; Visible: false; Style: (FontSize: 13, TextColor: #f1f7ff, RenderBold: true, VerticalAlignment: Center); }
   Label #AudienceInfoLabel { Anchor: (Left: 480, Top: 608, Width: 960, Height: 20); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #b5c7df, VerticalAlignment: Center); }
   Label #AudienceHelpLabel { Anchor: (Left: 480, Top: 636, Width: 960, Height: 36); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
-  TextButton #PlayersSaveButton { Anchor: (Left: 480, Top: 758, Width: 960, Height: 34); Text: "Guardar modo jugador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
-  Label #PlayerStatusLabel { Anchor: (Left: 480, Top: 804, Width: 960, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
+  TextButton #PlayersSaveButton { Anchor: (Left: 480, Top: 620, Width: 960, Height: 34); Text: "Guardar modo jugador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
+  Label #PlayerStatusLabel { Anchor: (Left: 480, Top: 678, Width: 960, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
 
   TextField #PlayerSelected { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   TextField #PlayerEditIconItemId { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Value: "Ingredient_Bar_Gold"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }

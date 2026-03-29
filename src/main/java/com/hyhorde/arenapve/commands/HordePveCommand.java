@@ -122,6 +122,13 @@ extends AbstractPlayerCommand {
                 this.handleArenaRadius(value, playerRef);
                 return;
             }
+            case "tp":
+            case "teleport":
+            case "tparena":
+            case "arena_tp": {
+                this.handleTeleportToSelectedArena(playerRef, world);
+                return;
+            }
             default: {
                 this.sendLocalized(playerRef, "Invalid subcommand: " + action + ". Use /hordahelp.", "Subcomando no valido: " + action + ". Usa /hordahelp.");
             }
@@ -241,6 +248,10 @@ extends AbstractPlayerCommand {
             return;
         }
         this.sendLocalized(playerRef, this.hordeService.setArenaJoinRadius(radius).getMessage());
+    }
+
+    private void handleTeleportToSelectedArena(PlayerRef playerRef, World world) {
+        this.sendLocalized(playerRef, this.hordeService.teleportPlayerToSelectedArena(playerRef, world).getMessage());
     }
 
     private void sendLocalized(PlayerRef playerRef, String text) {
