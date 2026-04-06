@@ -954,7 +954,7 @@ Group {
   }
 
   TextButton #SoundsEditorCloseButton {
-    Anchor: (Left: 1422, Top: 200, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 200, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1063,7 +1063,7 @@ Group {
   }
 
   TextButton #SoundsPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1164,13 +1164,13 @@ Group {
   Label #AudienceInfoLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
 
   Panel #PlayersListInset {
-    Anchor: (Left: 456, Top: 274, Width: 1008, Height: 618);
+    Anchor: (Left: 456, Top: 274, Width: 1008, Height: 560);
     Background: #000000(0);
     Visible: false;
   }
 
   Panel #PlayersRowsList {
-    Anchor: (Left: 468, Top: 286, Width: 984, Height: 594);
+    Anchor: (Left: 468, Top: 286, Width: 984, Height: 536);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 12, Right: 12, Bottom: 10);
@@ -1267,7 +1267,7 @@ Group {
   }
 
   TextButton #PlayersEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1353,7 +1353,7 @@ Group {
   }
 
   TextButton #PlayerIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1516,7 +1516,7 @@ Group {
   }
 
   TextButton #RewardCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1563,7 +1563,7 @@ Group {
   }
 
   TextButton #RewardCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1614,7 +1614,7 @@ Group {
   }
 
   TextButton #RewardCatItemPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1862,7 +1862,7 @@ Group {
   }
 
   TextButton #EnemyCatEditorCloseButton {
-    Anchor: (Left: 1422, Top: 192, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1956,7 +1956,7 @@ Group {
   }
 
   TextButton #EnemyCatIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2007,7 +2007,7 @@ Group {
   }
 
   TextButton #EnemyCatEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2020,8 +2020,25 @@ Group {
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
+  TabNavigation #EnemyCatEnemyPickerCategoryTabs {
+    Anchor: (Left: 468, Top: 170, Width: 590, Height: 34);
+    Style: $C.@HeaderTabsStyle;
+    SelectedTab: "all";
+    Visible: false;
+    TabButton #EnemyCatEnemyPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
+    TabButton #EnemyCatEnemyPickerTabGoblinsButton { Id: "goblins"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Goblins"; }
+    TabButton #EnemyCatEnemyPickerTabUndeadButton { Id: "undead"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Undead"; }
+    TabButton #EnemyCatEnemyPickerTabScarakButton { Id: "scarak"; Icon: "../Icons/ItemCategories/Items-Tools.png"; TooltipText: "Scarak"; }
+    TabButton #EnemyCatEnemyPickerTabVoidButton { Id: "void"; Icon: "../Icons/ItemCategories/Items-Potion.png"; TooltipText: "Void"; }
+    TabButton #EnemyCatEnemyPickerTabWildButton { Id: "wild"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Wild"; }
+    TabButton #EnemyCatEnemyPickerTabElementalsButton { Id: "elementals"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Elementals"; }
+    TabButton #EnemyCatEnemyPickerTabOtherButton { Id: "other"; Icon: "../Icons/ItemCategories/Misc.png"; TooltipText: "Otros"; }
+  }
+
+  $C.@HeaderSearch #EnemyCatEnemyPickerSearch { Anchor: (Left: 1116, Top: 170, Width: 336, Height: 34); Visible: false; }
+
   Panel #EnemyCatEnemyPickerGrid {
-    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    Anchor: (Left: 468, Top: 212, Width: 984, Height: 680);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
@@ -2246,7 +2263,7 @@ Group {
   }
 
   TextButton #HordeEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2309,7 +2326,7 @@ Group {
   }
 
   TextButton #HordeIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2635,7 +2652,7 @@ Group {
   }
 
   TextButton #BossEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2715,7 +2732,7 @@ Group {
   }
 
   TextButton #BossIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2766,7 +2783,7 @@ Group {
   }
 
   TextButton #BossEnemyPickerCloseButton {
-    Anchor: (Left: 1450, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2779,8 +2796,25 @@ Group {
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
+  TabNavigation #BossEnemyPickerCategoryTabs {
+    Anchor: (Left: 468, Top: 170, Width: 590, Height: 34);
+    Style: $C.@HeaderTabsStyle;
+    SelectedTab: "all";
+    Visible: false;
+    TabButton #BossEnemyPickerTabAllButton { Id: "all"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Todos"; }
+    TabButton #BossEnemyPickerTabGoblinsButton { Id: "goblins"; Icon: "../Icons/ItemCategories/Items-Weapons.png"; TooltipText: "Goblins"; }
+    TabButton #BossEnemyPickerTabUndeadButton { Id: "undead"; Icon: "../Icons/ItemCategories/Items-Armor.png"; TooltipText: "Undead"; }
+    TabButton #BossEnemyPickerTabScarakButton { Id: "scarak"; Icon: "../Icons/ItemCategories/Items-Tools.png"; TooltipText: "Scarak"; }
+    TabButton #BossEnemyPickerTabVoidButton { Id: "void"; Icon: "../Icons/ItemCategories/Items-Potion.png"; TooltipText: "Void"; }
+    TabButton #BossEnemyPickerTabWildButton { Id: "wild"; Icon: "../Icons/ItemCategories/Items-Ingredients.png"; TooltipText: "Wild"; }
+    TabButton #BossEnemyPickerTabElementalsButton { Id: "elementals"; Icon: "../Icons/ItemCategories/Builder Tools.png"; TooltipText: "Elementals"; }
+    TabButton #BossEnemyPickerTabOtherButton { Id: "other"; Icon: "../Icons/ItemCategories/Misc.png"; TooltipText: "Otros"; }
+  }
+
+  $C.@HeaderSearch #BossEnemyPickerSearch { Anchor: (Left: 1116, Top: 170, Width: 336, Height: 34); Visible: false; }
+
   Panel #BossEnemyPickerGrid {
-    Anchor: (Left: 468, Top: 170, Width: 984, Height: 722);
+    Anchor: (Left: 468, Top: 212, Width: 984, Height: 680);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
@@ -2842,7 +2876,7 @@ Group {
   }
 
   TextButton #ArenaEditorCloseButton {
-    Anchor: (Left: 1422, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2928,13 +2962,6 @@ Group {
     Style: $C.@SecondaryTextButtonStyle;
   }
 
-  TextButton #ArenaSaveButton {
-    Anchor: (Left: 480, Top: 548, Width: 960, Height: 34);
-    Text: "Guardar arena";
-    Visible: false;
-    Style: $C.@SecondaryTextButtonStyle;
-  }
-
   Label #ArenaStatusLabel {
     Anchor: (Left: 480, Top: 598, Width: 520, Height: 30);
     Text: "";
@@ -2954,7 +2981,7 @@ Group {
   }
 
   TextButton #ArenaIconPickerCloseButton {
-    Anchor: (Left: 1338, Top: 300, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -3167,7 +3194,7 @@ Group {
   }
 
   TextButton #HordeCloseButton {
-    Anchor: (Left: 1450, Top: 100, Width: 30, Height: 30);
+    Anchor: (Left: 1452, Top: 100, Width: 30, Height: 30);
     Text: "X";
     Style: $C.@CancelTextButtonStyle;
   }

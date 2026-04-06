@@ -315,6 +315,11 @@ Aplicado en este mod:
 8. Referencia NPC para pickers de enemigos
 - Regla: para listas de enemigos y validacion semantica, usar los docs NPC oficiales como referencia funcional (roles/templates), sin depender de fuentes no oficiales para IDs criticos.
 
+9. Eventos de alta frecuencia (sliders)
+- Regla: en `ValueChanged` de `Slider`/`SliderNumberField`, evitar handlers pesados como `applyUiConfig(...)`.
+- Regla: usar un setter ligero y especifico (ej. `setArenaJoinRadius(...)`) para no bloquear `GamePacketHandler` ni dejar la UI en loading.
+- Regla: tras procesar el evento, enviar una actualizacion UI minima para cerrar correctamente el estado de carga del cliente.
+
 ## Validacion build-11 (2026-03-29)
 
 Comprobado contra:
