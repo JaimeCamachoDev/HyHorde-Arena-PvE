@@ -59,6 +59,7 @@ extends CustomUIPage {
     private static final String ENEMY_ROLE_ROW_LAYOUT = "Pages/HordeEnemyRoleRow.ui";
     private static final String ENEMY_PICKER_ROW_LAYOUT = "Pages/HordeEnemyPickerRow.ui";
     private static final int ENEMY_PICKER_COLUMNS = 4;
+    private static final int COMPACT_ENEMY_ID_PICKER_COLUMNS = 3;
     private static final int ARENA_ICON_PICKER_COLUMNS = 7;
     private static final String ARENA_ICON_PICKER_ROW_LAYOUT = "Pages/HordeArenaIconPickerRow.ui";
     private static final String DEFAULT_ARENA_ITEM_ICON_ID = "Ingredient_Bar_Gold";
@@ -2743,12 +2744,12 @@ extends CustomUIPage {
         }
 
         List<String> options = HordeConfigPage.buildFilteredEnemyRolePickerOptions(enemyRoleOptions, selectedCategory, searchQuery);
-        int rows = (options.size() + ENEMY_PICKER_COLUMNS - 1) / ENEMY_PICKER_COLUMNS;
+        int rows = (options.size() + COMPACT_ENEMY_ID_PICKER_COLUMNS - 1) / COMPACT_ENEMY_ID_PICKER_COLUMNS;
         for (int rowIndex = 0; rowIndex < rows; ++rowIndex) {
             commandBuilder.append("#EnemyCatEnemyPickerGrid", ENEMY_PICKER_ROW_LAYOUT);
             String rowSelector = "#EnemyCatEnemyPickerGrid[" + rowIndex + "]";
-            for (int column = 0; column < ENEMY_PICKER_COLUMNS; ++column) {
-                int optionIndex = rowIndex * ENEMY_PICKER_COLUMNS + column;
+            for (int column = 0; column < COMPACT_ENEMY_ID_PICKER_COLUMNS; ++column) {
+                int optionIndex = rowIndex * COMPACT_ENEMY_ID_PICKER_COLUMNS + column;
                 int slot = column + 1;
                 String buttonSelector = rowSelector + " #EnemyPickButton" + slot;
                 String iconSelector = rowSelector + " #EnemyPickIcon" + slot;
@@ -2768,6 +2769,10 @@ extends CustomUIPage {
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
+            commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
+                    .set(rowSelector + " #EnemyPickIcon4.Visible", false)
+                    .set(rowSelector + " #EnemyPickLabel4.Visible", false)
+                    .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
     }
 
@@ -3042,12 +3047,12 @@ extends CustomUIPage {
         }
 
         List<String> options = HordeConfigPage.buildFilteredEnemyRolePickerOptions(enemyRoleOptions, selectedCategory, searchQuery);
-        int rows = (options.size() + ENEMY_PICKER_COLUMNS - 1) / ENEMY_PICKER_COLUMNS;
+        int rows = (options.size() + COMPACT_ENEMY_ID_PICKER_COLUMNS - 1) / COMPACT_ENEMY_ID_PICKER_COLUMNS;
         for (int rowIndex = 0; rowIndex < rows; ++rowIndex) {
             commandBuilder.append("#BossEnemyPickerGrid", ENEMY_PICKER_ROW_LAYOUT);
             String rowSelector = "#BossEnemyPickerGrid[" + rowIndex + "]";
-            for (int column = 0; column < ENEMY_PICKER_COLUMNS; ++column) {
-                int optionIndex = rowIndex * ENEMY_PICKER_COLUMNS + column;
+            for (int column = 0; column < COMPACT_ENEMY_ID_PICKER_COLUMNS; ++column) {
+                int optionIndex = rowIndex * COMPACT_ENEMY_ID_PICKER_COLUMNS + column;
                 int slot = column + 1;
                 String buttonSelector = rowSelector + " #EnemyPickButton" + slot;
                 String iconSelector = rowSelector + " #EnemyPickIcon" + slot;
@@ -3067,6 +3072,10 @@ extends CustomUIPage {
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
+            commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
+                    .set(rowSelector + " #EnemyPickIcon4.Visible", false)
+                    .set(rowSelector + " #EnemyPickLabel4.Visible", false)
+                    .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
     }
 
@@ -4145,8 +4154,8 @@ extends CustomUIPage {
                 .set("#PlayersPagePrevButton.Text", "<")
                 .set("#PlayersPageNextButton.Text", ">")
                 .set("#AudienceHelpLabel.Text", "")
-                .set("#EnemyCatTitleLabel.Text", HordeConfigPage.t(language, english, "Enemy category definitions", "Definiciones de categorias de enemigos"))
-                .set("#EnemyCatAddButton.Text", HordeConfigPage.t(language, english, "Add category", "Anadir categoria"))
+                .set("#EnemyCatTitleLabel.Text", HordeConfigPage.t(language, english, "Enemy list", "Lista de enemigos"))
+                .set("#EnemyCatAddButton.Text", HordeConfigPage.t(language, english, "Create enemies", "Crear enemigos"))
                 .set("#EnemyCatHeaderName.Text", HordeConfigPage.t(language, english, "Category ID", "Categoria ID"))
                 .set("#EnemyCatHeaderPreview.Text", HordeConfigPage.t(language, english, "Enemy IDs", "Enemy IDs"))
                 .set("#EnemyCatHeaderActions.Text", "")

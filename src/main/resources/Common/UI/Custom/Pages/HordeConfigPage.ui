@@ -1673,14 +1673,14 @@ Group {
 
   Label #EnemyCatTitleLabel {
     Anchor: (Left: 456, Top: 232, Width: 420, Height: 24);
-    Text: "Definiciones de categorias de enemigos";
+    Text: "Lista de enemigos";
     Visible: false;
     Style: (FontSize: 18, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   TextButton #EnemyCatAddButton {
     Anchor: (Left: 1238, Top: 232, Width: 226, Height: 32);
-    Text: "Anadir categoria";
+    Text: "Crear enemigos";
     Visible: false;
     Style: $C.@SmallSecondaryTextButtonStyle;
   }
@@ -2016,26 +2016,26 @@ Group {
   }
 
   $C.@DecoratedContainer #EnemyCatEnemyPickerFrame {
-    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
     Visible: false;
   }
 
   TextButton #EnemyCatEnemyPickerCloseButton {
-    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   Label #EnemyCatEnemyPickerTitleLabel {
-    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 16);
     Text: "Selecciona Enemy IDs";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   TabNavigation #EnemyCatEnemyPickerCategoryTabs {
-    Anchor: (Left: 468, Top: 170, Width: 590, Height: 34);
+    Anchor: (Left: 580, Top: 300, Width: 590, Height: 34);
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
@@ -2049,10 +2049,10 @@ Group {
     TabButton #EnemyCatEnemyPickerTabOtherButton { Id: "other"; Icon: "../Icons/ItemCategories/Misc.png"; TooltipText: "Otros"; }
   }
 
-  $C.@HeaderSearch #EnemyCatEnemyPickerSearch { Anchor: (Left: 1116, Top: 170, Width: 336, Height: 34); Visible: false; }
+  $C.@HeaderSearch #EnemyCatEnemyPickerSearch { Anchor: (Left: 1006, Top: 300, Width: 336, Height: 34); Visible: false; }
 
   Panel #EnemyCatEnemyPickerGrid {
-    Anchor: (Left: 468, Top: 212, Width: 984, Height: 680);
+    Anchor: (Left: 580, Top: 380, Width: 780, Height: 294);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
@@ -2790,26 +2790,26 @@ Group {
   }
 
   $C.@DecoratedContainer #BossEnemyPickerFrame {
-    Anchor: (Left: 430, Top: 124, Width: 1060, Height: 792);
+    Anchor: (Left: 556, Top: 292, Width: 824, Height: 446);
     Visible: false;
   }
 
   TextButton #BossEnemyPickerCloseButton {
-    Anchor: (Left: 1452, Top: 132, Width: 30, Height: 30);
+    Anchor: (Left: 1340, Top: 300, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
   }
 
   Label #BossEnemyPickerTitleLabel {
-    Anchor: (Left: 464, Top: 132, Width: 976, Height: 24);
+    Anchor: (Left: 580, Top: 338, Width: 780, Height: 16);
     Text: "Selecciona Enemy IDs";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
 
   TabNavigation #BossEnemyPickerCategoryTabs {
-    Anchor: (Left: 468, Top: 170, Width: 590, Height: 34);
+    Anchor: (Left: 580, Top: 300, Width: 590, Height: 34);
     Style: $C.@HeaderTabsStyle;
     SelectedTab: "all";
     Visible: false;
@@ -2823,10 +2823,10 @@ Group {
     TabButton #BossEnemyPickerTabOtherButton { Id: "other"; Icon: "../Icons/ItemCategories/Misc.png"; TooltipText: "Otros"; }
   }
 
-  $C.@HeaderSearch #BossEnemyPickerSearch { Anchor: (Left: 1116, Top: 170, Width: 336, Height: 34); Visible: false; }
+  $C.@HeaderSearch #BossEnemyPickerSearch { Anchor: (Left: 1006, Top: 300, Width: 336, Height: 34); Visible: false; }
 
   Panel #BossEnemyPickerGrid {
-    Anchor: (Left: 468, Top: 212, Width: 984, Height: 680);
+    Anchor: (Left: 580, Top: 380, Width: 780, Height: 294);
     LayoutMode: TopScrolling;
     ScrollbarStyle: $C.@DefaultScrollbarStyle;
     Padding: (Top: 10, Left: 10, Right: 10, Bottom: 10);
