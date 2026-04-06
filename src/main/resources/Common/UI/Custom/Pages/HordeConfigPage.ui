@@ -650,14 +650,28 @@ Group {
     Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
   }
 
-  Label #GeneralRewardLabel {
+  Label #RoleLabel {
     Anchor: (Left: 456, Top: 444, Width: 500, Height: 24);
+    Text: "Tipo enemigo";
+    Visible: false;
+    Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
+  }
+
+  $C.@DropdownBox #EnemyType {
+    @Anchor = (Left: 456, Top: 472, Width: 500);
+    Value: "undead";
+    Visible: false;
+    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  }
+
+  Label #GeneralRewardLabel {
+    Anchor: (Left: 456, Top: 514, Width: 500, Height: 24);
     Text: "Categoria de recompensa actual";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
   $C.@DropdownBox #GeneralRewardId {
-    @Anchor = (Left: 456, Top: 472, Width: 500);
+    @Anchor = (Left: 456, Top: 542, Width: 500);
     Value: "";
     Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
   }
@@ -1262,12 +1276,12 @@ Group {
   }
 
   $C.@DecoratedContainer #PlayersEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 320);
     Visible: false;
   }
 
   TextButton #PlayersEditorCloseButton {
-    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1511,12 +1525,12 @@ Group {
   }
 
   $C.@DecoratedContainer #RewardCatEditorModalFrame {
-    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 704);
+    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 560);
     Visible: false;
   }
 
   TextButton #RewardCatEditorCloseButton {
-    Anchor: (Left: 1424, Top: 192, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -1857,12 +1871,12 @@ Group {
   }
 
   $C.@DecoratedContainer #EnemyCatEditorModalFrame {
-    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 704);
+    Anchor: (Left: 456, Top: 184, Width: 1008, Height: 560);
     Visible: false;
   }
 
   TextButton #EnemyCatEditorCloseButton {
-    Anchor: (Left: 1424, Top: 192, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 192, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2258,12 +2272,12 @@ Group {
   }
 
   $C.@DecoratedContainer #HordeEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 488);
     Visible: false;
   }
 
   TextButton #HordeEditorCloseButton {
-    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2293,19 +2307,17 @@ Group {
   Label #HordeEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
   TextButton #HordeIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
 
-  Label #RoleLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Categoria de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@DropdownBox #EnemyType { @Anchor = (Left: 480, Top: 378, Width: 960, Height: 34); Value: "undead"; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 416, Width: 960, Height: 16); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
-  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 432, Width: 468, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 454, Width: 468); Value: "12.0"; Visible: false; }
-  Label #RoundLabel { Anchor: (Left: 972, Top: 432, Width: 468, Height: 16); Text: "Cantidad de rondas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #Rounds { @Anchor = (Left: 972, Top: 454, Width: 468); Value: "5"; Visible: false; }
-  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 506, Width: 468, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 528, Width: 468); Value: "8"; Visible: false; }
-  Label #EnemiesPerRoundLabel { Anchor: (Left: 972, Top: 506, Width: 468, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 972, Top: 528, Width: 468); Value: "2"; Visible: false; }
-  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 580, Width: 960, Height: 16); Text: "Tiempo de espera entre rondas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 602, Width: 960); Value: "8"; Visible: false; }
+  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 340, Width: 960, Height: 16); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 356, Width: 468, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 378, Width: 468); Value: "12.0"; Visible: false; }
+  Label #RoundLabel { Anchor: (Left: 972, Top: 356, Width: 468, Height: 16); Text: "Cantidad de rondas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #Rounds { @Anchor = (Left: 972, Top: 378, Width: 468); Value: "5"; Visible: false; }
+  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 430, Width: 468, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 452, Width: 468); Value: "8"; Visible: false; }
+  Label #EnemiesPerRoundLabel { Anchor: (Left: 972, Top: 430, Width: 468, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 972, Top: 452, Width: 468); Value: "2"; Visible: false; }
+  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 504, Width: 960, Height: 16); Text: "Tiempo de espera entre rondas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 526, Width: 960); Value: "8"; Visible: false; }
 
   Label #HordeStatusLabel {
     Anchor: (Left: 480, Top: 706, Width: 960, Height: 24);
@@ -2647,12 +2659,12 @@ Group {
   }
 
   $C.@DecoratedContainer #BossEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 640);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 488);
     Visible: false;
   }
 
   TextButton #BossEditorCloseButton {
-    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
@@ -2871,12 +2883,12 @@ Group {
   }
 
   $C.@DecoratedContainer #ArenaEditorModalFrame {
-    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 572);
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 320);
     Visible: false;
   }
 
   TextButton #ArenaEditorCloseButton {
-    Anchor: (Left: 1424, Top: 232, Width: 30, Height: 30);
+    Anchor: (Left: 1428, Top: 232, Width: 30, Height: 30);
     Text: "X";
     Visible: false;
     Style: $C.@CancelTextButtonStyle;
