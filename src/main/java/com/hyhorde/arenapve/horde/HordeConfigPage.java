@@ -19,10 +19,17 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.math.vector.Transform;
 import com.hypixel.hytale.math.vector.Vector3d;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -30,6 +37,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.stream.Stream;
 
 public final class HordeConfigPage
 extends CustomUIPage {
@@ -86,7 +96,14 @@ extends CustomUIPage {
     private static final String ENEMY_ROLE_CATEGORY_WILD = "wild";
     private static final String ENEMY_ROLE_CATEGORY_ELEMENTALS = "elementals";
     private static final String ENEMY_ROLE_CATEGORY_OTHER = "other";
+    private static final String NPC_FACE_RESOURCE_PREFIX = "Common/UI/Custom/Icons/Npcs/";
+    private static final Set<String> NPC_FACE_TECH_PREFIXES = Set.of("npc", "enemy", "mob", "role", "template");
+    private static final int MAX_NPC_FACE_ASSETS_PER_BUILD = 3;
     private static final Map<String, Boolean> NPC_FACE_RESOURCE_EXISTS_CACHE = new ConcurrentHashMap<String, Boolean>();
+    private static final Map<String, byte[]> NPC_FACE_BYTES_CACHE = new ConcurrentHashMap<String, byte[]>();
+    private static final Map<String, String> NPC_FACE_ROLE_KEY_CACHE = new ConcurrentHashMap<String, String>();
+    private static volatile Map<String, String> NPC_FACE_NAME_BY_EXACT_KEY = null;
+    private static volatile Map<String, String> NPC_FACE_NAME_BY_SORTED_TOKENS = null;
     private static final UiFieldBinding[] SNAPSHOT_FIELDS = new UiFieldBinding[]{
             new UiFieldBinding("spawnX", "SpawnX", "#SpawnX.Value"),
             new UiFieldBinding("spawnY", "SpawnY", "#SpawnY.Value"),
@@ -168,6 +185,9 @@ extends CustomUIPage {
     private final PlayerFaceCache playerFaceCache;
     private final Set<UUID> pendingPlayerFaceRefreshes;
     private final Set<UUID> sentPlayerFaceAssets;
+    private final Set<String> sentNpcFaceAssets;
+    private int npcFaceAssetsSentThisBuild;
+    private boolean npcFaceRebuildPending;
     private final Map<UUID, String> playerRowSelectors;
     private String activeTab;
     private int playerPage;
@@ -210,6 +230,7 @@ extends CustomUIPage {
         this.playerFaceCache = new PlayerFaceCache();
         this.pendingPlayerFaceRefreshes = Collections.synchronizedSet(new HashSet<UUID>());
         this.sentPlayerFaceAssets = Collections.synchronizedSet(new HashSet<UUID>());
+        this.sentNpcFaceAssets = Collections.synchronizedSet(new HashSet<String>());
         this.playerRowSelectors = new ConcurrentHashMap<UUID, String>();
         this.activeTab = TAB_GENERAL;
         this.playerPage = 0;
@@ -252,6 +273,8 @@ extends CustomUIPage {
 
     public void build(Ref<EntityStore> playerEntityRef, UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, Store<EntityStore> store) {
         HordeService.HordeConfig config = this.hordeService.getConfigSnapshot();
+        this.npcFaceAssetsSentThisBuild = 0;
+        this.npcFaceRebuildPending = false;
         this.ensureDraftDefaults(config);
         String language = HordeService.normalizeLanguage(this.getDraftValue("language", config.language));
         boolean english = HordeService.isEnglishLanguage(language);
@@ -2768,11 +2791,12 @@ extends CustomUIPage {
                 String labelSelector = rowSelector + " #EnemyPickLabel" + slot;
                 if (optionIndex < options.size()) {
                     String enemyRoleId = options.get(optionIndex);
-                    String npcFacePath = HordeConfigPage.resolveEnemyRoleNpcFaceAssetPath(enemyRoleId);
-                    boolean useNpcFace = npcFacePath != null && !npcFacePath.isBlank();
+                    String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(enemyRoleId);
+                    boolean useNpcFace = npcFaceKey != null && !npcFaceKey.isBlank();
                     commandBuilder.set(buttonSelector + ".Visible", true)
                             .set(iconSelector + ".Visible", !useNpcFace)
                             .set(faceSelector + ".Visible", useNpcFace)
+                            .set(faceSelector + ".AssetPath", useNpcFace ? HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey) : "")
                             .set(labelSelector + ".Visible", true)
                             .set(iconSelector + ".ItemId", HordeConfigPage.resolveEnemyRoleIcon(enemyRoleId, rewardItemCatalogOptions))
                             .set(labelSelector + ".Text", HordeConfigPage.compactName(enemyRoleId, 22));
@@ -2782,12 +2806,14 @@ extends CustomUIPage {
                 commandBuilder.set(buttonSelector + ".Visible", false)
                         .set(iconSelector + ".Visible", false)
                         .set(faceSelector + ".Visible", false)
+                        .set(faceSelector + ".AssetPath", "")
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
             commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
                     .set(rowSelector + " #EnemyPickIcon4.Visible", false)
                     .set(rowSelector + " #EnemyPickFace4.Visible", false)
+                    .set(rowSelector + " #EnemyPickFace4.AssetPath", "")
                     .set(rowSelector + " #EnemyPickLabel4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
@@ -3081,11 +3107,12 @@ extends CustomUIPage {
                 String labelSelector = rowSelector + " #EnemyPickLabel" + slot;
                 if (optionIndex < options.size()) {
                     String enemyRoleId = options.get(optionIndex);
-                    String npcFacePath = HordeConfigPage.resolveEnemyRoleNpcFaceAssetPath(enemyRoleId);
-                    boolean useNpcFace = npcFacePath != null && !npcFacePath.isBlank();
+                    String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(enemyRoleId);
+                    boolean useNpcFace = npcFaceKey != null && !npcFaceKey.isBlank();
                     commandBuilder.set(buttonSelector + ".Visible", true)
                             .set(iconSelector + ".Visible", !useNpcFace)
                             .set(faceSelector + ".Visible", useNpcFace)
+                            .set(faceSelector + ".AssetPath", useNpcFace ? HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey) : "")
                             .set(labelSelector + ".Visible", true)
                             .set(iconSelector + ".ItemId", HordeConfigPage.resolveEnemyRoleIcon(enemyRoleId, rewardItemCatalogOptions))
                             .set(labelSelector + ".Text", HordeConfigPage.compactName(enemyRoleId, 22));
@@ -3095,12 +3122,14 @@ extends CustomUIPage {
                 commandBuilder.set(buttonSelector + ".Visible", false)
                         .set(iconSelector + ".Visible", false)
                         .set(faceSelector + ".Visible", false)
+                        .set(faceSelector + ".AssetPath", "")
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
             commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
                     .set(rowSelector + " #EnemyPickIcon4.Visible", false)
                     .set(rowSelector + " #EnemyPickFace4.Visible", false)
+                    .set(rowSelector + " #EnemyPickFace4.AssetPath", "")
                     .set(rowSelector + " #EnemyPickLabel4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
@@ -3482,8 +3511,19 @@ extends CustomUIPage {
         List<String> baseOptions = HordeConfigPage.buildEnemyRolePickerOptions(rawOptions);
         String category = HordeConfigPage.normalizeEnemyRolePickerCategory(categoryFilter);
         String query = HordeConfigPage.firstNonEmpty(searchQuery, "").trim().toLowerCase(Locale.ROOT);
-        ArrayList<String> filtered = new ArrayList<String>();
+        ArrayList<String> iconReadyOptions = new ArrayList<String>();
         for (String option : baseOptions) {
+            if (option == null || option.isBlank()) {
+                continue;
+            }
+            String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(option);
+            if (npcFaceKey == null || npcFaceKey.isBlank()) {
+                continue;
+            }
+            iconReadyOptions.add(option);
+        }
+        ArrayList<String> filtered = new ArrayList<String>();
+        for (String option : iconReadyOptions) {
             if (option == null || option.isBlank()) {
                 continue;
             }
@@ -3493,7 +3533,7 @@ extends CustomUIPage {
                 filtered.add(option);
             }
         }
-        return filtered.isEmpty() ? baseOptions : filtered;
+        return filtered;
     }
 
     private static String classifyEnemyRolePickerCategory(String roleId) {
@@ -3585,16 +3625,309 @@ extends CustomUIPage {
         return fallbackIcon;
     }
 
-    private static String resolveEnemyRoleNpcFaceAssetPath(String roleId) {
+    private static String resolveEnemyRoleNpcFaceKey(String roleId) {
         String cleaned = HordeConfigPage.firstNonEmpty(roleId, "").trim();
         if (cleaned.isBlank()) {
             return "";
         }
-        String lower = cleaned.toLowerCase(Locale.ROOT);
-        if ("bat".equals(lower) || lower.endsWith("_bat") || lower.startsWith("bat_")) {
-            return "../Icons/Npcs/Bat.png";
+        return NPC_FACE_ROLE_KEY_CACHE.computeIfAbsent(cleaned, HordeConfigPage::resolveEnemyRoleNpcFaceKeyUncached);
+    }
+
+    private static String resolveEnemyRoleNpcFaceKeyUncached(String roleId) {
+        String normalized = HordeConfigPage.firstNonEmpty(roleId, "").trim();
+        if (normalized.isBlank()) {
+            return "";
+        }
+        int namespaceSeparator = normalized.lastIndexOf(':');
+        if (namespaceSeparator >= 0 && namespaceSeparator + 1 < normalized.length()) {
+            normalized = normalized.substring(namespaceSeparator + 1);
+        }
+        int pathSeparator = normalized.lastIndexOf('/');
+        if (pathSeparator >= 0 && pathSeparator + 1 < normalized.length()) {
+            normalized = normalized.substring(pathSeparator + 1);
+        }
+        String safe = normalized.replaceAll("([a-z0-9])([A-Z])", "$1_$2").replace('-', '_').replace(' ', '_').trim();
+        if (safe.isBlank()) {
+            return "";
+        }
+        String resolved = HordeConfigPage.resolveNpcFaceCandidate(safe);
+        if (!resolved.isBlank()) {
+            return resolved;
+        }
+        String withoutPrefix = HordeConfigPage.stripTechPrefixToken(safe);
+        if (!withoutPrefix.equals(safe)) {
+            resolved = HordeConfigPage.resolveNpcFaceCandidate(withoutPrefix);
+            if (!resolved.isBlank()) {
+                return resolved;
+            }
+        }
+        String withoutSuffix = HordeConfigPage.stripTechSuffixToken(safe);
+        if (!withoutSuffix.equals(safe)) {
+            resolved = HordeConfigPage.resolveNpcFaceCandidate(withoutSuffix);
+            if (!resolved.isBlank()) {
+                return resolved;
+            }
+        }
+        String withoutBoth = HordeConfigPage.stripTechSuffixToken(withoutPrefix);
+        if (!withoutBoth.equals(withoutPrefix)) {
+            resolved = HordeConfigPage.resolveNpcFaceCandidate(withoutBoth);
+            if (!resolved.isBlank()) {
+                return resolved;
+            }
         }
         return "";
+    }
+
+    private static String resolveNpcFaceCandidate(String rawValue) {
+        String normalized = HordeConfigPage.normalizeNpcFaceFileName(rawValue);
+        if (normalized.isBlank()) {
+            return "";
+        }
+        String lookupMatch = HordeConfigPage.resolveNpcFaceFromLookups(normalized);
+        if (!lookupMatch.isBlank()) {
+            return lookupMatch;
+        }
+        if (HordeConfigPage.hasNpcFaceResource(normalized)) {
+            return normalized;
+        }
+        String sortedMatch = HordeConfigPage.resolveNpcFaceFromSortedTokens(normalized);
+        if (!sortedMatch.isBlank()) {
+            return sortedMatch;
+        }
+        return "";
+    }
+
+    private static String resolveNpcFaceFromLookups(String normalizedCandidate) {
+        HordeConfigPage.ensureNpcFaceLookupsLoaded();
+        Map<String, String> exactMap = NPC_FACE_NAME_BY_EXACT_KEY;
+        if (exactMap == null || exactMap.isEmpty()) {
+            return "";
+        }
+        String exact = exactMap.get(normalizedCandidate.toLowerCase(Locale.ROOT));
+        return exact == null ? "" : exact;
+    }
+
+    private static String resolveNpcFaceFromSortedTokens(String normalizedCandidate) {
+        HordeConfigPage.ensureNpcFaceLookupsLoaded();
+        Map<String, String> sortedMap = NPC_FACE_NAME_BY_SORTED_TOKENS;
+        if (sortedMap == null || sortedMap.isEmpty()) {
+            return "";
+        }
+        String key = HordeConfigPage.sortedTokenKey(normalizedCandidate);
+        if (key.isBlank()) {
+            return "";
+        }
+        String match = sortedMap.get(key);
+        return match == null ? "" : match;
+    }
+
+    private static String stripTechPrefixToken(String safeValue) {
+        int firstUnderscore = safeValue.indexOf('_');
+        if (firstUnderscore <= 0 || firstUnderscore + 1 >= safeValue.length()) {
+            return safeValue;
+        }
+        String prefix = safeValue.substring(0, firstUnderscore).toLowerCase(Locale.ROOT);
+        if (!NPC_FACE_TECH_PREFIXES.contains(prefix)) {
+            return safeValue;
+        }
+        return safeValue.substring(firstUnderscore + 1);
+    }
+
+    private static String stripTechSuffixToken(String safeValue) {
+        int lastUnderscore = safeValue.lastIndexOf('_');
+        if (lastUnderscore <= 0 || lastUnderscore + 1 >= safeValue.length()) {
+            return safeValue;
+        }
+        String suffix = safeValue.substring(lastUnderscore + 1).toLowerCase(Locale.ROOT);
+        if (!NPC_FACE_TECH_PREFIXES.contains(suffix)) {
+            return safeValue;
+        }
+        return safeValue.substring(0, lastUnderscore);
+    }
+
+    private static String sortedTokenKey(String rawValue) {
+        String normalized = HordeConfigPage.normalizeNpcFaceFileName(rawValue);
+        if (normalized.isBlank()) {
+            return "";
+        }
+        String[] tokens = normalized.toLowerCase(Locale.ROOT).split("_+");
+        Arrays.sort(tokens);
+        StringBuilder builder = new StringBuilder();
+        for (String token : tokens) {
+            if (token == null || token.isBlank()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append('_');
+            }
+            builder.append(token);
+        }
+        return builder.toString();
+    }
+
+    private static void ensureNpcFaceLookupsLoaded() {
+        if (NPC_FACE_NAME_BY_EXACT_KEY != null && NPC_FACE_NAME_BY_SORTED_TOKENS != null) {
+            return;
+        }
+        synchronized (HordeConfigPage.class) {
+            if (NPC_FACE_NAME_BY_EXACT_KEY != null && NPC_FACE_NAME_BY_SORTED_TOKENS != null) {
+                return;
+            }
+            Set<String> baseNames = HordeConfigPage.loadNpcFaceResourceBaseNames();
+            HashMap<String, String> exactMap = new HashMap<String, String>();
+            HashMap<String, String> sortedMap = new HashMap<String, String>();
+            for (String baseName : baseNames) {
+                String normalized = HordeConfigPage.normalizeNpcFaceFileName(baseName);
+                if (normalized.isBlank()) {
+                    continue;
+                }
+                exactMap.putIfAbsent(normalized.toLowerCase(Locale.ROOT), normalized);
+                String sortedKey = HordeConfigPage.sortedTokenKey(normalized);
+                if (!sortedKey.isBlank()) {
+                    sortedMap.putIfAbsent(sortedKey, normalized);
+                }
+            }
+            NPC_FACE_NAME_BY_EXACT_KEY = exactMap;
+            NPC_FACE_NAME_BY_SORTED_TOKENS = sortedMap;
+        }
+    }
+
+    private static Set<String> loadNpcFaceResourceBaseNames() {
+        HashSet<String> baseNames = new HashSet<String>();
+        try {
+            URL codeSource = HordeConfigPage.class.getProtectionDomain().getCodeSource() == null ? null : HordeConfigPage.class.getProtectionDomain().getCodeSource().getLocation();
+            if (codeSource == null) {
+                return baseNames;
+            }
+            Path sourcePath = Paths.get(codeSource.toURI());
+            if (Files.isDirectory(sourcePath)) {
+                Path resourceDir = sourcePath.resolve(Paths.get("Common", "UI", "Custom", "Icons", "Npcs"));
+                if (Files.isDirectory(resourceDir)) {
+                    try (Stream<Path> files = Files.list(resourceDir)) {
+                        files.forEach(path -> {
+                            String fileName = path.getFileName() == null ? "" : path.getFileName().toString();
+                            if (!fileName.toLowerCase(Locale.ROOT).endsWith(".png")) {
+                                return;
+                            }
+                            baseNames.add(fileName.substring(0, fileName.length() - 4));
+                        });
+                    }
+                }
+            } else {
+                try (JarFile jar = new JarFile(sourcePath.toFile())) {
+                    Enumeration<JarEntry> entries = jar.entries();
+                    while (entries.hasMoreElements()) {
+                        JarEntry entry = entries.nextElement();
+                        if (entry == null || entry.isDirectory()) {
+                            continue;
+                        }
+                        String name = entry.getName();
+                        if (name == null || !name.startsWith(NPC_FACE_RESOURCE_PREFIX) || !name.toLowerCase(Locale.ROOT).endsWith(".png")) {
+                            continue;
+                        }
+                        String fileName = name.substring(NPC_FACE_RESOURCE_PREFIX.length());
+                        int slash = fileName.lastIndexOf('/');
+                        if (slash >= 0) {
+                            fileName = fileName.substring(slash + 1);
+                        }
+                        if (fileName.isBlank() || !fileName.toLowerCase(Locale.ROOT).endsWith(".png")) {
+                            continue;
+                        }
+                        baseNames.add(fileName.substring(0, fileName.length() - 4));
+                    }
+                }
+            }
+        }
+        catch (Exception ignored) {
+            // keep empty and fallback to direct resource checks
+        }
+        return baseNames;
+    }
+
+    private static boolean hasNpcFaceResource(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+        String classpathAsset = NPC_FACE_RESOURCE_PREFIX + fileName + ".png";
+        return NPC_FACE_RESOURCE_EXISTS_CACHE.computeIfAbsent(classpathAsset, key -> HordeConfigPage.class.getClassLoader().getResource(key) != null);
+    }
+
+    private static String resolveNpcFaceAssetPath(String npcFaceKey) {
+        if (npcFaceKey == null || npcFaceKey.isBlank()) {
+            return "";
+        }
+        return "UI/Custom/Icons/Npcs/" + npcFaceKey + ".png";
+    }
+
+    private static String normalizeNpcFaceFileName(String rawValue) {
+        String value = HordeConfigPage.firstNonEmpty(rawValue, "").trim();
+        if (value.isBlank()) {
+            return "";
+        }
+        String[] parts = value.replaceAll("[^A-Za-z0-9_]+", "_").split("_+");
+        StringBuilder fileNameBuilder = new StringBuilder();
+        for (String part : parts) {
+            if (part == null || part.isBlank()) {
+                continue;
+            }
+            if (fileNameBuilder.length() > 0) {
+                fileNameBuilder.append('_');
+            }
+            String lower = part.toLowerCase(Locale.ROOT);
+            fileNameBuilder.append(Character.toUpperCase(lower.charAt(0)));
+            if (lower.length() > 1) {
+                fileNameBuilder.append(lower.substring(1));
+            }
+        }
+        return fileNameBuilder.toString();
+    }
+
+    private boolean sendNpcFaceAssetIfNeeded(String npcFaceKey) {
+        if (npcFaceKey == null || npcFaceKey.isBlank()) {
+            return false;
+        }
+        if (this.sentNpcFaceAssets.contains(npcFaceKey)) {
+            return true;
+        }
+        if (this.npcFaceAssetsSentThisBuild >= MAX_NPC_FACE_ASSETS_PER_BUILD) {
+            return false;
+        }
+        if (!this.sentNpcFaceAssets.add(npcFaceKey)) {
+            return true;
+        }
+        byte[] png = HordeConfigPage.loadNpcFaceBytes(npcFaceKey);
+        if (png == null || png.length == 0) {
+            this.sentNpcFaceAssets.remove(npcFaceKey);
+            return false;
+        }
+        try {
+            NpcFaceAsset.sendToPlayer(this.playerRef.getPacketHandler(), new NpcFaceAsset(npcFaceKey, png));
+            this.npcFaceAssetsSentThisBuild = this.npcFaceAssetsSentThisBuild + 1;
+            this.npcFaceRebuildPending = true;
+            return true;
+        }
+        catch (Exception ignored) {
+            this.sentNpcFaceAssets.remove(npcFaceKey);
+            return false;
+        }
+    }
+
+    private static byte[] loadNpcFaceBytes(String npcFaceKey) {
+        if (npcFaceKey == null || npcFaceKey.isBlank()) {
+            return new byte[0];
+        }
+        return NPC_FACE_BYTES_CACHE.computeIfAbsent(npcFaceKey, key -> {
+            String classpathAsset = NPC_FACE_RESOURCE_PREFIX + key + ".png";
+            try (InputStream inputStream = HordeConfigPage.class.getClassLoader().getResourceAsStream(classpathAsset)) {
+                if (inputStream == null) {
+                    return new byte[0];
+                }
+                return inputStream.readAllBytes();
+            }
+            catch (Exception ignored) {
+                return new byte[0];
+            }
+        });
     }
 
     private static String firstAvailableIcon(List<String> rewardItemCatalogOptions, String ... candidates) {

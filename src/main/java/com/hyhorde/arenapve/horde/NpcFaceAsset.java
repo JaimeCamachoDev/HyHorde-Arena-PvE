@@ -6,29 +6,27 @@ import com.hypixel.hytale.protocol.ToClientPacket;
 import com.hypixel.hytale.protocol.packets.setup.AssetFinalize;
 import com.hypixel.hytale.protocol.packets.setup.AssetInitialize;
 import com.hypixel.hytale.protocol.packets.setup.AssetPart;
-import com.hypixel.hytale.protocol.packets.setup.RequestCommonAssetsRebuild;
 import com.hypixel.hytale.server.core.asset.common.CommonAsset;
 import com.hypixel.hytale.server.core.io.PacketHandler;
 import java.security.MessageDigest;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
-final class PlayerFaceAsset extends CommonAsset {
-    private static final String ASSET_PATH_PREFIX = "UI/Custom/Pages/Horde/PlayerFace/";
+final class NpcFaceAsset extends CommonAsset {
+    private static final String ASSET_PATH_PREFIX = "UI/Custom/Pages/Horde/NpcFace/";
     private static final int CHUNK_SIZE = 2621440;
     private static final char[] HEX = "0123456789abcdef".toCharArray();
     private final byte[] data;
 
-    PlayerFaceAsset(UUID playerId, byte[] data) {
-        super(PlayerFaceAsset.getPathForUi(playerId), PlayerFaceAsset.computeHash(data), PlayerFaceAsset.copyData(data));
-        this.data = PlayerFaceAsset.copyData(data);
+    NpcFaceAsset(String npcKey, byte[] data) {
+        super(NpcFaceAsset.getPathForUi(npcKey), NpcFaceAsset.computeHash(data), NpcFaceAsset.copyData(data));
+        this.data = NpcFaceAsset.copyData(data);
     }
 
-    public static String getPathForUi(UUID playerId) {
-        if (playerId == null) {
+    public static String getPathForUi(String npcKey) {
+        if (npcKey == null || npcKey.isBlank()) {
             return ASSET_PATH_PREFIX + "unknown.png";
         }
-        return ASSET_PATH_PREFIX + playerId.toString() + ".png";
+        return ASSET_PATH_PREFIX + npcKey + ".png";
     }
 
     public static void sendToPlayer(PacketHandler packetHandler, CommonAsset asset) {
@@ -49,7 +47,6 @@ final class PlayerFaceAsset extends CommonAsset {
         for (Packet packet : packets) {
             packetHandler.write((ToClientPacket)packet);
         }
-        packetHandler.writeNoCache((ToClientPacket)new RequestCommonAssetsRebuild());
     }
 
     @Override

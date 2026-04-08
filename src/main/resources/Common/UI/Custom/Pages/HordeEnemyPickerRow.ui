@@ -13,10 +13,10 @@ Group #HordeEnemyPickerRow {
   ItemIcon #EnemyPickIcon2 { Anchor: (Left: 248, Top: 11, Width: 40, Height: 40); Visible: false; }
   ItemIcon #EnemyPickIcon3 { Anchor: (Left: 486, Top: 11, Width: 40, Height: 40); Visible: false; }
   ItemIcon #EnemyPickIcon4 { Anchor: (Left: 724, Top: 11, Width: 40, Height: 40); Visible: false; }
-  Panel #EnemyPickFace1 { Anchor: (Left: 10, Top: 11, Width: 40, Height: 40); Visible: false; Background: (TexturePath: "../Icons/Npcs/Bat.png"); }
-  Panel #EnemyPickFace2 { Anchor: (Left: 248, Top: 11, Width: 40, Height: 40); Visible: false; Background: (TexturePath: "../Icons/Npcs/Bat.png"); }
-  Panel #EnemyPickFace3 { Anchor: (Left: 486, Top: 11, Width: 40, Height: 40); Visible: false; Background: (TexturePath: "../Icons/Npcs/Bat.png"); }
-  Panel #EnemyPickFace4 { Anchor: (Left: 724, Top: 11, Width: 40, Height: 40); Visible: false; Background: (TexturePath: "../Icons/Npcs/Bat.png"); }
+  AssetImage #EnemyPickFace1 { Anchor: (Left: 10, Top: 11, Width: 40, Height: 40); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace2 { Anchor: (Left: 248, Top: 11, Width: 40, Height: 40); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace3 { Anchor: (Left: 486, Top: 11, Width: 40, Height: 40); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace4 { Anchor: (Left: 724, Top: 11, Width: 40, Height: 40); Visible: false; Background: #000000(0); }
 
   Label #EnemyPickLabel1 { Anchor: (Left: 56, Top: 9, Width: 162, Height: 44); Text: ""; Visible: false; Style: (...$C.@DefaultLabelStyle, FontSize: 11, TextColor: #d8e3f4, RenderBold: true, VerticalAlignment: Center); }
   Label #EnemyPickLabel2 { Anchor: (Left: 294, Top: 9, Width: 162, Height: 44); Text: ""; Visible: false; Style: (...$C.@DefaultLabelStyle, FontSize: 11, TextColor: #d8e3f4, RenderBold: true, VerticalAlignment: Center); }
