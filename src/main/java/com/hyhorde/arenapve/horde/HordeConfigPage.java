@@ -86,6 +86,7 @@ extends CustomUIPage {
     private static final String ENEMY_ROLE_CATEGORY_WILD = "wild";
     private static final String ENEMY_ROLE_CATEGORY_ELEMENTALS = "elementals";
     private static final String ENEMY_ROLE_CATEGORY_OTHER = "other";
+    private static final Map<String, Boolean> NPC_FACE_RESOURCE_EXISTS_CACHE = new ConcurrentHashMap<String, Boolean>();
     private static final UiFieldBinding[] SNAPSHOT_FIELDS = new UiFieldBinding[]{
             new UiFieldBinding("spawnX", "SpawnX", "#SpawnX.Value"),
             new UiFieldBinding("spawnY", "SpawnY", "#SpawnY.Value"),
@@ -108,6 +109,7 @@ extends CustomUIPage {
             new UiFieldBinding("selectedHordeId", "GeneralHordeId", "#GeneralHordeId.Value"),
             new UiFieldBinding("hordeSelected", "HordeSelected", "#HordeSelected.Value"),
             new UiFieldBinding("hordeEditId", "HordeEditId", "#HordeEditId.Value"),
+            new UiFieldBinding("hordeMode", "HordeMode", "#HordeMode.Value"),
             new UiFieldBinding("hordeEditIconItemId", "HordeEditIconItemId", "#HordeEditIconItemId.Value"),
             new UiFieldBinding("enemyType", "EnemyType", "#EnemyType.Value", "role", "@Role", "Role"),
             new UiFieldBinding("enemyCategorySelected", "EnemyCatSelected", "#EnemyCatSelected.Value"),
@@ -263,6 +265,7 @@ extends CustomUIPage {
         List<String> rewardCategoryOptions = this.hordeService.getRewardCategoryOptions();
         List<String> rewardItemCatalogOptions = HordeConfigPage.filterRewardItemPickerOptions(this.hordeService.getRewardItemSuggestions((String)null));
         String enemyTypeValue = HordeConfigPage.normalizeEnemyTypeInput(this.getDraftValue("enemyType", config.enemyType == null ? "undead" : config.enemyType));
+        String hordeModeValue = HordeConfigPage.normalizeHordeModeInput(this.getDraftValue("hordeMode", "horde"));
         String roundStartSoundValue = this.getDraftValue("roundStartSoundId", this.hordeService.getRoundStartSoundSelection());
         String roundVictorySoundValue = this.getDraftValue("roundVictorySoundId", this.hordeService.getRoundVictorySoundSelection());
         String roundDefeatSoundValue = this.getDraftValue("roundDefeatSoundId", this.hordeService.getRoundDefeatSoundSelection());
@@ -284,6 +287,7 @@ extends CustomUIPage {
         double roundDefeatVolumeValue = HordeConfigPage.clamp(this.getDraftDouble("roundDefeatVolume", HordeConfigPage.toUiVolumePercent(config.roundDefeatVolume)), 0.0, 100.0);
         boolean finalBossEnabledValue = this.getDraftBoolean("finalBossEnabled", config.finalBossEnabled);
         List<DropdownEntryInfo> enemyTypeEntries = HordeConfigPage.buildEnemyTypeEntries(enemyTypeOptions, enemyTypeValue, language, english);
+        List<DropdownEntryInfo> hordeModeEntries = HordeConfigPage.buildHordeModeEntries(language, english, hordeModeValue);
         List<DropdownEntryInfo> languageEntries = HordeConfigPage.buildLanguageEntries(languageOptions, language);
         String tab = HordeConfigPage.normalizeTab(this.activeTab);
         this.activeTab = tab;
@@ -415,6 +419,8 @@ extends CustomUIPage {
                 .set("#GeneralRewardId.Entries", generalRewardEntries)
                 .set("#HordeSelected.Value", hordeSelectedValue)
                 .set("#HordeEditId.Value", this.getDraftValue("hordeEditId", hordeSelectedValue))
+                .set("#HordeMode.Value", hordeModeValue)
+                .set("#HordeMode.Entries", hordeModeEntries)
                 .set("#HordeEditIconItemId.Value", hordeEditIconItemIdValue)
                 .set("#HordeEditIconPreview.ItemId", hordeEditIconItemIdValue)
                 .set("#HordeEditIconCurrentLabel.Text", hordeEditIconItemIdValue)
@@ -423,7 +429,7 @@ extends CustomUIPage {
                 .set("#BaseEnemies.Value", this.getDraftValue("baseEnemies", Integer.toString(baseEnemiesValue)))
                 .set("#EnemiesPerRound.Value", this.getDraftValue("enemiesPerRound", Integer.toString(enemiesPerRoundValue)))
                 .set("#WaveDelay.Value", this.getDraftValue("waveDelay", Integer.toString(waveDelayValue)))
-                .set("#HordeStatusLabel.Text", this.hordeStatusText == null ? "" : this.hordeStatusText)
+                .set("#HordeStatusLabel.Text", "")
                 .set("#PlayerSelected.Value", playerSelectedValue)
                 .set("#PlayerModePlayerButton.Text", playerModePlayerButtonText)
                 .set("#PlayerModeSpectatorButton.Text", playerModeSpectatorButtonText)
@@ -2019,6 +2025,7 @@ extends CustomUIPage {
         this.putDraftIfMissing("selectedArenaId", config.selectedArenaId == null ? "" : config.selectedArenaId.trim());
         this.putDraftIfMissing("selectedBossId", config.selectedBossId == null ? "" : config.selectedBossId.trim());
         this.putDraftIfMissing("selectedHordeId", config.selectedHordeId == null ? "" : config.selectedHordeId.trim());
+        this.putDraftIfMissing("hordeMode", "horde");
         this.putDraftIfMissing("enemyType", config.enemyType == null ? "undead" : config.enemyType);
         this.putDraftIfMissing("language", HordeService.normalizeLanguage(config.language));
         this.putDraftIfMissing("rewardCategory", HordeConfigPage.firstNonEmpty(config.rewardCategory, this.hordeService.getRewardCategory()));
@@ -2172,6 +2179,7 @@ extends CustomUIPage {
             }
             this.putDraftIfMissing("hordeSelected", selectedHorde.hordeId);
             this.putDraftIfMissing("hordeEditId", selectedHorde.hordeId);
+            this.putDraftIfMissing("hordeMode", selectedHorde.hordeMode);
             this.putDraftIfMissing("enemyType", selectedHorde.enemyType);
             this.putDraftIfMissing("hordeEditIconItemId", HordeConfigPage.firstNonEmpty(selectedHorde.iconItemId, HordeConfigPage.resolveEnemyCategoryIcon(selectedHorde.enemyType), DEFAULT_ARENA_ITEM_ICON_ID));
             this.putDraftIfMissing("minRadius", HordeConfigPage.formatDouble(selectedHorde.minRadius));
@@ -2182,6 +2190,7 @@ extends CustomUIPage {
             this.putDraftIfMissing("waveDelay", Integer.toString(selectedHorde.waveDelay));
         } else {
             this.putDraftIfMissing("hordeEditId", "horde_1");
+            this.putDraftIfMissing("hordeMode", "horde");
             this.putDraftIfMissing("enemyType", config.enemyType == null ? "undead" : config.enemyType);
             this.putDraftIfMissing("hordeEditIconItemId", HordeConfigPage.resolveEnemyCategoryIcon(config.enemyType == null ? "undead" : config.enemyType));
             this.putDraftIfMissing("minRadius", HordeConfigPage.formatDouble(config.minSpawnRadius));
@@ -2421,6 +2430,7 @@ extends CustomUIPage {
         }
         this.draftValues.put("hordeSelected", snapshot.hordeId);
         this.draftValues.put("hordeEditId", snapshot.hordeId);
+        this.draftValues.put("hordeMode", HordeConfigPage.normalizeHordeModeInput(snapshot.hordeMode));
         this.draftValues.put("enemyType", snapshot.enemyType == null ? "undead" : snapshot.enemyType);
         this.draftValues.put("hordeEditIconItemId", HordeConfigPage.firstNonEmpty(snapshot.iconItemId, HordeConfigPage.resolveEnemyCategoryIcon(snapshot.enemyType), DEFAULT_ARENA_ITEM_ICON_ID));
         this.draftValues.put("minRadius", HordeConfigPage.formatDouble(snapshot.minRadius));
@@ -2491,6 +2501,7 @@ extends CustomUIPage {
         HashMap<String, String> values = new HashMap<String, String>();
         HordeConfigPage.putIfNotBlank(values, "hordeSelected", this.getDraftValue("hordeSelected", ""));
         HordeConfigPage.putIfNotBlank(values, "hordeEditId", this.getDraftValue("hordeEditId", ""));
+        HordeConfigPage.putIfNotBlank(values, "hordeMode", this.getDraftValue("hordeMode", "horde"));
         HordeConfigPage.putIfNotBlank(values, "enemyType", this.getDraftValue("enemyType", ""));
         HordeConfigPage.putIfNotBlank(values, "hordeEditIconItemId", this.getDraftValue("hordeEditIconItemId", HordeConfigPage.resolveEnemyCategoryIcon(this.getDraftValue("enemyType", ""))));
         values.put("minRadius", "1");
@@ -2753,11 +2764,15 @@ extends CustomUIPage {
                 int slot = column + 1;
                 String buttonSelector = rowSelector + " #EnemyPickButton" + slot;
                 String iconSelector = rowSelector + " #EnemyPickIcon" + slot;
+                String faceSelector = rowSelector + " #EnemyPickFace" + slot;
                 String labelSelector = rowSelector + " #EnemyPickLabel" + slot;
                 if (optionIndex < options.size()) {
                     String enemyRoleId = options.get(optionIndex);
+                    String npcFacePath = HordeConfigPage.resolveEnemyRoleNpcFaceAssetPath(enemyRoleId);
+                    boolean useNpcFace = npcFacePath != null && !npcFacePath.isBlank();
                     commandBuilder.set(buttonSelector + ".Visible", true)
-                            .set(iconSelector + ".Visible", true)
+                            .set(iconSelector + ".Visible", !useNpcFace)
+                            .set(faceSelector + ".Visible", useNpcFace)
                             .set(labelSelector + ".Visible", true)
                             .set(iconSelector + ".ItemId", HordeConfigPage.resolveEnemyRoleIcon(enemyRoleId, rewardItemCatalogOptions))
                             .set(labelSelector + ".Text", HordeConfigPage.compactName(enemyRoleId, 22));
@@ -2766,11 +2781,13 @@ extends CustomUIPage {
                 }
                 commandBuilder.set(buttonSelector + ".Visible", false)
                         .set(iconSelector + ".Visible", false)
+                        .set(faceSelector + ".Visible", false)
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
             commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
                     .set(rowSelector + " #EnemyPickIcon4.Visible", false)
+                    .set(rowSelector + " #EnemyPickFace4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
@@ -2912,8 +2929,12 @@ extends CustomUIPage {
                     continue;
                 }
                 String rowSelector = "#HordeRowsList[" + renderedRows + "]";
+                String hordeModeLabel = HordeConfigPage.hordeModeDisplay(row.hordeMode, language, english);
+                String subtitle = HordeConfigPage.t(language, english, "Rounds", "Rondas") + ": " + row.rounds
+                        + "  |  " + HordeConfigPage.t(language, english, "Type", "Tipo") + ": " + hordeModeLabel
+                        + "  |  " + HordeConfigPage.t(language, english, "Enemies", "Enemigos") + ": " + row.baseEnemies
+                        + "  |  " + HordeConfigPage.t(language, english, "Time", "Tiempo") + ": " + Math.max(0, row.waveDelay) + "s";
                 String enemyType = HordeConfigPage.firstNonEmpty(row.enemyType, "-");
-                String subtitle = HordeConfigPage.t(language, english, "Type", "Tipo") + ": " + HordeConfigPage.compactName(enemyType, 20) + "  |  " + HordeConfigPage.t(language, english, "Rounds", "Rondas") + ": " + row.rounds;
                 String iconItemId = HordeConfigPage.firstNonEmpty(row.iconItemId, HordeConfigPage.resolveEnemyCategoryIcon(enemyType));
                 commandBuilder.append("#HordeRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.hordeId)
@@ -3056,11 +3077,15 @@ extends CustomUIPage {
                 int slot = column + 1;
                 String buttonSelector = rowSelector + " #EnemyPickButton" + slot;
                 String iconSelector = rowSelector + " #EnemyPickIcon" + slot;
+                String faceSelector = rowSelector + " #EnemyPickFace" + slot;
                 String labelSelector = rowSelector + " #EnemyPickLabel" + slot;
                 if (optionIndex < options.size()) {
                     String enemyRoleId = options.get(optionIndex);
+                    String npcFacePath = HordeConfigPage.resolveEnemyRoleNpcFaceAssetPath(enemyRoleId);
+                    boolean useNpcFace = npcFacePath != null && !npcFacePath.isBlank();
                     commandBuilder.set(buttonSelector + ".Visible", true)
-                            .set(iconSelector + ".Visible", true)
+                            .set(iconSelector + ".Visible", !useNpcFace)
+                            .set(faceSelector + ".Visible", useNpcFace)
                             .set(labelSelector + ".Visible", true)
                             .set(iconSelector + ".ItemId", HordeConfigPage.resolveEnemyRoleIcon(enemyRoleId, rewardItemCatalogOptions))
                             .set(labelSelector + ".Text", HordeConfigPage.compactName(enemyRoleId, 22));
@@ -3069,11 +3094,13 @@ extends CustomUIPage {
                 }
                 commandBuilder.set(buttonSelector + ".Visible", false)
                         .set(iconSelector + ".Visible", false)
+                        .set(faceSelector + ".Visible", false)
                         .set(labelSelector + ".Visible", false)
                         .set(labelSelector + ".Text", "");
             }
             commandBuilder.set(rowSelector + " #EnemyPickButton4.Visible", false)
                     .set(rowSelector + " #EnemyPickIcon4.Visible", false)
+                    .set(rowSelector + " #EnemyPickFace4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Visible", false)
                     .set(rowSelector + " #EnemyPickLabel4.Text", "");
         }
@@ -3558,6 +3585,18 @@ extends CustomUIPage {
         return fallbackIcon;
     }
 
+    private static String resolveEnemyRoleNpcFaceAssetPath(String roleId) {
+        String cleaned = HordeConfigPage.firstNonEmpty(roleId, "").trim();
+        if (cleaned.isBlank()) {
+            return "";
+        }
+        String lower = cleaned.toLowerCase(Locale.ROOT);
+        if ("bat".equals(lower) || lower.endsWith("_bat") || lower.startsWith("bat_")) {
+            return "../Icons/Npcs/Bat.png";
+        }
+        return "";
+    }
+
     private static String firstAvailableIcon(List<String> rewardItemCatalogOptions, String ... candidates) {
         if (candidates != null) {
             for (String candidate : candidates) {
@@ -3652,6 +3691,7 @@ extends CustomUIPage {
             case TAB_HORDE:
                 return "hordeSelected".equals(field.configKey)
                         || "hordeEditId".equals(field.configKey)
+                        || "hordeMode".equals(field.configKey)
                         || "hordeEditIconItemId".equals(field.configKey)
                         || "hordedefIconPickerSearch".equals(field.configKey)
                         || "maxRadius".equals(field.configKey)
@@ -3771,6 +3811,18 @@ extends CustomUIPage {
             localizedEntries.add(new DropdownEntryInfo(LocalizableString.fromString(text), value));
         }
         return localizedEntries;
+    }
+
+    private static List<DropdownEntryInfo> buildHordeModeEntries(String language, boolean english, String selectedValue) {
+        String selected = HordeConfigPage.normalizeHordeModeInput(selectedValue);
+        ArrayList<DropdownEntryInfo> entries = new ArrayList<DropdownEntryInfo>(3);
+        entries.add(new DropdownEntryInfo(LocalizableString.fromString(HordeConfigPage.hordeModeDisplay("wave", language, english)), "wave"));
+        entries.add(new DropdownEntryInfo(LocalizableString.fromString(HordeConfigPage.hordeModeDisplay("timed", language, english)), "timed"));
+        entries.add(new DropdownEntryInfo(LocalizableString.fromString(HordeConfigPage.hordeModeDisplay("horde", language, english)), "horde"));
+        if (!"wave".equals(selected) && !"timed".equals(selected) && !"horde".equals(selected)) {
+            entries.add(0, new DropdownEntryInfo(LocalizableString.fromString(HordeConfigPage.hordeModeDisplay(selected, language, english)), selected));
+        }
+        return entries;
     }
 
     private static List<DropdownEntryInfo> buildRewardCategoryEntries(List<String> options, String selectedValue, String language, boolean english) {
@@ -4044,6 +4096,41 @@ extends CustomUIPage {
         return entries;
     }
 
+    private static String normalizeHordeModeInput(String value) {
+        String normalized = HordeConfigPage.firstNonEmpty(value, "horde").trim().toLowerCase(Locale.ROOT);
+        switch (normalized) {
+            case "wave":
+            case "timed":
+            case "horde":
+                return normalized;
+            default:
+                return "horde";
+        }
+    }
+
+    private static String hordeModeDisplay(String value, String language, boolean english) {
+        String normalized = HordeConfigPage.normalizeHordeModeInput(value);
+        switch (normalized) {
+            case "wave":
+                return HordeConfigPage.t(language, english, "Wave", "Oleada");
+            case "timed":
+                return HordeConfigPage.t(language, english, "Time trial", "Contrarreloj");
+            default:
+                return HordeConfigPage.t(language, english, "Horde", "Horda");
+        }
+    }
+
+    private String resolveWaveDelayLabelByMode(String language, boolean english) {
+        String mode = HordeConfigPage.normalizeHordeModeInput(this.getDraftValue("hordeMode", "wave"));
+        if ("timed".equals(mode)) {
+            return HordeConfigPage.t(language, english, "Time trial duration (s)", "Tiempo de contrarreloj (s)");
+        }
+        if ("horde".equals(mode)) {
+            return HordeConfigPage.t(language, english, "Horde duration (s)", "Tiempo de horda (s)");
+        }
+        return HordeConfigPage.t(language, english, "Time between waves (s)", "Tiempo entre oleadas (s)");
+    }
+
     private static List<DropdownEntryInfo> buildPlayerModeEntries(String language, boolean english, String selectedMode) {
         ArrayList<String> values = new ArrayList<String>();
         values.add("player");
@@ -4203,16 +4290,17 @@ extends CustomUIPage {
                 .set("#HordeHeaderActions.Text", "")
                 .set("#HordeEditorTitleLabel.Text", HordeConfigPage.t(language, english, "Horde editor", "Editor de horda"))
                 .set("#HordeEditIdLabel.Text", HordeConfigPage.t(language, english, "Horde ID", "Horde ID"))
+                .set("#HordeModeLabel.Text", HordeConfigPage.t(language, english, "Horde mode", "Modo de horda"))
                 .set("#HordeIconSelectorLabel.Text", HordeConfigPage.t(language, english, "Horde icon", "Icono de horda"))
                 .set("#HordeIconPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose icon", "Elegir icono"))
                 .set("#HordeIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
                 .set("#HordePagePrevButton.Text", "<")
                 .set("#HordePageNextButton.Text", ">")
                 .set("#HordeSaveButton.Text", HordeConfigPage.t(language, english, "Save horde", "Guardar horda"))
-                .set("#RoundLabel.Text", HordeConfigPage.t(language, english, "Number of rounds", "Cantidad de rondas"))
+                .set("#RoundLabel.Text", HordeConfigPage.t(language, english, "Number of hordes", "Cantidad de hordas"))
                 .set("#BaseEnemiesLabel.Text", HordeConfigPage.t(language, english, "Base enemies per round", "Cantidad base de enemigos por ronda"))
                 .set("#EnemiesPerRoundLabel.Text", HordeConfigPage.t(language, english, "Enemy increment per round", "Incremento de enemigos por ronda"))
-                .set("#WaveDelayLabel.Text", HordeConfigPage.t(language, english, "Delay between rounds (s)", "Tiempo de espera entre rondas (s)"))
+                .set("#WaveDelayLabel.Text", this.resolveWaveDelayLabelByMode(language, english))
                 .set("#RoleLabel.Text", HordeConfigPage.t(language, english, "Enemy type", "Tipo enemigo"))
                 .set("#LanguageLabel.Text", HordeConfigPage.t(language, english, "Interface language", "Idioma interfaz"))
                 .set("#EnemyLevelRangeLabel.Text", "")
@@ -4383,7 +4471,7 @@ extends CustomUIPage {
 
     private void applyHordeEditorModalVisibility(UICommandBuilder commandBuilder, boolean hordeTab) {
         boolean visible = hordeTab && this.hordeEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#HordeEditorModalShade", "#HordeEditorModalFrame", "#HordeEditorCloseButton", "#HordeEditorTitleLabel", "#HordeEditIdLabel", "#HordeEditId", "#MaxRadiusLabel", "#MaxRadius", "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#HordeSaveButton", "#HordeStatusLabel");
+        this.setVisible(commandBuilder, visible, "#HordeEditorModalShade", "#HordeEditorModalFrame", "#HordeEditorCloseButton", "#HordeEditorTitleLabel", "#HordeEditIdLabel", "#HordeEditId", "#HordeModeLabel", "#HordeMode", "#MaxRadiusLabel", "#MaxRadius", "#RoundLabel", "#Rounds", "#BaseEnemiesLabel", "#BaseEnemies", "#EnemiesPerRoundLabel", "#EnemiesPerRound", "#WaveDelayLabel", "#WaveDelay", "#HordeSaveButton", "#HordeStatusLabel");
         boolean pickerVisible = hordeTab && this.hordeIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#HordeIconPickerShade", "#HordeIconPickerFrame", "#HordeIconPickerCloseButton", "#HordeIconPickerTitleLabel", "#HordeIconPickerCategoryTabs", "#HordeIconPickerSearch", "#HordeIconPickerStatusLabel", "#HordeIconPickerGrid");
     }

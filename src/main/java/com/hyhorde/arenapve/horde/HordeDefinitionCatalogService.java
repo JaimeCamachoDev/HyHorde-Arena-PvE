@@ -142,6 +142,7 @@ final class HordeDefinitionCatalogService {
         target.baseEnemies = HordeDefinitionCatalogService.clamp(HordeDefinitionCatalogService.parseInt(values.get("baseEnemies"), target.baseEnemies), HordeConfigRules.MIN_ENEMIES_PER_ROUND, HordeConfigRules.MAX_ENEMIES_PER_ROUND);
         target.enemiesPerRound = HordeDefinitionCatalogService.clamp(HordeDefinitionCatalogService.parseInt(values.get("enemiesPerRound"), target.enemiesPerRound), HordeConfigRules.MIN_ENEMY_INCREMENT, HordeConfigRules.MAX_ENEMY_INCREMENT);
         target.waveDelay = HordeDefinitionCatalogService.clamp(HordeDefinitionCatalogService.parseInt(values.get("waveDelay"), target.waveDelay), HordeConfigRules.MIN_WAVE_DELAY_SECONDS, HordeConfigRules.MAX_WAVE_DELAY_SECONDS);
+        target.hordeMode = HordeService.normalizeHordeMode(HordeDefinitionCatalogService.firstNonBlank(values.get("hordeMode"), target.hordeMode, fallbackConfig.hordeMode));
         target.finalBossEnabled = HordeDefinitionCatalogService.parseBoolean(values.get("finalBossEnabled"), target.finalBossEnabled);
         if (!selectedKey.isBlank() && !selectedKey.equals(requestedKey)) {
             this.definitionsById.remove(selectedKey);
@@ -297,9 +298,10 @@ final class HordeDefinitionCatalogService {
         final int baseEnemies;
         final int enemiesPerRound;
         final int waveDelay;
+        final String hordeMode;
         final boolean finalBossEnabled;
 
-        private HordeDefinitionSnapshot(String hordeId, String enemyType, String iconItemId, double minRadius, double maxRadius, int rounds, int baseEnemies, int enemiesPerRound, int waveDelay, boolean finalBossEnabled) {
+        private HordeDefinitionSnapshot(String hordeId, String enemyType, String iconItemId, double minRadius, double maxRadius, int rounds, int baseEnemies, int enemiesPerRound, int waveDelay, String hordeMode, boolean finalBossEnabled) {
             this.hordeId = hordeId;
             this.enemyType = enemyType;
             this.iconItemId = iconItemId;
@@ -309,12 +311,13 @@ final class HordeDefinitionCatalogService {
             this.baseEnemies = baseEnemies;
             this.enemiesPerRound = enemiesPerRound;
             this.waveDelay = waveDelay;
+            this.hordeMode = hordeMode;
             this.finalBossEnabled = finalBossEnabled;
         }
 
         private static HordeDefinitionSnapshot from(HordeDefinition source) {
             HordeDefinition clean = HordeDefinition.sanitize(source, HordeService.HordeConfig.defaults());
-            return new HordeDefinitionSnapshot(clean.hordeId, clean.enemyType, clean.iconItemId, clean.minRadius, clean.maxRadius, clean.rounds, clean.baseEnemies, clean.enemiesPerRound, clean.waveDelay, clean.finalBossEnabled);
+            return new HordeDefinitionSnapshot(clean.hordeId, clean.enemyType, clean.iconItemId, clean.minRadius, clean.maxRadius, clean.rounds, clean.baseEnemies, clean.enemiesPerRound, clean.waveDelay, clean.hordeMode, clean.finalBossEnabled);
         }
     }
 
@@ -332,6 +335,7 @@ final class HordeDefinitionCatalogService {
         private int baseEnemies;
         private int enemiesPerRound;
         private int waveDelay;
+        private String hordeMode;
         private boolean finalBossEnabled;
 
         private static HordeDefinition defaults(String hordeId, HordeService.HordeConfig fallbackConfig) {
@@ -346,6 +350,7 @@ final class HordeDefinitionCatalogService {
             row.baseEnemies = config.baseEnemiesPerRound;
             row.enemiesPerRound = config.enemiesPerRoundIncrement;
             row.waveDelay = config.waveDelaySeconds;
+            row.hordeMode = HordeService.normalizeHordeMode(config.hordeMode);
             row.finalBossEnabled = config.finalBossEnabled;
             return HordeDefinition.sanitize(row, config);
         }
@@ -361,6 +366,7 @@ final class HordeDefinitionCatalogService {
             copy.baseEnemies = this.baseEnemies;
             copy.enemiesPerRound = this.enemiesPerRound;
             copy.waveDelay = this.waveDelay;
+            copy.hordeMode = this.hordeMode;
             copy.finalBossEnabled = this.finalBossEnabled;
             return copy;
         }
@@ -397,6 +403,7 @@ final class HordeDefinitionCatalogService {
             clean.baseEnemies = HordeDefinitionCatalogService.clamp(clean.baseEnemies, HordeConfigRules.MIN_ENEMIES_PER_ROUND, HordeConfigRules.MAX_ENEMIES_PER_ROUND);
             clean.enemiesPerRound = HordeDefinitionCatalogService.clamp(clean.enemiesPerRound, HordeConfigRules.MIN_ENEMY_INCREMENT, HordeConfigRules.MAX_ENEMY_INCREMENT);
             clean.waveDelay = HordeDefinitionCatalogService.clamp(clean.waveDelay, HordeConfigRules.MIN_WAVE_DELAY_SECONDS, HordeConfigRules.MAX_WAVE_DELAY_SECONDS);
+            clean.hordeMode = HordeService.normalizeHordeMode(HordeDefinitionCatalogService.firstNonBlank(clean.hordeMode, fallback.hordeMode));
             return clean;
         }
     }

@@ -2299,6 +2299,16 @@ Group {
 
   Label #HordeEditIdLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Horde ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@TextField #HordeEditId { @Anchor = (Left: 480, Top: 312, Width: 960); Value: ""; }
+  Label #HordeModeLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Modo de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@DropdownBox #HordeMode {
+    @Anchor = (Left: 480, Top: 378, Width: 960, Height: 34);
+    Value: "horde";
+    Visible: false;
+    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960);
+    DropdownEntry { Value: "wave"; Text: "Oleada"; }
+    DropdownEntry { Value: "timed"; Text: "Contrarreloj"; }
+    DropdownEntry { Value: "horde"; Text: "Horda"; }
+  }
   $C.@TextField #HordeEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Ingredient_Bar_Gold"; Visible: false; }
 
   Label #HordeIconSelectorLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Icono de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
@@ -2307,17 +2317,17 @@ Group {
   Label #HordeEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
   TextButton #HordeIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
 
-  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 340, Width: 960, Height: 16); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
-  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 356, Width: 468, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 378, Width: 468); Value: "12.0"; Visible: false; }
-  Label #RoundLabel { Anchor: (Left: 972, Top: 356, Width: 468, Height: 16); Text: "Cantidad de rondas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #Rounds { @Anchor = (Left: 972, Top: 378, Width: 468); Value: "5"; Visible: false; }
-  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 430, Width: 468, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 452, Width: 468); Value: "8"; Visible: false; }
-  Label #EnemiesPerRoundLabel { Anchor: (Left: 972, Top: 430, Width: 468, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 972, Top: 452, Width: 468); Value: "2"; Visible: false; }
-  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 504, Width: 960, Height: 16); Text: "Tiempo de espera entre rondas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 526, Width: 960); Value: "8"; Visible: false; }
+  Label #RoleHelpLabel { Anchor: (Left: 480, Top: 416, Width: 960, Height: 16); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
+  Label #MaxRadiusLabel { Anchor: (Left: 480, Top: 434, Width: 468, Height: 16); Text: "Radio maximo"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #MaxRadius { @Anchor = (Left: 480, Top: 456, Width: 468); Value: "12.0"; Visible: false; }
+  Label #RoundLabel { Anchor: (Left: 972, Top: 434, Width: 468, Height: 16); Text: "Cantidad de hordas"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #Rounds { @Anchor = (Left: 972, Top: 456, Width: 468); Value: "5"; Visible: false; }
+  Label #BaseEnemiesLabel { Anchor: (Left: 480, Top: 508, Width: 468, Height: 16); Text: "Cantidad base de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #BaseEnemies { @Anchor = (Left: 480, Top: 530, Width: 468); Value: "8"; Visible: false; }
+  Label #EnemiesPerRoundLabel { Anchor: (Left: 972, Top: 508, Width: 468, Height: 16); Text: "Incremento de enemigos por ronda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #EnemiesPerRound { @Anchor = (Left: 972, Top: 530, Width: 468); Value: "2"; Visible: false; }
+  Label #WaveDelayLabel { Anchor: (Left: 480, Top: 582, Width: 960, Height: 16); Text: "Tiempo de espera entre hordas (s)"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  $C.@TextField #WaveDelay { @Anchor = (Left: 480, Top: 604, Width: 960); Value: "8"; Visible: false; }
 
   Label #HordeStatusLabel {
     Anchor: (Left: 480, Top: 706, Width: 960, Height: 24);
