@@ -651,10 +651,6 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaJoinRadius", this.buildConfigSnapshotEvent("playerdef_radius_autosave"))
                 .addEventBinding(CustomUIEventBindingType.Validating, "#EnemyCatEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("enemycat_enemy_search_change"))
                 .addEventBinding(CustomUIEventBindingType.Validating, "#BossEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("boss_enemy_search_change"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditId", this.buildConfigSnapshotEvent("arena_autosave"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditX", this.buildConfigSnapshotEvent("arena_autosave"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditY", this.buildConfigSnapshotEvent("arena_autosave"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditZ", this.buildConfigSnapshotEvent("arena_autosave"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SaveButton", this.buildConfigSnapshotEvent("save"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#SoundsSaveButton", this.buildConfigSnapshotEvent("sounds_save"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#StartButton", this.buildConfigSnapshotEvent("start"))
@@ -897,7 +893,7 @@ extends CustomUIPage {
             if (refreshDraftFromConfig) {
                 this.resetDraftFromConfig();
             }
-            boolean silentAction = "playerdef_radius_autosave".equals(action) || "arena_autosave".equals(action);
+            boolean silentAction = "playerdef_radius_autosave".equals(action);
             if (result != null && !silentAction) {
                 this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateLegacy(language, result.getMessage())));
             }
@@ -909,7 +905,7 @@ extends CustomUIPage {
                 this.updateRuntimeControlsOnly(language);
                 return;
             }
-            if ("playerdef_radius_autosave".equals(action) || "arena_autosave".equals(action)) {
+            if ("playerdef_radius_autosave".equals(action)) {
                 this.updateCurrentTabVisibilityOnly();
                 return;
             }
@@ -1879,16 +1875,6 @@ extends CustomUIPage {
             this.arenaStatusText = result == null ? "" : result.getMessage();
             return result;
         }
-        if ("arena_autosave".equals(action)) {
-            HordeService.OperationResult result = this.hordeService.saveArenaDefinitionFromUi(this.extractArenaValuesForSave(), fallbackWorldName);
-            if (result != null && result.isSuccess()) {
-                this.selectArenaForEditing(this.getDraftValue("arenaEditId", this.getDraftValue("arenaSelected", "")));
-                this.arenaStatusText = "";
-            } else if (result != null) {
-                this.arenaStatusText = result.getMessage();
-            }
-            return null;
-        }
         if ("arena_use_current_position".equals(action)) {
             String selectedArenaId = this.getDraftValue("arenaSelected", "");
             if (selectedArenaId == null || selectedArenaId.isBlank()) {
@@ -1907,12 +1893,8 @@ extends CustomUIPage {
             this.draftValues.put("arenaEditX", HordeConfigPage.formatDouble(position.x));
             this.draftValues.put("arenaEditY", HordeConfigPage.formatDouble(position.y));
             this.draftValues.put("arenaEditZ", HordeConfigPage.formatDouble(position.z));
-            HordeService.OperationResult result = this.hordeService.saveArenaDefinitionFromUi(this.extractArenaValuesForSave(), fallbackWorldName);
-            if (result != null && result.isSuccess()) {
-                this.selectArenaForEditing(this.getDraftValue("arenaEditId", selectedArenaId));
-            }
-            this.arenaStatusText = result == null ? "" : result.getMessage();
-            return result;
+            this.arenaStatusText = "";
+            return null;
         }
         if (action.startsWith("arena_open:")) {
             String arenaId = HordeConfigPage.extractActionArgument(action);
