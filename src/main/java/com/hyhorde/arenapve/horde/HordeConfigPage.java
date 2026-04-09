@@ -1192,13 +1192,13 @@ extends CustomUIPage {
             return result;
         }
         if (action.startsWith("enemycat_icon_pick:")) {
-            String pickedItemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
-            if (pickedItemId == null || pickedItemId.isBlank()) {
+            String pickedIconToken = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.extractActionArgument(action));
+            if (pickedIconToken == null || pickedIconToken.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.enemyCategoryStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("enemyCategoryEditIconItemId", pickedItemId.trim());
+            this.draftValues.put("enemyCategoryEditIconItemId", pickedIconToken.trim());
             this.enemyCategoryIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveEnemyCategoryFromUi(this.extractEnemyCategoryValuesForSave());
             if (result != null && result.isSuccess()) {
@@ -1310,13 +1310,13 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("rewardcat_icon_pick:")) {
-            String pickedItemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
-            if (pickedItemId == null || pickedItemId.isBlank()) {
+            String pickedIconToken = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.extractActionArgument(action));
+            if (pickedIconToken == null || pickedIconToken.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.rewardCategoryStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("rewardCatEditIconItemId", pickedItemId.trim());
+            this.draftValues.put("rewardCatEditIconItemId", pickedIconToken.trim());
             this.rewardCategoryIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveRewardCategoryFromUi(this.extractRewardCategoryValuesForSave());
             if (result != null && result.isSuccess()) {
@@ -1599,13 +1599,13 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("hordedef_icon_pick:")) {
-            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
-            if (itemId == null || itemId.isBlank()) {
+            String pickedIconToken = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.extractActionArgument(action));
+            if (pickedIconToken == null || pickedIconToken.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.hordeStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("hordeEditIconItemId", itemId.trim());
+            this.draftValues.put("hordeEditIconItemId", pickedIconToken.trim());
             this.hordeIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveHordeDefinitionFromUi(this.extractHordeValuesForSave());
             this.hordeStatusText = result == null ? "" : result.getMessage();
@@ -1703,13 +1703,13 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("boss_icon_pick:")) {
-            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
-            if (itemId == null || itemId.isBlank()) {
+            String pickedIconToken = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.extractActionArgument(action));
+            if (pickedIconToken == null || pickedIconToken.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.bossStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("bossEditIconItemId", itemId.trim());
+            this.draftValues.put("bossEditIconItemId", pickedIconToken.trim());
             this.bossIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveBossDefinitionFromUi(this.extractBossValuesForSave());
             this.bossStatusText = result == null ? "" : result.getMessage();
@@ -1836,13 +1836,13 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("arena_icon_pick:")) {
-            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
-            if (itemId == null || itemId.isBlank()) {
+            String pickedIconToken = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.extractActionArgument(action));
+            if (pickedIconToken == null || pickedIconToken.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.arenaStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("arenaEditIconItemId", itemId.trim());
+            this.draftValues.put("arenaEditIconItemId", pickedIconToken.trim());
             this.arenaIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveArenaDefinitionFromUi(this.extractArenaValuesForSave(), fallbackWorldName);
             this.arenaStatusText = result == null ? "" : result.getMessage();
@@ -2003,12 +2003,24 @@ extends CustomUIPage {
             if (!this.shouldCaptureFieldFromPayload(field, action)) {
                 continue;
             }
-            HordeConfigPage.putIfNotBlank(this.draftValues, field.configKey, HordeConfigPage.extractFieldValue(payload, field));
+            String extractedValue = HordeConfigPage.extractFieldValue(payload, field);
+            if (this.shouldCaptureBlankFieldValue(field)) {
+                this.draftValues.put(field.configKey, extractedValue == null ? "" : extractedValue);
+                continue;
+            }
+            HordeConfigPage.putIfNotBlank(this.draftValues, field.configKey, extractedValue);
         }
         if (TAB_HORDE.equals(HordeConfigPage.normalizeTab(this.activeTab))) {
             HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMin", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMin"), HordeConfigPage.read(payload, "@EnemyLevelMin"), HordeConfigPage.read(payload, "EnemyLevelMin")));
             HordeConfigPage.putIfNotBlank(this.draftValues, "enemyLevelMax", HordeConfigPage.firstNonEmpty(HordeConfigPage.read(payload, "enemyLevelMax"), HordeConfigPage.read(payload, "@EnemyLevelMax"), HordeConfigPage.read(payload, "EnemyLevelMax")));
         }
+    }
+
+    private boolean shouldCaptureBlankFieldValue(UiFieldBinding field) {
+        if (field == null || field.configKey == null || field.configKey.isBlank()) {
+            return false;
+        }
+        return field.configKey.toLowerCase(Locale.ROOT).contains("search");
     }
 
     private void ensureDraftDefaults(HordeService.HordeConfig config) {
@@ -2668,9 +2680,9 @@ extends CustomUIPage {
                 commandBuilder.append("#EnemyCatRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.categoryId)
                         .set(rowSelector + " #ArenaCoords.Text", preview)
-                        .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
                         .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("icon_open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildEnemyCategoryAction("delete", row.categoryId)));
@@ -2821,9 +2833,9 @@ extends CustomUIPage {
                 commandBuilder.append("#RewardCatRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.categoryId)
                         .set(rowSelector + " #ArenaCoords.Text", preview)
-                        .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
                         .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("icon_open", row.categoryId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildRewardCategoryAction("delete", row.categoryId)));
@@ -2957,9 +2969,9 @@ extends CustomUIPage {
                 commandBuilder.append("#HordeRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.hordeId)
                         .set(rowSelector + " #ArenaCoords.Text", subtitle)
-                        .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
                         .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("open", row.hordeId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("icon_open", row.hordeId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildHordeDefinitionAction("delete", row.hordeId)));
@@ -3018,9 +3030,9 @@ extends CustomUIPage {
                 commandBuilder.append("#BossRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.bossId)
                         .set(rowSelector + " #ArenaCoords.Text", subtitle)
-                        .set(rowSelector + " #ArenaIcon.ItemId", iconItemId)
                         .set(rowSelector + " #ArenaIconButton.Visible", true)
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("open", row.bossId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("icon_open", row.bossId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("delete", row.bossId)));
@@ -3271,8 +3283,8 @@ extends CustomUIPage {
                 commandBuilder.append("#ArenaRowsList", "Pages/HordeArenaRow.ui")
                         .set(selectorPrefix + " #ArenaName.Text", row.arenaId)
                         .set(selectorPrefix + " #ArenaCoords.Text", coords)
-                        .set(selectorPrefix + " #ArenaIcon.ItemId", iconItemId)
                         .set(selectorPrefix + " #ArenaIconButton.Visible", true);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, selectorPrefix, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("open", row.arenaId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("icon_open", row.arenaId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, selectorPrefix + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildArenaAction("delete", row.arenaId)));
@@ -3332,6 +3344,23 @@ extends CustomUIPage {
             options.add(DEFAULT_ARENA_ITEM_ICON_ID);
         }
         return options;
+    }
+
+    private static void setArenaRowIcon(UICommandBuilder commandBuilder, String rowSelector, String rawIconToken) {
+        String iconToken = HordeConfigPage.normalizePickedIconToken(rawIconToken);
+        if (HordeConfigPage.isEnemyIconPickerOption(iconToken)) {
+            String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(iconToken);
+            commandBuilder.set(rowSelector + " #ArenaIcon.Visible", false)
+                    .set(rowSelector + " #ArenaFacePreview.Visible", true)
+                    .set(rowSelector + " #ArenaFacePreview.AssetPath", HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey))
+                    .set(rowSelector + " #ArenaFaceSpinner.Visible", false);
+            return;
+        }
+        commandBuilder.set(rowSelector + " #ArenaIcon.Visible", true)
+                .set(rowSelector + " #ArenaIcon.ItemId", iconToken)
+                .set(rowSelector + " #ArenaFacePreview.Visible", false)
+                .set(rowSelector + " #ArenaFacePreview.AssetPath", "")
+                .set(rowSelector + " #ArenaFaceSpinner.Visible", false);
     }
 
     private void populateSharedIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, String pickerPrefix, String actionScope, boolean pickerVisible, String selectedIconItemId, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions, String language, boolean english) {
@@ -3405,7 +3434,7 @@ extends CustomUIPage {
     private static List<String> buildFilteredIconPickerOptions(List<String> rawOptions, List<String> enemyRoleOptions, String selectedIconItemId, String categoryFilter, String searchQuery) {
         List<String> baseOptions = HordeConfigPage.buildArenaIconPickerOptions(rawOptions, selectedIconItemId);
         baseOptions.addAll(HordeConfigPage.buildEnemyIconPickerOptions(enemyRoleOptions));
-        String selected = HordeConfigPage.firstNonEmpty(selectedIconItemId, DEFAULT_ARENA_ITEM_ICON_ID);
+        String selected = HordeConfigPage.normalizePickedIconToken(HordeConfigPage.firstNonEmpty(selectedIconItemId, DEFAULT_ARENA_ITEM_ICON_ID));
         String category = HordeConfigPage.normalizeIconPickerCategory(categoryFilter);
         String query = HordeConfigPage.firstNonEmpty(searchQuery, "").trim().toLowerCase(Locale.ROOT);
         ArrayList<String> filtered = new ArrayList<String>();
@@ -3413,9 +3442,9 @@ extends CustomUIPage {
             if (option == null || option.isBlank()) {
                 continue;
             }
-            String optionItemId = HordeConfigPage.iconPickerOptionToItemId(option);
+            String optionToken = HordeConfigPage.normalizePickedIconToken(option);
             String optionSearchKey = HordeConfigPage.iconPickerOptionSearchKey(option).toLowerCase(Locale.ROOT);
-            boolean selectedEntry = optionItemId.equalsIgnoreCase(selected);
+            boolean selectedEntry = optionToken.equalsIgnoreCase(selected);
             boolean categoryMatch = ICON_CATEGORY_ALL.equals(category) || category.equals(HordeConfigPage.classifyIconPickerCategory(option));
             boolean searchMatch = query.isBlank() || optionSearchKey.contains(query);
             if (selectedEntry || categoryMatch && searchMatch) {
@@ -3428,6 +3457,18 @@ extends CustomUIPage {
             filtered.add(selected);
         }
         return filtered;
+    }
+
+    private static String normalizePickedIconToken(String rawOptionOrItemId) {
+        String raw = HordeConfigPage.firstNonEmpty(rawOptionOrItemId, "").trim();
+        if (raw.isBlank()) {
+            return DEFAULT_ARENA_ITEM_ICON_ID;
+        }
+        if (HordeConfigPage.isEnemyIconPickerOption(raw)) {
+            String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(raw);
+            return npcFaceKey.isBlank() ? DEFAULT_ARENA_ITEM_ICON_ID : "enemy:" + npcFaceKey;
+        }
+        return HordeConfigPage.iconPickerOptionToItemId(raw);
     }
 
     private static String classifyIconPickerCategory(String itemId) {
@@ -3663,7 +3704,7 @@ extends CustomUIPage {
             return fallbackIcon;
         }
         String lower = cleaned.toLowerCase(Locale.ROOT);
-        if (lower.contains("dragon") || lower.contains("wyvern") || lower.contains("drake") || lower.contains("wizard") || lower.contains("mage") || lower.contains("void") || lower.contains("spectre") || lower.contains("spirit") || lower.contains("elemental")) {
+        if (lower.contains("dragon") || lower.contains("wyvern") || lower.contains("drake") || lower.contains("wizard") || lower.contains("mage") || lower.contains("void") || lower.contains("spectre") || lower.contains("spirit") || lower.contains("elemental") || lower.contains("golem") || lower.contains("spark") || lower.contains("frost") || lower.contains("flame") || lower.contains("thunder")) {
             return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Crystal_Purple", "Ingredient_Crystal_Blue", "Ingredient_Voidheart", fallbackIcon);
         }
         if (lower.contains("skeleton") || lower.contains("zombie") || lower.contains("ghoul") || lower.contains("lich") || lower.contains("wraith") || lower.contains("knight") || lower.contains("lancer") || lower.contains("praetorian")) {
@@ -3675,8 +3716,17 @@ extends CustomUIPage {
         if (lower.contains("spider") || lower.contains("scarak") || lower.contains("insect") || lower.contains("beetle") || lower.contains("larva") || lower.contains("roach")) {
             return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Fabric_Scrap_Silk", "Ingredient_Bolt_Silk", "Ingredient_Crystal_Green", fallbackIcon);
         }
-        if (lower.contains("wolf") || lower.contains("crocodile") || lower.contains("raptor") || lower.contains("rex") || lower.contains("saurian") || lower.contains("beast")) {
+        if (lower.contains("wolf") || lower.contains("crocodile") || lower.contains("raptor") || lower.contains("rex") || lower.contains("saurian") || lower.contains("beast") || lower.contains("bear") || lower.contains("boar") || lower.contains("bat") || lower.contains("fox") || lower.contains("hyena") || lower.contains("yeti") || lower.contains("warthog")) {
             return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Leather_Scaled", "Ingredient_Hide_Scaled", "Ingredient_Leather_Heavy", fallbackIcon);
+        }
+        if (lower.contains("fish") || lower.contains("shark") || lower.contains("whale") || lower.contains("eel") || lower.contains("piranha") || lower.contains("trout") || lower.contains("salmon") || lower.contains("minnow") || lower.contains("bluegill") || lower.contains("catfish") || lower.contains("clownfish") || lower.contains("tang") || lower.contains("jellyfish") || lower.contains("lobster") || lower.contains("crab") || lower.contains("trilobite")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Hide_Scaled", "Ingredient_Leather_Scaled", "Ingredient_Crystal_Blue", fallbackIcon);
+        }
+        if (lower.contains("bird") || lower.contains("owl") || lower.contains("hawk") || lower.contains("raven") || lower.contains("crow") || lower.contains("vulture") || lower.contains("pigeon") || lower.contains("parrot") || lower.contains("duck") || lower.contains("flamingo") || lower.contains("sparrow") || lower.contains("finch") || lower.contains("bluebird") || lower.contains("woodpecker") || lower.contains("chicken") || lower.contains("turkey") || lower.contains("penguin")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Fabric_Scrap_Silk", "Ingredient_Bolt_Silk", "Ingredient_Leather_Light", fallbackIcon);
+        }
+        if (lower.contains("snake") || lower.contains("lizard") || lower.contains("gecko") || lower.contains("toad") || lower.contains("frog") || lower.contains("tortoise") || lower.contains("turtle") || lower.contains("shellfish") || lower.contains("scorpion")) {
+            return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Leather_Scaled", "Ingredient_Hide_Scaled", "Ingredient_Crystal_Green", fallbackIcon);
         }
         if (lower.contains("slime") || lower.contains("frog") || lower.contains("toad") || lower.contains("mushroom")) {
             return HordeConfigPage.firstAvailableIcon(rewardItemCatalogOptions, "Ingredient_Crystal_Green", "Potion_Signature_Lesser", fallbackIcon);

@@ -1050,14 +1050,6 @@ public final class HordeService {
         return OperationResult.ok(english ? "You will be locked as PLAYER if you are inside the arena area when the horde starts." : "Quedaras bloqueado como JUGADOR si estas dentro del area de arena al iniciar la horda.");
     }
 
-    public synchronized OperationResult teleportPlayerToSelectedArena(PlayerRef playerRef, World world) {
-        boolean english = HordeService.isEnglishLanguage(this.config.language);
-        if (playerRef == null || playerRef.getUuid() == null) {
-            return OperationResult.fail(english ? "Could not resolve your player identity." : "No se pudo resolver tu identidad de jugador.");
-        }
-        return OperationResult.fail(english ? "Teleport is temporarily disabled." : "El teletransporte esta desactivado temporalmente.");
-    }
-
     public synchronized List<AudiencePlayerSnapshot> getArenaAudiencePlayers(World world) {
         if (world == null) {
             return List.of();
@@ -1111,14 +1103,6 @@ public final class HordeService {
             return OperationResult.ok("Modo de audiencia para " + username + ": ESPECTADOR.");
         }
         return OperationResult.ok("Modo de audiencia para " + username + ": SALIR.");
-    }
-
-    public synchronized OperationResult teleportAudiencePlayerToArena(UUID playerId, String selectedArenaIdInput, World world) {
-        boolean english = HordeService.isEnglishLanguage(this.config.language);
-        if (playerId == null) {
-            return OperationResult.fail(english ? "Could not resolve target player." : "No se pudo resolver el jugador objetivo.");
-        }
-        return OperationResult.fail(english ? "Teleport is temporarily disabled." : "El teletransporte esta desactivado temporalmente.");
     }
 
     public synchronized boolean isSpectatorPreferenceEnabled(PlayerRef playerRef) {
@@ -4126,6 +4110,13 @@ public final class HordeService {
             return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
         }
         String lower = selected.toLowerCase(Locale.ROOT);
+        if (lower.startsWith("enemy:")) {
+            String npcFaceKey = selected.substring("enemy:".length()).trim();
+            if (!npcFaceKey.isBlank()) {
+                return "enemy:" + npcFaceKey;
+            }
+            return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
+        }
         if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
             return HordeService.resolveDefaultEnemyCategoryIconItemId(categoryId);
         }

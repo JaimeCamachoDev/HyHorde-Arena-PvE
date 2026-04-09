@@ -30,7 +30,6 @@ extends AbstractPlayerCommand {
         this.sendLocalized(playerRef, "/hordeconfig reward <rounds>", "/hordeconfig reward <rondas>");
         this.sendLocalized(playerRef, "/hordeconfig spectator <on|off> | player", "/hordeconfig spectator <on|off> | jugador");
         this.sendLocalized(playerRef, "/hordeconfig arearadius <blocks>", "/hordeconfig arearadius <bloques>");
-        this.sendLocalized(playerRef, "/hordetp (alias: /htp) | /hordeconfig tp", "/hordetp (alias: /htp) | /hordeconfig tp");
         this.sendLocalized(playerRef, "/hordareload [config] (mod/jar requires restart)", "/hordareload [config] (mod/jar requiere reinicio)");
     }
 
