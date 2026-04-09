@@ -537,20 +537,20 @@ extends CustomUIPage {
         if (TAB_ENEMIES.equals(tab)) {
             this.populateEnemyCategoryRows(commandBuilder, eventBuilder, enemyCategoryRows, language, english, rewardItemCatalogOptions);
             this.populateEnemyCategoryEnemyPicker(commandBuilder, eventBuilder, enemyRoleOptions, language, english, rewardItemCatalogOptions);
-            this.populateEnemyCategoryIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
+            this.populateEnemyCategoryIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, enemyRoleOptions);
         }
         if (TAB_REWARDS.equals(tab)) {
             this.populateRewardCategoryRows(commandBuilder, eventBuilder, rewardCategoryRows, language, english);
-            this.populateRewardCategoryIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
+            this.populateRewardCategoryIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, enemyRoleOptions);
             this.populateRewardCategoryItemPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, language, english);
         }
         if (TAB_HORDE.equals(tab)) {
             this.populateHordeRows(commandBuilder, eventBuilder, hordeRows, language, english);
-            this.populateHordeIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
+            this.populateHordeIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, enemyRoleOptions);
         }
         if (TAB_BOSSES.equals(tab)) {
             this.populateBossRows(commandBuilder, eventBuilder, bossRows, language, english);
-            this.populateBossIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
+            this.populateBossIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, enemyRoleOptions);
             this.populateBossEnemyPicker(commandBuilder, eventBuilder, enemyRoleOptions, language, english, rewardItemCatalogOptions);
         }
         if (TAB_SOUNDS.equals(tab)) {
@@ -560,7 +560,7 @@ extends CustomUIPage {
         }
         if (TAB_ARENAS.equals(tab)) {
             this.populateArenaRows(commandBuilder, eventBuilder, arenaRows, language, english);
-            this.populateArenaIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions);
+            this.populateArenaIconPicker(commandBuilder, eventBuilder, rewardItemCatalogOptions, enemyRoleOptions);
         }
         // IMPORTANT: Dropdowns like #Language must use ValueChanged.
         // Using Activating on dropdowns triggers client crash: "Failed to apply CustomUI event bindings".
@@ -1192,7 +1192,7 @@ extends CustomUIPage {
             return result;
         }
         if (action.startsWith("enemycat_icon_pick:")) {
-            String pickedItemId = HordeConfigPage.extractActionArgument(action);
+            String pickedItemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
             if (pickedItemId == null || pickedItemId.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.enemyCategoryStatusText = result.getMessage();
@@ -1310,7 +1310,7 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("rewardcat_icon_pick:")) {
-            String pickedItemId = HordeConfigPage.extractActionArgument(action);
+            String pickedItemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
             if (pickedItemId == null || pickedItemId.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.rewardCategoryStatusText = result.getMessage();
@@ -1599,7 +1599,7 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("hordedef_icon_pick:")) {
-            String itemId = HordeConfigPage.extractActionArgument(action);
+            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
             if (itemId == null || itemId.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.hordeStatusText = result.getMessage();
@@ -1703,7 +1703,7 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("boss_icon_pick:")) {
-            String itemId = HordeConfigPage.extractActionArgument(action);
+            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
             if (itemId == null || itemId.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.bossStatusText = result.getMessage();
@@ -1836,7 +1836,7 @@ extends CustomUIPage {
             return null;
         }
         if (action.startsWith("arena_icon_pick:")) {
-            String itemId = HordeConfigPage.extractActionArgument(action);
+            String itemId = HordeConfigPage.iconPickerOptionToItemId(HordeConfigPage.extractActionArgument(action));
             if (itemId == null || itemId.isBlank()) {
                 HordeService.OperationResult result = HordeService.OperationResult.fail(english ? "Invalid icon item ID." : "Item ID de icono invalido.");
                 this.arenaStatusText = result.getMessage();
@@ -2717,7 +2717,7 @@ extends CustomUIPage {
                 .set("#EnemyCatRolesOverflowLabel.Text", "");
     }
 
-    private void populateEnemyCategoryIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+    private void populateEnemyCategoryIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(
                 this.getDraftValue("enemyCategoryEditIconItemId", ""),
                 HordeConfigPage.resolveEnemyCategoryIcon(this.getDraftValue("enemyCategoryEditId", this.getDraftValue("enemyCategorySelected", ""))),
@@ -2738,6 +2738,7 @@ extends CustomUIPage {
                 this.enemyCategoryIconPickerModalVisible,
                 selectedIconItemId,
                 rewardItemCatalogOptions,
+                enemyRoleOptions,
                 language,
                 english
         );
@@ -2867,7 +2868,7 @@ extends CustomUIPage {
                 .set("#RewardCatItemsOverflowLabel.Text", "");
     }
 
-    private void populateRewardCategoryIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+    private void populateRewardCategoryIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(
                 this.getDraftValue("rewardCatEditIconItemId", ""),
                 HordeConfigPage.resolveListIconCandidate(HordeConfigPage.firstEnemyRoleOption(HordeConfigPage.parseEnemyCategoryRolesCsv(this.getDraftValue("rewardCatEditItems", "")))),
@@ -2888,6 +2889,7 @@ extends CustomUIPage {
                 this.rewardCategoryIconPickerModalVisible,
                 selectedIconItemId,
                 rewardItemCatalogOptions,
+                enemyRoleOptions,
                 language,
                 english
         );
@@ -2973,7 +2975,7 @@ extends CustomUIPage {
                 .set("#HordeOverflowLabel.Text", "");
     }
 
-    private void populateHordeIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+    private void populateHordeIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(
                 this.getDraftValue("hordeEditIconItemId", ""),
                 HordeConfigPage.resolveEnemyCategoryIcon(this.getDraftValue("enemyType", "")),
@@ -2994,6 +2996,7 @@ extends CustomUIPage {
                 this.hordeIconPickerModalVisible,
                 selectedIconItemId,
                 rewardItemCatalogOptions,
+                enemyRoleOptions,
                 language,
                 english
         );
@@ -3033,7 +3036,7 @@ extends CustomUIPage {
                 .set("#BossOverflowLabel.Text", "");
     }
 
-    private void populateBossIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+    private void populateBossIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(
                 this.getDraftValue("bossEditIconItemId", ""),
                 HordeConfigPage.resolveBossTierIcon(this.getDraftValue("bossEditTier", "common"))
@@ -3053,6 +3056,7 @@ extends CustomUIPage {
                 this.bossIconPickerModalVisible,
                 selectedIconItemId,
                 rewardItemCatalogOptions,
+                enemyRoleOptions,
                 language,
                 english
         );
@@ -3281,7 +3285,7 @@ extends CustomUIPage {
                 .set("#ArenaOverflowLabel.Text", "");
     }
 
-    private void populateArenaIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions) {
+    private void populateArenaIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(this.getDraftValue("arenaEditIconItemId", DEFAULT_ARENA_ITEM_ICON_ID), DEFAULT_ARENA_ITEM_ICON_ID);
         this.draftValues.put("arenaEditIconItemId", selectedIconItemId);
         commandBuilder.set("#ArenaEditIconItemId.Value", selectedIconItemId)
@@ -3298,6 +3302,7 @@ extends CustomUIPage {
                 this.arenaIconPickerModalVisible,
                 selectedIconItemId,
                 rewardItemCatalogOptions,
+                enemyRoleOptions,
                 language,
                 english
         );
@@ -3329,7 +3334,7 @@ extends CustomUIPage {
         return options;
     }
 
-    private void populateSharedIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, String pickerPrefix, String actionScope, boolean pickerVisible, String selectedIconItemId, List<String> rewardItemCatalogOptions, String language, boolean english) {
+    private void populateSharedIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, String pickerPrefix, String actionScope, boolean pickerVisible, String selectedIconItemId, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions, String language, boolean english) {
         String selectorBase = "#" + pickerPrefix;
         String categoryDraftKey = HordeConfigPage.iconPickerCategoryDraftKey(actionScope);
         String searchDraftKey = HordeConfigPage.iconPickerSearchDraftKey(actionScope);
@@ -3354,14 +3359,14 @@ extends CustomUIPage {
                 .set(selectorBase + "TabArmorButton.TooltipText", HordeConfigPage.t(language, english, "Armor", "Armadura"))
                 .set(selectorBase + "TabToolsButton.TooltipText", HordeConfigPage.t(language, english, "Tools", "Herramientas"))
                 .set(selectorBase + "TabConsumablesButton.TooltipText", HordeConfigPage.t(language, english, "Consumables", "Consumibles"))
-                .set(selectorBase + "TabOtherButton.TooltipText", HordeConfigPage.t(language, english, "Other", "Otros"))
+                .set(selectorBase + "TabOtherButton.TooltipText", HordeConfigPage.t(language, english, "Enemies", "Enemigos"))
                 .set(selectorBase + "Search #SearchInput.PlaceholderText", HordeConfigPage.t(language, english, "Search icons", "Buscar iconos"));
         commandBuilder.clear(selectorBase + "Grid");
         if (!pickerVisible) {
             return;
         }
 
-        List<String> iconOptions = HordeConfigPage.buildFilteredIconPickerOptions(rewardItemCatalogOptions, selectedIconItemId, selectedCategory, searchQuery);
+        List<String> iconOptions = HordeConfigPage.buildFilteredIconPickerOptions(rewardItemCatalogOptions, enemyRoleOptions, selectedIconItemId, selectedCategory, searchQuery);
         int rows = (iconOptions.size() + ARENA_ICON_PICKER_COLUMNS - 1) / ARENA_ICON_PICKER_COLUMNS;
         for (int rowIndex = 0; rowIndex < rows; ++rowIndex) {
             commandBuilder.append(selectorBase + "Grid", ARENA_ICON_PICKER_ROW_LAYOUT);
@@ -3371,16 +3376,24 @@ extends CustomUIPage {
                 int slotNumber = column + 1;
                 String buttonSelector = rowSelector + " #IconPickButton" + slotNumber;
                 String iconSelector = rowSelector + " #IconPickIcon" + slotNumber;
+                String faceSelector = rowSelector + " #IconPickFace" + slotNumber;
                 if (iconIndex < iconOptions.size()) {
                     String option = iconOptions.get(iconIndex);
+                    boolean npcOption = HordeConfigPage.isEnemyIconPickerOption(option);
+                    String iconItemId = HordeConfigPage.iconPickerOptionToItemId(option);
+                    String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(option);
                     commandBuilder.set(buttonSelector + ".Visible", true)
-                            .set(iconSelector + ".Visible", true)
-                            .set(iconSelector + ".ItemId", option);
+                            .set(iconSelector + ".Visible", !npcOption)
+                            .set(faceSelector + ".Visible", npcOption)
+                            .set(faceSelector + ".AssetPath", npcOption ? HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey) : "")
+                            .set(iconSelector + ".ItemId", iconItemId);
                     eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, buttonSelector, this.buildConfigSnapshotEvent(actionScope + "_icon_pick:" + option));
                     continue;
                 }
                 commandBuilder.set(buttonSelector + ".Visible", false)
-                        .set(iconSelector + ".Visible", false);
+                        .set(iconSelector + ".Visible", false)
+                        .set(faceSelector + ".Visible", false)
+                        .set(faceSelector + ".AssetPath", "");
             }
         }
         String categoryLabel = HordeConfigPage.iconPickerCategoryDisplay(selectedCategory, language, english);
@@ -3389,8 +3402,9 @@ extends CustomUIPage {
         commandBuilder.set(selectorBase + "StatusLabel.Text", statusText);
     }
 
-    private static List<String> buildFilteredIconPickerOptions(List<String> rawOptions, String selectedIconItemId, String categoryFilter, String searchQuery) {
+    private static List<String> buildFilteredIconPickerOptions(List<String> rawOptions, List<String> enemyRoleOptions, String selectedIconItemId, String categoryFilter, String searchQuery) {
         List<String> baseOptions = HordeConfigPage.buildArenaIconPickerOptions(rawOptions, selectedIconItemId);
+        baseOptions.addAll(HordeConfigPage.buildEnemyIconPickerOptions(enemyRoleOptions));
         String selected = HordeConfigPage.firstNonEmpty(selectedIconItemId, DEFAULT_ARENA_ITEM_ICON_ID);
         String category = HordeConfigPage.normalizeIconPickerCategory(categoryFilter);
         String query = HordeConfigPage.firstNonEmpty(searchQuery, "").trim().toLowerCase(Locale.ROOT);
@@ -3399,9 +3413,11 @@ extends CustomUIPage {
             if (option == null || option.isBlank()) {
                 continue;
             }
-            boolean selectedEntry = option.equalsIgnoreCase(selected);
+            String optionItemId = HordeConfigPage.iconPickerOptionToItemId(option);
+            String optionSearchKey = HordeConfigPage.iconPickerOptionSearchKey(option).toLowerCase(Locale.ROOT);
+            boolean selectedEntry = optionItemId.equalsIgnoreCase(selected);
             boolean categoryMatch = ICON_CATEGORY_ALL.equals(category) || category.equals(HordeConfigPage.classifyIconPickerCategory(option));
-            boolean searchMatch = query.isBlank() || option.toLowerCase(Locale.ROOT).contains(query);
+            boolean searchMatch = query.isBlank() || optionSearchKey.contains(query);
             if (selectedEntry || categoryMatch && searchMatch) {
                 if (!HordeConfigPage.containsIgnoreCase(filtered, option)) {
                     filtered.add(option);
@@ -3415,7 +3431,10 @@ extends CustomUIPage {
     }
 
     private static String classifyIconPickerCategory(String itemId) {
-        String lower = HordeConfigPage.firstNonEmpty(itemId, "").trim().toLowerCase(Locale.ROOT);
+        String lower = HordeConfigPage.firstNonEmpty(HordeConfigPage.iconPickerOptionToItemId(itemId), "").trim().toLowerCase(Locale.ROOT);
+        if (HordeConfigPage.isEnemyIconPickerOption(itemId)) {
+            return ICON_CATEGORY_OTHER;
+        }
         if (lower.isBlank()) {
             return ICON_CATEGORY_OTHER;
         }
@@ -3474,10 +3493,60 @@ extends CustomUIPage {
             case ICON_CATEGORY_CONSUMABLE:
                 return HordeConfigPage.t(language, english, "Consumables", "Consumibles");
             case ICON_CATEGORY_OTHER:
-                return HordeConfigPage.t(language, english, "Other", "Otros");
+                return HordeConfigPage.t(language, english, "Enemies", "Enemigos");
             default:
                 return HordeConfigPage.t(language, english, "All", "Todo");
         }
+    }
+
+    private static List<String> buildEnemyIconPickerOptions(List<String> enemyRoleOptions) {
+        ArrayList<String> options = new ArrayList<String>();
+        List<String> roles = HordeConfigPage.buildEnemyRolePickerOptions(enemyRoleOptions);
+        for (String roleId : roles) {
+            String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(roleId);
+            if (npcFaceKey == null || npcFaceKey.isBlank()) {
+                continue;
+            }
+            String option = "enemy:" + npcFaceKey;
+            if (!HordeConfigPage.containsIgnoreCase(options, option)) {
+                options.add(option);
+            }
+        }
+        return options;
+    }
+
+    private static boolean isEnemyIconPickerOption(String option) {
+        String normalized = HordeConfigPage.firstNonEmpty(option, "").trim();
+        return normalized.toLowerCase(Locale.ROOT).startsWith("enemy:");
+    }
+
+    private static String iconPickerOptionToNpcFaceKey(String option) {
+        if (!HordeConfigPage.isEnemyIconPickerOption(option)) {
+            return "";
+        }
+        String normalized = HordeConfigPage.firstNonEmpty(option, "").trim();
+        String npcFaceKey = normalized.substring("enemy:".length()).trim();
+        return HordeConfigPage.firstNonEmpty(npcFaceKey, "");
+    }
+
+    private static String iconPickerOptionToItemId(String option) {
+        if (!HordeConfigPage.isEnemyIconPickerOption(option)) {
+            return HordeConfigPage.firstNonEmpty(option, DEFAULT_ARENA_ITEM_ICON_ID);
+        }
+        String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(option);
+        if (npcFaceKey.isBlank()) {
+            return DEFAULT_ARENA_ITEM_ICON_ID;
+        }
+        String roleLikeId = npcFaceKey.replace('_', ' ');
+        return HordeConfigPage.resolveEnemyRoleIcon(roleLikeId);
+    }
+
+    private static String iconPickerOptionSearchKey(String option) {
+        if (!HordeConfigPage.isEnemyIconPickerOption(option)) {
+            return HordeConfigPage.firstNonEmpty(option, "");
+        }
+        String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(option);
+        return "enemy " + npcFaceKey;
     }
 
     private static List<String> buildEnemyRolePickerOptions(List<String> rawOptions) {

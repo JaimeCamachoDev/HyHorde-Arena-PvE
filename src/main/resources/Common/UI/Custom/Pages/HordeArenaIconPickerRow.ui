@@ -19,4 +19,12 @@ Group #HordeArenaIconPickerRow {
   ItemIcon #IconPickIcon5 { Anchor: (Left: 476, Top: 17, Width: 48, Height: 48); Visible: false; }
   ItemIcon #IconPickIcon6 { Anchor: (Left: 588, Top: 17, Width: 48, Height: 48); Visible: false; }
   ItemIcon #IconPickIcon7 { Anchor: (Left: 700, Top: 17, Width: 48, Height: 48); Visible: false; }
+
+  AssetImage #IconPickFace1 { Anchor: (Left: 28, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace2 { Anchor: (Left: 140, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace3 { Anchor: (Left: 252, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace4 { Anchor: (Left: 364, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace5 { Anchor: (Left: 476, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace6 { Anchor: (Left: 588, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace7 { Anchor: (Left: 700, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
 }
