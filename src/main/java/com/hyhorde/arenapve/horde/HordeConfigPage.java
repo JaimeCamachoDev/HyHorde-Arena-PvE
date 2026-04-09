@@ -1671,7 +1671,7 @@ extends CustomUIPage {
             return null;
         }
         if ("boss_icon_picker_open".equals(action)) {
-            this.bossIconPickerModalVisible = true;
+            this.bossIconPickerModalVisible = false;
             this.bossEnemyPickerModalVisible = false;
             return null;
         }
@@ -1681,12 +1681,12 @@ extends CustomUIPage {
         }
         if (action.startsWith("boss_icon_filter:")) {
             this.draftValues.put(HordeConfigPage.iconPickerCategoryDraftKey("boss"), HordeConfigPage.normalizeIconPickerCategory(HordeConfigPage.extractActionArgument(action)));
-            this.bossIconPickerModalVisible = true;
+            this.bossIconPickerModalVisible = false;
             this.bossEnemyPickerModalVisible = false;
             return null;
         }
         if ("boss_icon_search_change".equals(action)) {
-            this.bossIconPickerModalVisible = true;
+            this.bossIconPickerModalVisible = false;
             this.bossEnemyPickerModalVisible = false;
             return null;
         }
@@ -1698,7 +1698,7 @@ extends CustomUIPage {
                 return result;
             }
             this.selectBossForEditing(bossId);
-            this.bossIconPickerModalVisible = true;
+            this.bossIconPickerModalVisible = false;
             this.bossEnemyPickerModalVisible = false;
             return null;
         }
@@ -1709,7 +1709,8 @@ extends CustomUIPage {
                 this.bossStatusText = result.getMessage();
                 return result;
             }
-            this.draftValues.put("bossEditIconItemId", pickedIconToken.trim());
+            String selectedNpcId = this.getDraftValue("bossEditNpcId", "");
+            this.draftValues.put("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(selectedNpcId));
             this.bossIconPickerModalVisible = false;
             HordeService.OperationResult result = this.hordeService.saveBossDefinitionFromUi(this.extractBossValuesForSave());
             this.bossStatusText = result == null ? "" : result.getMessage();
@@ -1746,6 +1747,7 @@ extends CustomUIPage {
                 return result;
             }
             this.draftValues.put("bossEditNpcId", pickedRoleId.trim());
+            this.draftValues.put("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(pickedRoleId));
             this.bossEnemyPickerModalVisible = false;
             HordeService.OperationResult result = HordeService.OperationResult.ok(english ? "Enemy ID selected for boss." : "Enemy ID seleccionado para el boss.");
             this.bossStatusText = result.getMessage();
@@ -2229,7 +2231,7 @@ extends CustomUIPage {
             this.putDraftIfMissing("bossEditName", selectedBoss.bossId);
             this.putDraftIfMissing("bossEditNpcId", selectedBoss.npcId);
             this.putDraftIfMissing("bossEditTier", selectedBoss.tier);
-            this.putDraftIfMissing("bossEditIconItemId", HordeConfigPage.firstNonEmpty(selectedBoss.iconItemId, HordeConfigPage.resolveBossTierIcon(selectedBoss.tier)));
+            this.putDraftIfMissing("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(selectedBoss.npcId));
             this.putDraftIfMissing("bossEditAmount", Integer.toString(selectedBoss.amount));
             this.putDraftIfMissing("bossEditHp", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.hp));
             this.putDraftIfMissing("bossEditDamage", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.damage));
@@ -2237,7 +2239,7 @@ extends CustomUIPage {
             this.putDraftIfMissing("bossEditAttackRate", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.attackRate));
         }
         this.putDraftIfMissing("bossEditTier", "common");
-        this.putDraftIfMissing("bossEditIconItemId", HordeConfigPage.resolveBossTierIcon(this.getDraftValue("bossEditTier", "common")));
+        this.putDraftIfMissing("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(this.getDraftValue("bossEditNpcId", "")));
         this.putDraftIfMissing("bossEditAmount", "1");
         this.putDraftIfMissing("bossEditHp", "1");
         this.putDraftIfMissing("bossEditDamage", "1");
@@ -2407,7 +2409,7 @@ extends CustomUIPage {
         this.draftValues.put("bossEditName", snapshot.bossId);
         this.draftValues.put("bossEditNpcId", snapshot.npcId == null ? "" : snapshot.npcId);
         this.draftValues.put("bossEditTier", snapshot.tier == null ? "common" : snapshot.tier);
-        this.draftValues.put("bossEditIconItemId", HordeConfigPage.firstNonEmpty(snapshot.iconItemId, HordeConfigPage.resolveBossTierIcon(snapshot.tier)));
+        this.draftValues.put("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(snapshot.npcId));
         this.draftValues.put("bossEditAmount", Integer.toString(snapshot.amount));
         this.draftValues.put("bossEditHp", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.hp));
         this.draftValues.put("bossEditDamage", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.damage));
@@ -2490,11 +2492,13 @@ extends CustomUIPage {
 
     private Map<String, String> extractBossValuesForSave() {
         HashMap<String, String> values = new HashMap<String, String>();
+        String bossNpcId = this.getDraftValue("bossEditNpcId", "");
+        String autoBossIcon = HordeConfigPage.resolveBossAutoIconToken(bossNpcId);
         HordeConfigPage.putIfNotBlank(values, "bossSelected", this.getDraftValue("bossSelected", ""));
         HordeConfigPage.putIfNotBlank(values, "bossEditName", this.getDraftValue("bossEditName", ""));
-        HordeConfigPage.putIfNotBlank(values, "bossEditNpcId", this.getDraftValue("bossEditNpcId", ""));
+        HordeConfigPage.putIfNotBlank(values, "bossEditNpcId", bossNpcId);
         HordeConfigPage.putIfNotBlank(values, "bossEditTier", this.getDraftValue("bossEditTier", "common"));
-        HordeConfigPage.putIfNotBlank(values, "bossEditIconItemId", this.getDraftValue("bossEditIconItemId", HordeConfigPage.resolveBossTierIcon(this.getDraftValue("bossEditTier", "common"))));
+        HordeConfigPage.putIfNotBlank(values, "bossEditIconItemId", autoBossIcon);
         HordeConfigPage.putIfNotBlank(values, "bossEditAmount", this.getDraftValue("bossEditAmount", "1"));
         HordeConfigPage.putIfNotBlank(values, "bossEditHp", this.getDraftValue("bossEditHp", "1"));
         HordeConfigPage.putIfNotBlank(values, "bossEditDamage", this.getDraftValue("bossEditDamage", "1"));
@@ -2713,7 +2717,7 @@ extends CustomUIPage {
                 boolean useNpcFace = npcFaceKey != null && !npcFaceKey.isBlank();
                 commandBuilder.append("#EnemyCatRolesRowsList", ENEMY_ROLE_ROW_LAYOUT)
                         .set(rowSelector + " #RoleName.Text", HordeConfigPage.compactName(roleId, 44))
-                        .set(rowSelector + " #RoleMeta.Text", HordeConfigPage.t(language, english, "Enemy ID in category", "Enemy ID en categoria"))
+                        .set(rowSelector + " #RoleMeta.Text", HordeConfigPage.t(language, english, "Enemies list", "Lista de enemigos"))
                         .set(rowSelector + " #RoleIcon.Visible", !useNpcFace)
                         .set(rowSelector + " #RoleFace.Visible", useNpcFace)
                         .set(rowSelector + " #RoleFace.AssetPath", useNpcFace ? HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey) : "")
@@ -3026,7 +3030,11 @@ extends CustomUIPage {
                 String tierText = HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(row.tier, "common"), 10);
                 String npcText = HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(row.npcId, "-"), 28);
                 String subtitle = npcText + "  |  " + tierText + "  x" + Math.max(1, row.amount);
-                String iconItemId = HordeConfigPage.firstNonEmpty(row.iconItemId, HordeConfigPage.resolveBossTierIcon(row.tier));
+                String iconItemId = HordeConfigPage.firstNonEmpty(
+                        HordeConfigPage.resolveBossAutoIconToken(row.npcId),
+                        row.iconItemId,
+                        HordeConfigPage.resolveBossTierIcon(row.tier)
+                );
                 commandBuilder.append("#BossRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.bossId)
                         .set(rowSelector + " #ArenaCoords.Text", subtitle)
@@ -3034,7 +3042,7 @@ extends CustomUIPage {
                         .set(rowSelector + " #ArenaDeleteButton.Visible", true);
                 HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, iconItemId);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("open", row.bossId)))
-                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("icon_open", row.bossId)))
+                        .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaIconButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("open", row.bossId)))
                         .addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaDeleteButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildBossAction("delete", row.bossId)));
                 ++renderedRows;
             }
@@ -3050,6 +3058,7 @@ extends CustomUIPage {
 
     private void populateBossIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions) {
         String selectedIconItemId = HordeConfigPage.firstNonEmpty(
+                HordeConfigPage.resolveBossAutoIconToken(this.getDraftValue("bossEditNpcId", "")),
                 this.getDraftValue("bossEditIconItemId", ""),
                 HordeConfigPage.resolveBossTierIcon(this.getDraftValue("bossEditTier", "common"))
         );
@@ -3740,6 +3749,14 @@ extends CustomUIPage {
             return "";
         }
         return NPC_FACE_ROLE_KEY_CACHE.computeIfAbsent(cleaned, HordeConfigPage::resolveEnemyRoleNpcFaceKeyUncached);
+    }
+
+    private static String resolveBossAutoIconToken(String npcId) {
+        String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(npcId);
+        if (npcFaceKey != null && !npcFaceKey.isBlank()) {
+            return "enemy:" + npcFaceKey;
+        }
+        return HordeConfigPage.resolveEnemyRoleIcon(npcId);
     }
 
     private static String resolveEnemyRoleNpcFaceKeyUncached(String roleId) {
@@ -4695,10 +4712,10 @@ extends CustomUIPage {
                 .set("#EnemyCatIconSelectorLabel.Text", HordeConfigPage.t(language, english, "Category icon", "Icono de categoria"))
                 .set("#EnemyCatIconPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose icon", "Elegir icono"))
                 .set("#EnemyCatIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
-                .set("#EnemyCatRolePickerLabel.Text", HordeConfigPage.t(language, english, "Enemy ID", "Enemy ID"))
+                .set("#EnemyCatRolePickerLabel.Text", "")
                 .set("#EnemyCatEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Create enemy", "Crear enemigo"))
                 .set("#EnemyCatRoleAddButton.Text", HordeConfigPage.t(language, english, "Add", "Anadir"))
-                .set("#EnemyCatEditRolesLabel.Text", HordeConfigPage.t(language, english, "Enemy IDs in category", "Enemy IDs en categoria"))
+                .set("#EnemyCatEditRolesLabel.Text", HordeConfigPage.t(language, english, "Enemies list", "Lista de enemigos"))
                 .set("#EnemyCatEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy", "Selecciona enemigo"))
                 .set("#EnemyCatEditRolesHelpLabel.Text", "")
                 .set("#EnemyCatRolesOverflowLabel.Text", "")
@@ -4800,7 +4817,7 @@ extends CustomUIPage {
                 .set("#ArenaHeaderCoords.Text", HordeConfigPage.t(language, english, "Coordinates", "Coordenadas"))
                 .set("#ArenaHeaderActions.Text", "")
                 .set("#ArenaEditorTitleLabel.Text", HordeConfigPage.t(language, english, "Arena editor", "Editor de arena"))
-                .set("#ArenaEditIdLabel.Text", HordeConfigPage.t(language, english, "Arena ID", "Arena ID"))
+                .set("#ArenaEditIdLabel.Text", HordeConfigPage.t(language, english, "Arena name", "Nombre de la Arena"))
                 .set("#ArenaIconSelectorLabel.Text", HordeConfigPage.t(language, english, "Arena icon", "Icono de arena"))
                 .set("#ArenaIconPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose icon", "Elegir icono"))
                 .set("#ArenaCoordsTitleLabel.Text", HordeConfigPage.t(language, english, "Coordinates", "Coordenadas"))
@@ -4895,7 +4912,7 @@ extends CustomUIPage {
 
     private void applyEnemyCategoryEditorModalVisibility(UICommandBuilder commandBuilder, boolean enemiesTab) {
         boolean visible = enemiesTab && this.enemyCategoryEditorModalVisible;
-        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatRolePickerLabel", "#EnemyCatEnemyPickerOpenButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton");
+        this.setVisible(commandBuilder, visible, "#EnemyCatEditorModalShade", "#EnemyCatEditorModalFrame", "#EnemyCatEditorCloseButton", "#EnemyCatEditorTitleLabel", "#EnemyCatEditIdLabel", "#EnemyCatEditId", "#EnemyCatEnemyPickerOpenButton", "#EnemyCatEditRolesLabel", "#EnemyCatRolesListInset", "#EnemyCatRolesRowsList", "#EnemyCatRolesEmptyLabel", "#EnemyCatSaveButton");
         this.setVisible(commandBuilder, false, "#EnemyCatStatusLabel");
         boolean pickerVisible = enemiesTab && this.enemyCategoryIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#EnemyCatIconPickerShade", "#EnemyCatIconPickerFrame", "#EnemyCatIconPickerCloseButton", "#EnemyCatIconPickerTitleLabel", "#EnemyCatIconPickerCategoryTabs", "#EnemyCatIconPickerSearch", "#EnemyCatIconPickerStatusLabel", "#EnemyCatIconPickerGrid");
