@@ -2300,11 +2300,11 @@ Group {
   Label #HordeEditIdLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Horde ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@TextField #HordeEditId { @Anchor = (Left: 480, Top: 312, Width: 960); Value: ""; }
   Label #HordeModeLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Modo de horda"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@DropdownBox #HordeMode {
-    @Anchor = (Left: 480, Top: 378, Width: 960);
+  DropdownBox #HordeMode {
+    Anchor: (Left: 480, Top: 378, Width: 960, Height: 34);
     Value: "horde";
     Visible: false;
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, Anchor: (Width: 960, Height: 34), PanelWidth: 960);
+    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960);
     DropdownEntry { Value: "wave"; Text: "Oleada"; }
     DropdownEntry { Value: "timed"; Text: "Contrarreloj"; }
     DropdownEntry { Value: "horde"; Text: "Horda"; }
@@ -2714,7 +2714,7 @@ Group {
   Label #BossEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
   TextButton #BossIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #BossEditTierLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Tier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@DropdownBox #BossEditTier { @Anchor = (Left: 480, Top: 378, Width: 960); Value: "common"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, Anchor: (Width: 960, Height: 34), PanelWidth: 960); }
+  DropdownBox #BossEditTier { Anchor: (Left: 480, Top: 378, Width: 960, Height: 34); Value: "common"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
   Label #BossEnemyPickerLabel { Anchor: (Left: 480, Top: 422, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   TextButton #BossEnemyPickerOpenButton { Anchor: (Left: 480, Top: 444, Width: 960, Height: 34); Text: "Elegir Enemy ID"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
   Label #BossEditAmountLabel { Anchor: (Left: 480, Top: 488, Width: 304, Height: 16); Text: "Cantidad"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
@@ -2723,10 +2723,10 @@ Group {
   $C.@TextField #BossEditHp { @Anchor = (Left: 808, Top: 510, Width: 304); Value: "1"; }
   Label #BossEditDamageLabel { Anchor: (Left: 1136, Top: 488, Width: 304, Height: 16); Text: "Damage multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@TextField #BossEditDamage { @Anchor = (Left: 1136, Top: 510, Width: 304); Value: "1"; }
-  Label #BossEditSizeLabel { Anchor: (Left: 480, Top: 554, Width: 468, Height: 16); Text: "Size multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #BossEditSize { @Anchor = (Left: 480, Top: 576, Width: 468); Value: "1"; }
-  Label #BossEditAttackRateLabel { Anchor: (Left: 972, Top: 554, Width: 468, Height: 16); Text: "Attack rate x"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  $C.@TextField #BossEditAttackRate { @Anchor = (Left: 972, Top: 576, Width: 468); Value: "1"; }
+        Label #BossEditSizeLabel { Anchor: (Left: 480, Top: 554, Width: 468, Height: 16); Text: "Level"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+        $C.@TextField #BossEditSize { @Anchor = (Left: 480, Top: 576, Width: 468); Value: "0"; }
+        Label #BossEditAttackRateLabel { Anchor: (Left: 972, Top: 554, Width: 468, Height: 16); Text: "Experience points"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+        $C.@TextField #BossEditAttackRate { @Anchor = (Left: 972, Top: 576, Width: 468); Value: "0"; }
 
   TextButton #BossSaveButton {
     Anchor: (Left: 480, Top: 644, Width: 960, Height: 34);

@@ -30,6 +30,7 @@ final class BossArenaCatalogService {
     private static final String DEFAULT_ARENA_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private static final String DEFAULT_BOSS_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private static final int MAX_LEVEL_OVERRIDE = 300;
+    private static final int MAX_BOSS_XP_POINTS = 1000000;
     private static final Set<String> BOSS_SPAWN_TRIGGERS = Set.of("before_boss", "on_spawn", "after_spawn_seconds", "since_last_wave", "boss_hp_percent");
     private static final List<String> BOSS_TIER_OPTIONS = List.of("common", "uncommon", "rare", "epic", "legendary");
     private final PluginBase plugin;
@@ -132,6 +133,7 @@ final class BossArenaCatalogService {
         try {
             target.amount = BossArenaCatalogService.clamp(BossArenaCatalogService.parseInt(values.get("bossEditAmount"), target.amount), 1, 250);
             target.levelOverride = BossArenaCatalogService.clamp(BossArenaCatalogService.parseInt(values.get("bossEditLevelOverride"), target.levelOverride), 0, MAX_LEVEL_OVERRIDE);
+            target.experiencePoints = BossArenaCatalogService.clamp(BossArenaCatalogService.parseInt(values.get("bossEditXpPoints"), target.experiencePoints), 0, MAX_BOSS_XP_POINTS);
             target.lootRadius = BossArenaCatalogService.clamp(BossArenaCatalogService.parseDouble(values.get("bossEditLootRadius"), target.lootRadius), 0.0, 4096.0);
             target.modifiers.apply(values, "bossEdit", true);
             target.perPlayerIncrease.apply(values, "bossEditPp", false);
@@ -480,6 +482,7 @@ final class BossArenaCatalogService {
         final String iconItemId;
         final int amount;
         final int levelOverride;
+        final int experiencePoints;
         final double lootRadius;
         final ScalersSnapshot modifiers;
         final ScalersSnapshot perPlayerIncrease;
@@ -492,13 +495,14 @@ final class BossArenaCatalogService {
         final double timedProximityRadius;
         final int timedProximityCooldownSeconds;
 
-        private BossDefinitionSnapshot(String bossId, String npcId, String tier, String iconItemId, int amount, int levelOverride, double lootRadius, ScalersSnapshot modifiers, ScalersSnapshot perPlayerIncrease, String bossSpawnTrigger, double bossSpawnTriggerValue, boolean useRandomSpawnLocations, double randomSpawnRadius, boolean timedProximityEnabled, String timedProximityArenaId, double timedProximityRadius, int timedProximityCooldownSeconds) {
+        private BossDefinitionSnapshot(String bossId, String npcId, String tier, String iconItemId, int amount, int levelOverride, int experiencePoints, double lootRadius, ScalersSnapshot modifiers, ScalersSnapshot perPlayerIncrease, String bossSpawnTrigger, double bossSpawnTriggerValue, boolean useRandomSpawnLocations, double randomSpawnRadius, boolean timedProximityEnabled, String timedProximityArenaId, double timedProximityRadius, int timedProximityCooldownSeconds) {
             this.bossId = bossId;
             this.npcId = npcId;
             this.tier = tier;
             this.iconItemId = iconItemId;
             this.amount = amount;
             this.levelOverride = levelOverride;
+            this.experiencePoints = experiencePoints;
             this.lootRadius = lootRadius;
             this.modifiers = modifiers;
             this.perPlayerIncrease = perPlayerIncrease;
@@ -514,7 +518,7 @@ final class BossArenaCatalogService {
 
         private static BossDefinitionSnapshot from(BossDefinition source) {
             BossDefinition clean = BossDefinition.sanitize(source);
-            return new BossDefinitionSnapshot(clean.bossId, clean.npcId, clean.tier, clean.iconItemId, clean.amount, clean.levelOverride, clean.lootRadius, ScalersSnapshot.from(clean.modifiers), ScalersSnapshot.from(clean.perPlayerIncrease), clean.bossSpawnTrigger, clean.bossSpawnTriggerValue, clean.useRandomSpawnLocations, clean.randomSpawnRadius, clean.timedProximityEnabled, clean.timedProximityArenaId, clean.timedProximityRadius, clean.timedProximityCooldownSeconds);
+            return new BossDefinitionSnapshot(clean.bossId, clean.npcId, clean.tier, clean.iconItemId, clean.amount, clean.levelOverride, clean.experiencePoints, clean.lootRadius, ScalersSnapshot.from(clean.modifiers), ScalersSnapshot.from(clean.perPlayerIncrease), clean.bossSpawnTrigger, clean.bossSpawnTriggerValue, clean.useRandomSpawnLocations, clean.randomSpawnRadius, clean.timedProximityEnabled, clean.timedProximityArenaId, clean.timedProximityRadius, clean.timedProximityCooldownSeconds);
         }
     }
 
@@ -591,6 +595,7 @@ final class BossArenaCatalogService {
         private String iconItemId;
         private int amount;
         private int levelOverride;
+        private int experiencePoints;
         private double lootRadius;
         private Scalers modifiers;
         private Scalers perPlayerIncrease;
@@ -611,6 +616,7 @@ final class BossArenaCatalogService {
             row.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
             row.amount = 1;
             row.levelOverride = 0;
+            row.experiencePoints = 0;
             row.lootRadius = 24.0;
             row.modifiers = Scalers.defaults(true);
             row.perPlayerIncrease = Scalers.defaults(false);
@@ -633,6 +639,7 @@ final class BossArenaCatalogService {
             copy.iconItemId = this.iconItemId;
             copy.amount = this.amount;
             copy.levelOverride = this.levelOverride;
+            copy.experiencePoints = this.experiencePoints;
             copy.lootRadius = this.lootRadius;
             copy.modifiers = this.modifiers == null ? Scalers.defaults(true) : this.modifiers.copy();
             copy.perPlayerIncrease = this.perPlayerIncrease == null ? Scalers.defaults(false) : this.perPlayerIncrease.copy();
@@ -661,6 +668,7 @@ final class BossArenaCatalogService {
             }
             clean.amount = BossArenaCatalogService.clamp(clean.amount, 1, 250);
             clean.levelOverride = BossArenaCatalogService.clamp(clean.levelOverride, 0, MAX_LEVEL_OVERRIDE);
+            clean.experiencePoints = BossArenaCatalogService.clamp(clean.experiencePoints, 0, MAX_BOSS_XP_POINTS);
             clean.lootRadius = BossArenaCatalogService.clamp(clean.lootRadius, 0.0, 4096.0);
             clean.modifiers = Scalers.sanitize(clean.modifiers, true);
             clean.perPlayerIncrease = Scalers.sanitize(clean.perPlayerIncrease, false);

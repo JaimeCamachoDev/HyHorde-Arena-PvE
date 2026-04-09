@@ -18,6 +18,7 @@ import com.hypixel.hytale.server.core.asset.type.soundevent.config.SoundEvent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.inventory.ItemStack;
 import com.hypixel.hytale.server.core.modules.entity.item.ItemComponent;
+import com.hypixel.hytale.server.core.modules.entity.component.TransformComponent;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatMap;
 import com.hypixel.hytale.server.core.modules.entitystats.EntityStatValue;
 import com.hypixel.hytale.server.core.modules.entitystats.asset.DefaultEntityStatTypes;
@@ -27,6 +28,7 @@ import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.SoundUtil;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.server.core.util.EventTitleUtil;
+import com.hypixel.hytale.server.core.entity.UUIDComponent;
 import com.hypixel.hytale.server.npc.NPCPlugin;
 import com.hyhorde.arenapve.horde.HordeStatusPage;
 import it.unimi.dsi.fastutil.Pair;
@@ -35,7 +37,9 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
@@ -168,6 +172,9 @@ public final class HordeService {
     private static final float FINAL_BOSS_HEALTH_MULTIPLIER = 1.35f;
     private static final float MIN_BOSS_RUNTIME_MULTIPLIER = 0.01f;
     private static final float MAX_BOSS_RUNTIME_MULTIPLIER = 1000.0f;
+    private static final long BOSS_MODIFIER_APPLY_INITIAL_DELAY_MILLIS = 1000L;
+    private static final long BOSS_MODIFIER_APPLY_RETRY_INTERVAL_MILLIS = 500L;
+    private static final int BOSS_MODIFIER_APPLY_MAX_ATTEMPTS = 12;
     private static final double MIN_RADIUS = HordeConfigRules.MIN_RADIUS;
     private static final double MAX_RADIUS = HordeConfigRules.MAX_RADIUS;
     private static final double MIN_ARENA_JOIN_RADIUS = HordeConfigRules.MIN_ARENA_JOIN_RADIUS;
@@ -183,6 +190,8 @@ public final class HordeService {
     private static final String AUDIENCE_MODE_PLAYER = "player";
     private static final String AUDIENCE_MODE_SPECTATOR = "spectator";
     private static final String AUDIENCE_MODE_EXIT = "exit";
+    private static final Object UNSUPPORTED_ARGUMENT_MARKER = new Object();
+    private static final String RPG_XP_SOURCE_ENTITY_KILL = "ENTITY_KILL";
     private static final List<String> LANGUAGE_OPTIONS = List.of(LANGUAGE_SPANISH, LANGUAGE_ENGLISH, LANGUAGE_PORTUGUESE, LANGUAGE_FRENCH, LANGUAGE_GERMAN);
     private final PluginBase plugin;
     private final Gson gson;
@@ -209,6 +218,10 @@ public final class HordeService {
     private HordeConfig config;
     private HordeSession session;
     private final Map<Ref<EntityStore>, BossRuntimeModifiers> bossRuntimeModifiersByEnemyRef;
+    private final Map<Ref<EntityStore>, PendingBossModifierApplication> pendingBossModifierApplicationsByEnemyRef;
+    private final Map<Ref<EntityStore>, Integer> bossExperiencePointsByEnemyRef;
+    private final Map<UUID, Integer> bossExperiencePointsByEntityUuid;
+    private Object rpgExperienceGainedListener;
     private long nextAutoStartPollAtMillis;
     private long nextAutoStartAtMillis;
     private long lastStartDiagnosticAtMillis;
@@ -238,6 +251,10 @@ public final class HordeService {
         this.nextAudienceSoundAllowedAtMillis = 0L;
         this.config = HordeConfig.defaults();
         this.bossRuntimeModifiersByEnemyRef = new HashMap<Ref<EntityStore>, BossRuntimeModifiers>();
+        this.pendingBossModifierApplicationsByEnemyRef = new HashMap<Ref<EntityStore>, PendingBossModifierApplication>();
+        this.bossExperiencePointsByEnemyRef = new HashMap<Ref<EntityStore>, Integer>();
+        this.bossExperiencePointsByEntityUuid = new HashMap<UUID, Integer>();
+        this.rpgExperienceGainedListener = null;
         this.nextAutoStartPollAtMillis = 0L;
         this.nextAutoStartAtMillis = 0L;
         this.lastStartDiagnosticAtMillis = 0L;
@@ -1175,6 +1192,8 @@ public final class HordeService {
             return;
         }
         this.bossRuntimeModifiersByEnemyRef.remove(enemyRef);
+        this.pendingBossModifierApplicationsByEnemyRef.remove(enemyRef);
+        this.bossExperiencePointsByEnemyRef.remove(enemyRef);
         if (!this.isArenaPlayer(attackerPlayer)) {
             return;
         }
@@ -1742,6 +1761,9 @@ public final class HordeService {
         Vector3f startRotation = new Vector3f(startedBy.getTransform().getRotation());
         long firstRoundAtMillis = System.currentTimeMillis() + (long)START_COUNTDOWN_TOTAL_SECONDS * 1000L;
         this.bossRuntimeModifiersByEnemyRef.clear();
+        this.pendingBossModifierApplicationsByEnemyRef.clear();
+        this.bossExperiencePointsByEnemyRef.clear();
+        this.bossExperiencePointsByEntityUuid.clear();
         this.session = newSession = new HordeSession(world, store, selectedRole, selectedEnemyType, new ArrayList<String>(roles), playerMultiplier, forcedRole, randomizableEnemyTypes, startRotation, firstRoundAtMillis, lockedPlayers, lockedSpectators, selectedArenaSessionId, sessionArenaCenterX, sessionArenaCenterY, sessionArenaCenterZ, selectedBossSessionId, selectedBossNpcRole, selectedBossAmount);
         newSession.hordeMode = HordeService.normalizeHordeMode(this.config.hordeMode);
         this.syncSessionPlayers(newSession);
@@ -1961,6 +1983,9 @@ public final class HordeService {
             }
             this.session = null;
             this.bossRuntimeModifiersByEnemyRef.clear();
+            this.pendingBossModifierApplicationsByEnemyRef.clear();
+            this.bossExperiencePointsByEnemyRef.clear();
+            this.bossExperiencePointsByEntityUuid.clear();
             this.plugin.getLogger().at(Level.WARNING).log("Skipping horde shutdown announcements because world is already closing: %s", (Object)ex.getMessage());
         }
         this.closeAllStatusPages();
@@ -1985,14 +2010,19 @@ public final class HordeService {
                             return;
                         }
                         this.purgeBossRuntimeModifiers(trackedSession);
+                        this.purgePendingBossModifierApplications(trackedSession);
+                        this.purgeBossExperienceEntries(trackedSession);
                         int removed = HordeService.removeInvalidRefs(trackedSession.activeEnemies, trackedSession.accountedEnemyDeaths);
                         if (removed > 0) {
                             trackedSession.totalKilled += removed;
                         }
                         HordeService.removeInvalidRefs(trackedSession.spawnedEnemies, null);
                         this.purgeBossRuntimeModifiers(trackedSession);
-                        this.syncSessionPlayers(trackedSession);
+                        this.purgePendingBossModifierApplications(trackedSession);
+                        this.purgeBossExperienceEntries(trackedSession);
                         long now = System.currentTimeMillis();
+                        this.processPendingBossModifierApplications(trackedSession, now);
+                        this.syncSessionPlayers(trackedSession);
                         boolean english = HordeService.isEnglishLanguage(this.config.language);
                         if (!trackedSession.roundActive && trackedSession.currentRound == 0 && trackedSession.nextRoundAtMillis > 0L) {
                             int secondsRemaining = HordeService.computeRemainingSeconds(now, trackedSession.nextRoundAtMillis);
@@ -2163,7 +2193,28 @@ public final class HordeService {
                     this.applyEnemyLevelIfSupported(sessionToAdvance.store, enemyRef, enemyLevel, bossSpawn);
                 }
                 if (bossSpawn) {
-                    this.applyBossRuntimeModifiers(sessionToAdvance.store, enemyRef, configuredBossDefinition, configuredBossRuntimeModifiers, nextRound);
+                    int forcedBossLevel = configuredBossDefinition == null ? 0 : Math.max(0, configuredBossDefinition.levelOverride);
+                    if (forcedBossLevel > 0) {
+                        this.applyEnemyLevelIfSupported(sessionToAdvance.store, enemyRef, forcedBossLevel, true);
+                        this.plugin.getLogger().at(Level.INFO).log("Boss level override applied | boss=%s | level=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(forcedBossLevel));
+                    }
+                    int bossXpPoints = configuredBossDefinition == null ? 0 : Math.max(0, configuredBossDefinition.experiencePoints);
+                    if (bossXpPoints > 0) {
+                        this.bossExperiencePointsByEnemyRef.put(enemyRef, bossXpPoints);
+                        UUID enemyUuid = this.resolveEntityUuid(sessionToAdvance.store, enemyRef);
+                        if (enemyUuid != null) {
+                            this.bossExperiencePointsByEntityUuid.put(enemyUuid, bossXpPoints);
+                        }
+                        this.ensureRpgExperienceOverrideListenerRegistered();
+                        this.plugin.getLogger().at(Level.INFO).log("Boss XP override armed | boss=%s | xp=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(bossXpPoints));
+                    } else {
+                        this.bossExperiencePointsByEnemyRef.remove(enemyRef);
+                        UUID enemyUuid = this.resolveEntityUuid(sessionToAdvance.store, enemyRef);
+                        if (enemyUuid != null) {
+                            this.bossExperiencePointsByEntityUuid.remove(enemyUuid);
+                        }
+                    }
+                    this.queueBossRuntimeModifierApplication(enemyRef, configuredBossDefinition, configuredBossRuntimeModifiers, nextRound);
                 }
                 ++sessionToAdvance.totalSpawned;
                 ++spawned;
@@ -2288,6 +2339,182 @@ public final class HordeService {
         this.bossRuntimeModifiersByEnemyRef.entrySet().removeIf(entry -> entry == null || entry.getKey() == null || !entry.getKey().isValid() || !trackedSession.activeEnemies.contains(entry.getKey()));
     }
 
+    private void purgePendingBossModifierApplications(HordeSession trackedSession) {
+        if (trackedSession == null || this.pendingBossModifierApplicationsByEnemyRef.isEmpty()) {
+            return;
+        }
+        this.pendingBossModifierApplicationsByEnemyRef.entrySet().removeIf(entry -> entry == null || entry.getKey() == null || !entry.getKey().isValid() || !trackedSession.activeEnemies.contains(entry.getKey()));
+    }
+
+    private void purgeBossExperienceEntries(HordeSession trackedSession) {
+        if (trackedSession == null || this.bossExperiencePointsByEnemyRef.isEmpty()) {
+            return;
+        }
+        this.bossExperiencePointsByEnemyRef.entrySet().removeIf(entry -> entry == null || entry.getKey() == null || !entry.getKey().isValid() || !trackedSession.activeEnemies.contains(entry.getKey()));
+    }
+
+    private UUID resolveEntityUuid(Store<EntityStore> store, Ref<EntityStore> enemyRef) {
+        if (store == null || enemyRef == null || !enemyRef.isValid()) {
+            return null;
+        }
+        try {
+            UUIDComponent uuidComponent = (UUIDComponent)store.getComponent(enemyRef, UUIDComponent.getComponentType());
+            return uuidComponent == null ? null : uuidComponent.getUuid();
+        }
+        catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private void ensureRpgExperienceOverrideListenerRegistered() {
+        if (this.rpgExperienceGainedListener != null) {
+            return;
+        }
+        try {
+            Class<?> apiClass = Class.forName("org.zuxaw.plugin.api.RPGLevelingAPI");
+            Class<?> listenerClass = Class.forName("org.zuxaw.plugin.api.ExperienceGainedListener");
+            Method getApiMethod = apiClass.getMethod("get", new Class[0]);
+            Object api = getApiMethod.invoke(null, new Object[0]);
+            if (api == null) {
+                return;
+            }
+            InvocationHandler handler = (proxy, method, args) -> {
+                if (method != null && "onExperienceGained".equals(method.getName()) && args != null && args.length == 1 && args[0] != null) {
+                    this.handleRpgExperienceGainedEvent(args[0]);
+                }
+                return null;
+            };
+            Object listener = Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class<?>[]{listenerClass}, handler);
+            Method registerMethod = apiClass.getMethod("registerExperienceGainedListener", listenerClass);
+            registerMethod.invoke(api, listener);
+            this.rpgExperienceGainedListener = listener;
+            this.plugin.getLogger().at(Level.INFO).log("RPGLeveling XP override listener registered.");
+        }
+        catch (Exception ignored) {
+            // RPGLeveling optional. If unavailable, keep running without listener.
+        }
+    }
+
+    private void handleRpgExperienceGainedEvent(Object event) {
+        if (event == null) {
+            return;
+        }
+        try {
+            Class<?> eventClass = event.getClass();
+            Method getSource = eventClass.getMethod("getSource", new Class[0]);
+            Method getEntityUuid = eventClass.getMethod("getEntityUuid", new Class[0]);
+            Method setXpAmount = eventClass.getMethod("setXpAmount", Double.TYPE);
+            Object source = getSource.invoke(event, new Object[0]);
+            if (!this.isEntityKillXpSource(source)) {
+                return;
+            }
+            Object entityUuidRaw = getEntityUuid.invoke(event, new Object[0]);
+            if (!(entityUuidRaw instanceof UUID)) {
+                return;
+            }
+            UUID entityUuid = (UUID)entityUuidRaw;
+            Integer overrideXp;
+            synchronized (this) {
+                overrideXp = this.bossExperiencePointsByEntityUuid.remove(entityUuid);
+            }
+            if (overrideXp == null || overrideXp.intValue() < 0) {
+                return;
+            }
+            double forcedXp = (double)overrideXp.intValue();
+            setXpAmount.invoke(event, Double.valueOf(forcedXp));
+            this.plugin.getLogger().at(Level.INFO).log("Boss XP override applied | entity=%s | xp=%.2f", (Object)entityUuid, (Object)Double.valueOf(forcedXp));
+        }
+        catch (Exception ignored) {
+            // keep gameplay stable if event reflection changes
+        }
+    }
+
+    private boolean isEntityKillXpSource(Object source) {
+        if (source == null) {
+            return false;
+        }
+        try {
+            Method getName = source.getClass().getMethod("getName", new Class[0]);
+            Object nameRaw = getName.invoke(source, new Object[0]);
+            String name = nameRaw == null ? "" : nameRaw.toString();
+            return RPG_XP_SOURCE_ENTITY_KILL.equalsIgnoreCase(name);
+        }
+        catch (Exception ignored) {
+            return RPG_XP_SOURCE_ENTITY_KILL.equalsIgnoreCase(source.toString());
+        }
+    }
+
+    private void queueBossRuntimeModifierApplication(Ref<EntityStore> enemyRef, BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber) {
+        if (enemyRef == null || runtimeModifiers == null) {
+            return;
+        }
+        this.bossRuntimeModifiersByEnemyRef.put(enemyRef, runtimeModifiers);
+        if (!runtimeModifiers.requiresApplication()) {
+            this.pendingBossModifierApplicationsByEnemyRef.remove(enemyRef);
+            return;
+        }
+        long nextAttemptAt = System.currentTimeMillis() + BOSS_MODIFIER_APPLY_INITIAL_DELAY_MILLIS;
+        this.pendingBossModifierApplicationsByEnemyRef.put(enemyRef, new PendingBossModifierApplication(definition, runtimeModifiers, roundNumber, BOSS_MODIFIER_APPLY_MAX_ATTEMPTS, nextAttemptAt));
+    }
+
+    private void processPendingBossModifierApplications(HordeSession trackedSession, long nowMillis) {
+        if (trackedSession == null || this.pendingBossModifierApplicationsByEnemyRef.isEmpty()) {
+            return;
+        }
+        ArrayList<Ref<EntityStore>> refsToRemove = new ArrayList<Ref<EntityStore>>();
+        for (Map.Entry<Ref<EntityStore>, PendingBossModifierApplication> entry : this.pendingBossModifierApplicationsByEnemyRef.entrySet()) {
+            if (entry == null || entry.getKey() == null) {
+                continue;
+            }
+            Ref<EntityStore> enemyRef = entry.getKey();
+            PendingBossModifierApplication pending = entry.getValue();
+            if (pending == null || !enemyRef.isValid() || !trackedSession.activeEnemies.contains(enemyRef)) {
+                refsToRemove.add(enemyRef);
+                continue;
+            }
+            if (nowMillis < pending.nextAttemptAtMillis) {
+                continue;
+            }
+            if (pending.definition != null && pending.definition.levelOverride > 0) {
+                this.applyEnemyLevelIfSupported(trackedSession.store, enemyRef, pending.definition.levelOverride, true);
+            }
+            BossModifierApplyResult applyResult = this.applyBossRuntimeModifiers(
+                    trackedSession.store,
+                    enemyRef,
+                    pending.definition,
+                    pending.runtimeModifiers,
+                    pending.roundNumber,
+                    !pending.hpApplied,
+                    !pending.sizeApplied,
+                    !pending.attackRateApplied
+            );
+            pending.hpApplied = pending.hpApplied || applyResult.hpApplied;
+            pending.sizeApplied = pending.sizeApplied || applyResult.sizeApplied;
+            pending.attackRateApplied = pending.attackRateApplied || applyResult.attackRateApplied;
+            if (pending.isComplete()) {
+                refsToRemove.add(enemyRef);
+                continue;
+            }
+            --pending.remainingAttempts;
+            if (pending.remainingAttempts <= 0) {
+                String bossIdText = pending.definition == null || pending.definition.bossId == null || pending.definition.bossId.isBlank() ? "<legacy>" : pending.definition.bossId;
+                this.plugin.getLogger().at(Level.WARNING).log(
+                        "Boss modifiers could not be fully applied after retries | boss=%s | hp=%s | size=%s | attackRate=%s",
+                        (Object)bossIdText,
+                        (Object)Boolean.valueOf(pending.hpApplied),
+                        (Object)Boolean.valueOf(pending.sizeApplied),
+                        (Object)Boolean.valueOf(pending.attackRateApplied)
+                );
+                refsToRemove.add(enemyRef);
+                continue;
+            }
+            pending.nextAttemptAtMillis = nowMillis + BOSS_MODIFIER_APPLY_RETRY_INTERVAL_MILLIS;
+        }
+        for (Ref<EntityStore> enemyRef : refsToRemove) {
+            this.pendingBossModifierApplicationsByEnemyRef.remove(enemyRef);
+        }
+    }
+
     private BossRuntimeModifiers computeBossRuntimeModifiers(BossArenaCatalogService.BossDefinitionSnapshot definition, int playerCount) {
         int safePlayers = Math.max(MIN_PLAYER_MULTIPLIER, Math.min(MAX_PLAYER_MULTIPLIER, playerCount));
         int extraPlayers = Math.max(0, safePlayers - 1);
@@ -2322,16 +2549,17 @@ public final class HordeService {
         return value;
     }
 
-    private void applyBossRuntimeModifiers(Store<EntityStore> store, Ref<EntityStore> enemyRef, BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber) {
+    private BossModifierApplyResult applyBossRuntimeModifiers(Store<EntityStore> store, Ref<EntityStore> enemyRef, BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber, boolean applyHp, boolean applySize, boolean applyAttackRate) {
         if (store == null || enemyRef == null || runtimeModifiers == null) {
-            return;
+            return BossModifierApplyResult.NONE;
         }
-        boolean hpApplied = this.applyBossHealthMultiplier(store, enemyRef, runtimeModifiers.hpMultiplier);
-        boolean sizeApplied = this.applyBossSizeMultiplier(store, enemyRef, runtimeModifiers.sizeMultiplier);
-        boolean attackRateApplied = this.applyBossAttackRateMultiplier(store, enemyRef, runtimeModifiers.attackRateMultiplier);
+        boolean hpApplied = !applyHp || this.applyBossHealthMultiplier(store, enemyRef, runtimeModifiers.hpMultiplier);
+        boolean sizeApplied = !applySize || this.applyBossSizeMultiplier(store, enemyRef, runtimeModifiers.sizeMultiplier);
+        boolean attackRateApplied = !applyAttackRate || this.applyBossAttackRateMultiplier(store, enemyRef, runtimeModifiers.attackRateMultiplier);
         this.bossRuntimeModifiersByEnemyRef.put(enemyRef, runtimeModifiers);
         String bossIdText = definition == null || definition.bossId == null || definition.bossId.isBlank() ? "<legacy>" : definition.bossId;
         this.plugin.getLogger().at(Level.INFO).log("Boss modifiers | round=%d | boss=%s | hp=%.3f | damage=%.3f | size=%.3f | attackRate=%.3f | applied(hp=%s,size=%s,attackRate=%s)", (Object)Integer.valueOf(roundNumber), (Object)bossIdText, (Object)Float.valueOf(runtimeModifiers.hpMultiplier), (Object)Float.valueOf(runtimeModifiers.damageMultiplier), (Object)Float.valueOf(runtimeModifiers.sizeMultiplier), (Object)Float.valueOf(runtimeModifiers.attackRateMultiplier), (Object)Boolean.valueOf(hpApplied), (Object)Boolean.valueOf(sizeApplied), (Object)Boolean.valueOf(attackRateApplied));
+        return new BossModifierApplyResult(hpApplied, sizeApplied, attackRateApplied);
     }
 
     private boolean applyBossHealthMultiplier(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
@@ -3360,6 +3588,9 @@ public final class HordeService {
         trackedSession.activeEnemies.clear();
         trackedSession.spawnedEnemies.clear();
         this.bossRuntimeModifiersByEnemyRef.clear();
+        this.pendingBossModifierApplicationsByEnemyRef.clear();
+        this.bossExperiencePointsByEnemyRef.clear();
+        this.bossExperiencePointsByEntityUuid.clear();
         this.session = null;
         String cleanInfo = cleanupAliveEnemies ? (english ? " | cleaned: " + cleanedEnemies : " | limpiados: " + cleanedEnemies) : "";
         String aliveLabel = english ? "alive remaining: " : "vivos restantes: ";
@@ -3391,6 +3622,12 @@ public final class HordeService {
                 continue;
             }
             this.bossRuntimeModifiersByEnemyRef.remove(enemyRef);
+            this.pendingBossModifierApplicationsByEnemyRef.remove(enemyRef);
+            this.bossExperiencePointsByEnemyRef.remove(enemyRef);
+            UUID enemyUuid = this.resolveEntityUuid(trackedSession.store, enemyRef);
+            if (enemyUuid != null) {
+                this.bossExperiencePointsByEntityUuid.remove(enemyUuid);
+            }
             try {
                 trackedSession.store.removeEntity(enemyRef, RemoveReason.REMOVE);
                 ++cleaned;
@@ -3411,6 +3648,9 @@ public final class HordeService {
         trackedSession.spawnedEnemies.clear();
         trackedSession.accountedEnemyDeaths.clear();
         this.bossRuntimeModifiersByEnemyRef.clear();
+        this.pendingBossModifierApplicationsByEnemyRef.clear();
+        this.bossExperiencePointsByEnemyRef.clear();
+        this.bossExperiencePointsByEntityUuid.clear();
         return cleaned;
     }
 
@@ -5849,13 +6089,20 @@ public final class HordeService {
             return;
         }
         boolean appliedWithLevelComponent = false;
+        if (this.tryApplyLevelWithRpgLevelingPlugin(store, enemyRef, level)) {
+            appliedWithLevelComponent = true;
+        }
         String[] candidateComponentClasses = new String[]{
             "com.hypixel.hytale.server.core.modules.entity.stats.LevelComponent",
             "com.hypixel.hytale.server.core.modules.entity.stats.EntityLevelComponent",
             "com.hypixel.hytale.server.core.modules.entity.npc.NpcLevelComponent",
-            "com.hypixel.hytale.server.core.modules.entity.npc.NPCLevelComponent"
+            "com.hypixel.hytale.server.core.modules.entity.npc.NPCLevelComponent",
+            "org.zuxaw.plugin.components.MobLevelData"
         };
         for (String className : candidateComponentClasses) {
+            if (appliedWithLevelComponent) {
+                break;
+            }
             try {
                 Class<?> componentClass = Class.forName(className);
                 Method getComponentType = componentClass.getMethod("getComponentType", new Class[0]);
@@ -5876,12 +6123,114 @@ public final class HordeService {
             catch (ClassNotFoundException classNotFoundException) {
                 // optional component not available in this runtime
             }
+            catch (NoSuchMethodException ignored) {
+                // component exists but does not expose getComponentType()
+            }
             catch (Exception exception) {
                 // keep horde flow alive even if level assignment fails
             }
         }
         if (!appliedWithLevelComponent) {
             this.applyEnemyHealthScalingFallback(store, enemyRef, level, bossSpawn);
+        }
+    }
+
+    private boolean tryApplyLevelWithRpgLevelingPlugin(Store<EntityStore> store, Ref<EntityStore> enemyRef, int level) {
+        try {
+            Class<?> pluginClass = Class.forName("org.zuxaw.plugin.RPGLevelingPlugin");
+            Method getMethod = pluginClass.getMethod("get", new Class[0]);
+            Object pluginInstance = getMethod.invoke(null, new Object[0]);
+            if (pluginInstance == null) {
+                return false;
+            }
+            UUID entityUuid = null;
+            try {
+                UUIDComponent uuidComponent = (UUIDComponent)store.getComponent(enemyRef, UUIDComponent.getComponentType());
+                if (uuidComponent != null) {
+                    entityUuid = uuidComponent.getUuid();
+                }
+            }
+            catch (Exception ignored) {
+                // best effort UUID resolution
+            }
+            if (entityUuid != null) {
+                try {
+                    Method putSpawnLevelMethod = pluginClass.getMethod("putSpawnLevelForEntity", UUID.class, Integer.TYPE);
+                    putSpawnLevelMethod.invoke(pluginInstance, entityUuid, Integer.valueOf(level));
+                }
+                catch (Exception ignored) {
+                    // best effort spawn-level override
+                }
+            }
+            EntityStatMap statMap = (EntityStatMap)store.getComponent(enemyRef, EntityStatMap.getComponentType());
+            if (statMap != null) {
+                try {
+                    Method calcMultiplierMethod = pluginClass.getMethod("calculateMonsterHpMultiplier", Integer.TYPE);
+                    Method applyHealthMethod = pluginClass.getMethod("applyHealthModifier", EntityStatMap.class, Float.TYPE);
+                    Object multiplierRaw = calcMultiplierMethod.invoke(pluginInstance, Integer.valueOf(level));
+                    if (multiplierRaw instanceof Number) {
+                        applyHealthMethod.invoke(pluginInstance, statMap, Float.valueOf(((Number)multiplierRaw).floatValue()));
+                    }
+                }
+                catch (Exception ignored) {
+                    // keep level flow alive if health apply is unavailable
+                }
+            }
+            Method getMobTypeMethod = pluginClass.getMethod("getMobLevelDataType", new Class[0]);
+            Object mobLevelDataType = getMobTypeMethod.invoke(pluginInstance, new Object[0]);
+            if (mobLevelDataType == null) {
+                return entityUuid != null;
+            }
+            Object mobLevelData = this.invokeStoreGetComponent(store, enemyRef, mobLevelDataType);
+            if (mobLevelData == null) {
+                try {
+                    Class<?> mobDataClass = Class.forName("org.zuxaw.plugin.components.MobLevelData");
+                    mobLevelData = mobDataClass.getConstructor(new Class[0]).newInstance(new Object[0]);
+                }
+                catch (Exception ignored) {
+                    return entityUuid != null;
+                }
+            }
+            float maxHealth = 1.0f;
+            try {
+                EntityStatMap statMapForHealth = (EntityStatMap)store.getComponent(enemyRef, EntityStatMap.getComponentType());
+                if (statMapForHealth != null) {
+                    EntityStatValue health = statMapForHealth.get(DefaultEntityStatTypes.getHealth());
+                    if (health != null) {
+                        maxHealth = Math.max(1.0f, health.getMax());
+                    }
+                }
+            }
+            catch (Exception ignored) {
+                // keep default maxHealth
+            }
+            double posX = 0.0;
+            double posZ = 0.0;
+            try {
+                TransformComponent transformComponent = (TransformComponent)store.getComponent(enemyRef, TransformComponent.getComponentType());
+                if (transformComponent != null && transformComponent.getPosition() != null) {
+                    posX = transformComponent.getPosition().x;
+                    posZ = transformComponent.getPosition().z;
+                }
+            }
+            catch (Exception ignored) {
+                // keep default position values
+            }
+            try {
+                Method updateMethod = mobLevelData.getClass().getMethod("update", Integer.TYPE, Float.TYPE, String.class, Double.TYPE, Double.TYPE);
+                updateMethod.invoke(mobLevelData, Integer.valueOf(level), Float.valueOf(maxHealth), "", Double.valueOf(posX), Double.valueOf(posZ));
+            }
+            catch (Exception ignored) {
+                this.tryInvokeNumericSetter(mobLevelData, "setCachedLevel", (float)level);
+            }
+            this.invokeStorePutComponent(store, enemyRef, mobLevelDataType, mobLevelData);
+            return true;
+        }
+        catch (ClassNotFoundException ignored) {
+            return false;
+        }
+        catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -6148,36 +6497,246 @@ public final class HordeService {
     }
 
     private boolean trySetLevelWithMethod(Object component, int level) {
-        String[] candidateSetters = new String[]{"setLevel", "setLvl", "setNpcLevel", "setEntityLevel"};
+        String[] candidateSetters = new String[]{"setLevel", "setLvl", "setNpcLevel", "setEntityLevel", "setMobLevel", "setRequestedLevel", "setTargetLevel"};
         for (String setter : candidateSetters) {
-            try {
-                Method method = component.getClass().getMethod(setter, Integer.TYPE);
-                method.invoke(component, level);
+            if (this.tryInvokeNumericSetter(component, setter, (float)level)) {
                 return true;
-            }
-            catch (Exception exception) {
-                // try next setter
             }
         }
         return false;
     }
 
     private boolean trySetLevelWithField(Object component, int level) {
-        String[] candidateFields = new String[]{"level", "lvl", "npcLevel", "entityLevel"};
+        String[] candidateFields = new String[]{"level", "lvl", "npcLevel", "entityLevel", "mobLevel", "requestedLevel", "targetLevel"};
         for (String fieldName : candidateFields) {
-            try {
-                Field field = component.getClass().getDeclaredField(fieldName);
-                field.setAccessible(true);
-                if (field.getType() == Integer.TYPE || field.getType() == Integer.class) {
-                    field.set(component, level);
-                    return true;
-                }
-            }
-            catch (Exception exception) {
-                // try next field
+            if (this.trySetNumericField(component, fieldName, (float)level)) {
+                return true;
             }
         }
         return false;
+    }
+
+    private void tryGrantBossExperience(PlayerRef playerRef, int experiencePoints) {
+        if (playerRef == null || experiencePoints <= 0) {
+            return;
+        }
+        boolean granted = this.tryGrantBossExperienceDirectRpgApi(playerRef, experiencePoints);
+        if (!granted) {
+            granted = this.tryGrantBossExperienceFallback(playerRef, experiencePoints);
+        }
+        if (granted) {
+            this.plugin.getLogger().at(Level.INFO).log("Boss XP granted via RPGLeveling | player=%s | xp=%d", (Object)playerRef, (Object)Integer.valueOf(experiencePoints));
+        } else {
+            this.plugin.getLogger().at(Level.WARNING).log("Boss XP could not be granted via RPGLeveling | player=%s | xp=%d", (Object)playerRef, (Object)Integer.valueOf(experiencePoints));
+        }
+    }
+
+    private boolean tryGrantBossExperienceDirectRpgApi(PlayerRef playerRef, int experiencePoints) {
+        try {
+            Class<?> apiClass = Class.forName("org.zuxaw.plugin.api.RPGLevelingAPI");
+            Method getApiMethod = apiClass.getMethod("get", new Class[0]);
+            Object apiTarget = getApiMethod.invoke(null, new Object[0]);
+            if (apiTarget == null) {
+                return false;
+            }
+            Class<?> xpSourceClass = Class.forName("org.zuxaw.plugin.api.XPSource");
+            Field entityKillField = xpSourceClass.getField("ENTITY_KILL");
+            Object entityKill = entityKillField.get(null);
+            Method addXpMethod = apiClass.getMethod("addXP", PlayerRef.class, Double.TYPE, xpSourceClass);
+            Object result = addXpMethod.invoke(apiTarget, playerRef, Double.valueOf((double)experiencePoints), entityKill);
+            if (result instanceof Boolean) {
+                return ((Boolean)result).booleanValue();
+            }
+            return true;
+        }
+        catch (ClassNotFoundException ignored) {
+            return false;
+        }
+        catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean tryGrantBossExperienceFallback(PlayerRef playerRef, int experiencePoints) {
+        try {
+            Class<?> apiClass = Class.forName("org.zuxaw.plugin.api.RPGLevelingAPI");
+            Object apiTarget = this.resolveRpgLevelingApiTarget(apiClass);
+            if (apiTarget == null) {
+                return false;
+            }
+            Class<?> xpSourceClass = null;
+            Object xpSourceValue = null;
+            try {
+                xpSourceClass = Class.forName("org.zuxaw.plugin.api.XPSource");
+                xpSourceValue = this.buildXpSourceEnumValue(xpSourceClass);
+            }
+            catch (ClassNotFoundException ignored) {
+                // Keep fallback generic
+            }
+            Method[] methods = apiClass.getMethods();
+            for (Method method : methods) {
+                if (method == null) {
+                    continue;
+                }
+                String normalizedName = method.getName() == null ? "" : method.getName().toLowerCase(Locale.ROOT);
+                if (!normalizedName.contains("addxp") && !normalizedName.contains("experience")) {
+                    continue;
+                }
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                Object[] args = new Object[parameterTypes.length];
+                boolean supported = true;
+                for (int i = 0; i < parameterTypes.length; ++i) {
+                    Object arg = this.resolveArgumentForXpMethod(parameterTypes[i], playerRef, experiencePoints, xpSourceClass, xpSourceValue);
+                    if (arg == HordeService.UNSUPPORTED_ARGUMENT_MARKER) {
+                        supported = false;
+                        break;
+                    }
+                    args[i] = arg;
+                }
+                if (!supported) {
+                    continue;
+                }
+                try {
+                    Object invokeTarget = java.lang.reflect.Modifier.isStatic(method.getModifiers()) ? null : apiTarget;
+                    if (invokeTarget == null && !java.lang.reflect.Modifier.isStatic(method.getModifiers())) {
+                        continue;
+                    }
+                    Object result = method.invoke(invokeTarget, args);
+                    if (!(result instanceof Boolean) || ((Boolean)result).booleanValue()) {
+                        return true;
+                    }
+                }
+                catch (Exception ignored) {
+                    // try next
+                }
+            }
+        }
+        catch (Exception ignored) {
+            return false;
+        }
+        return false;
+    }
+
+    private Object resolveRpgLevelingApiTarget(Class<?> apiClass) {
+        if (apiClass == null) {
+            return null;
+        }
+        String[] staticAccessors = new String[]{"get", "getInstance", "instance", "api", "getApi"};
+        for (String accessor : staticAccessors) {
+            try {
+                Method method = apiClass.getMethod(accessor, new Class[0]);
+                if ((method.getModifiers() & java.lang.reflect.Modifier.STATIC) == 0) {
+                    continue;
+                }
+                Object value = method.invoke(null, new Object[0]);
+                if (value != null) {
+                    return value;
+                }
+            }
+            catch (Exception ignored) {
+                // try next accessor
+            }
+        }
+        for (Field field : apiClass.getFields()) {
+            if (field == null || field.getType() == null || !apiClass.isAssignableFrom(field.getType())) {
+                continue;
+            }
+            String name = field.getName() == null ? "" : field.getName().toLowerCase(Locale.ROOT);
+            if (!("instance".equals(name) || "api".equals(name))) {
+                continue;
+            }
+            if ((field.getModifiers() & java.lang.reflect.Modifier.STATIC) == 0) {
+                continue;
+            }
+            try {
+                Object value = field.get(null);
+                if (value != null) {
+                    return value;
+                }
+            }
+            catch (Exception ignored) {
+                // try next field
+            }
+        }
+        return null;
+    }
+
+    private void invokeStorePutComponent(Store<EntityStore> store, Ref<EntityStore> enemyRef, Object componentType, Object component) throws Exception {
+        if (store == null || enemyRef == null || componentType == null || component == null) {
+            return;
+        }
+        for (Method method : store.getClass().getMethods()) {
+            if (!"putComponent".equals(method.getName()) || method.getParameterCount() != 3) {
+                continue;
+            }
+            Class<?>[] parameterTypes = method.getParameterTypes();
+            if (!parameterTypes[0].isAssignableFrom(enemyRef.getClass())) {
+                continue;
+            }
+            if (!parameterTypes[1].isAssignableFrom(componentType.getClass())) {
+                continue;
+            }
+            if (!parameterTypes[2].isAssignableFrom(component.getClass())) {
+                continue;
+            }
+            method.invoke(store, enemyRef, componentType, component);
+            return;
+        }
+    }
+
+    private Object buildXpSourceEnumValue(Class<?> xpSourceClass) {
+        if (xpSourceClass == null || !xpSourceClass.isEnum()) {
+            return null;
+        }
+        Object[] values = xpSourceClass.getEnumConstants();
+        if (values == null || values.length == 0) {
+            return null;
+        }
+        for (Object value : values) {
+            if (!(value instanceof Enum<?>)) {
+                continue;
+            }
+            String name = ((Enum<?>)value).name().toLowerCase(Locale.ROOT);
+            if (name.contains("kill")) {
+                return value;
+            }
+        }
+        return values[0];
+    }
+
+    private Object resolveArgumentForXpMethod(Class<?> parameterType, PlayerRef playerRef, int experiencePoints, Class<?> xpSourceClass, Object xpSourceValue) {
+        if (parameterType == null) {
+            return HordeService.UNSUPPORTED_ARGUMENT_MARKER;
+        }
+        if (PlayerRef.class.isAssignableFrom(parameterType)) {
+            return playerRef;
+        }
+        UUID playerId = playerRef.getUuid();
+        if (parameterType == UUID.class) {
+            return playerId;
+        }
+        if (parameterType == Integer.TYPE || parameterType == Integer.class) {
+            return Integer.valueOf(experiencePoints);
+        }
+        if (parameterType == Long.TYPE || parameterType == Long.class) {
+            return Long.valueOf(experiencePoints);
+        }
+        if (parameterType == Float.TYPE || parameterType == Float.class) {
+            return Float.valueOf((float)experiencePoints);
+        }
+        if (parameterType == Double.TYPE || parameterType == Double.class) {
+            return Double.valueOf((double)experiencePoints);
+        }
+        if (parameterType == String.class) {
+            return "hyhorde_boss";
+        }
+        if (xpSourceClass != null && xpSourceValue != null && parameterType.isAssignableFrom(xpSourceClass)) {
+            return xpSourceValue;
+        }
+        if (parameterType.getName() != null && parameterType.getName().toLowerCase(Locale.ROOT).endsWith("entitykillcontext")) {
+            return null;
+        }
+        return HordeService.UNSUPPORTED_ARGUMENT_MARKER;
     }
 
     private static int removeInvalidRefs(Set<Ref<EntityStore>> refs, Set<Ref<EntityStore>> accountedEnemyDeaths) {
@@ -6914,6 +7473,51 @@ public final class HordeService {
 
         private static BossRuntimeModifiers defaults() {
             return new BossRuntimeModifiers(1.0f, 1.0f, 1.0f, 1.0f);
+        }
+
+        private boolean requiresApplication() {
+            return Math.abs(this.hpMultiplier - 1.0f) >= 0.0001f
+                    || Math.abs(this.sizeMultiplier - 1.0f) >= 0.0001f
+                    || Math.abs(this.attackRateMultiplier - 1.0f) >= 0.0001f;
+        }
+    }
+
+    private static final class BossModifierApplyResult {
+        private static final BossModifierApplyResult NONE = new BossModifierApplyResult(false, false, false);
+        private final boolean hpApplied;
+        private final boolean sizeApplied;
+        private final boolean attackRateApplied;
+
+        private BossModifierApplyResult(boolean hpApplied, boolean sizeApplied, boolean attackRateApplied) {
+            this.hpApplied = hpApplied;
+            this.sizeApplied = sizeApplied;
+            this.attackRateApplied = attackRateApplied;
+        }
+    }
+
+    private static final class PendingBossModifierApplication {
+        private final BossArenaCatalogService.BossDefinitionSnapshot definition;
+        private final BossRuntimeModifiers runtimeModifiers;
+        private final int roundNumber;
+        private int remainingAttempts;
+        private long nextAttemptAtMillis;
+        private boolean hpApplied;
+        private boolean sizeApplied;
+        private boolean attackRateApplied;
+
+        private PendingBossModifierApplication(BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber, int remainingAttempts, long nextAttemptAtMillis) {
+            this.definition = definition;
+            this.runtimeModifiers = runtimeModifiers;
+            this.roundNumber = roundNumber;
+            this.remainingAttempts = Math.max(1, remainingAttempts);
+            this.nextAttemptAtMillis = Math.max(0L, nextAttemptAtMillis);
+            this.hpApplied = false;
+            this.sizeApplied = false;
+            this.attackRateApplied = false;
+        }
+
+        private boolean isComplete() {
+            return this.hpApplied && this.sizeApplied && this.attackRateApplied;
         }
     }
 

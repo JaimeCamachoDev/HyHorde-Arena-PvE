@@ -124,6 +124,60 @@ Regla:
 - En buscadores de pickers pesados, usar `Validating` como trigger principal.
 - No usar `FocusLost` si el handler provoca rebuild completo de pantalla.
 
+## Error actual (2026-04-09 - crash tras tocar ancho de DropdownBox)
+
+Firma:
+
+- Tras el cambio de ancho en dropdowns de editor (`#HordeMode`, `#BossEditTier`), el cliente se cae al entrar (`Crash - Crash`) y el servidor termina con `Exception when adding player to world` / `CancellationException`.
+
+Causa:
+
+- Se forzó `Anchor` dentro de `DropdownBoxStyle(...)`:
+  - `Style: DropdownBoxStyle(..., Anchor: (Width: 960, Height: 34), PanelWidth: 960)`
+- Ese patrón no es estable en este runtime para estos controles.
+
+Solucion aplicada:
+
+- Quitar `Anchor` del `Style`.
+- Mantener:
+  - `@Anchor = (Left: ..., Top: ..., Width: 960)` en el control.
+  - `Style: DropdownBoxStyle(..., PanelWidth: 960)` para el panel desplegable.
+
+Regla:
+
+- No definir `Anchor` dentro de `DropdownBoxStyle`.
+- Definir geometría del botón en `@Anchor` del `DropdownBox` y usar `PanelWidth` solo para ancho del desplegable.
+- Si se cambia layout de dropdown, validar en juego los dos estados:
+  - botón cerrado (ancho correcto)
+  - panel abierto (ancho correcto)
+
+## Error actual (2026-04-09 - panel ancho correcto pero boton del dropdown corto)
+
+Firma visual:
+
+- En `Tier`/`Modo de horda`, el panel desplegado tiene el ancho correcto.
+- El botón que abre el dropdown queda más corto que el resto de campos.
+
+Causa:
+
+- Dependencia del template `$C.@DropdownBox` (de `Common.ui`) para el botón renderizado.
+- Si el template/base cambia o se comporta distinto, puede respetar `PanelWidth` en el panel pero no el ancho visual del botón.
+
+Solucion aplicada (estable):
+
+- Para dropdowns críticos de editor, usar `DropdownBox` nativo en vez de `$C.@DropdownBox`.
+- Definir `Anchor` directo en el control:
+  - `Anchor: (Left: ..., Top: ..., Width: 960, Height: 34)`
+- Mantener estilo:
+  - `Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960)`
+
+Patron recomendado:
+
+- `DropdownBox #ControlId { Anchor: (..., Width: X, Height: 34); Style: DropdownBoxStyle(..., PanelWidth: X); }`
+- Evitar mezclar:
+  - `Anchor` dentro de `DropdownBoxStyle`
+  - dependencia innecesaria de template (`$C.@DropdownBox`) en campos donde el ancho del botón debe ser exacto.
+
 ## Error actual (2026-03-29)
 
 Firma en cliente (`C:\Users\Jaime\AppData\Roaming\Hytale\UserData\Logs\2026-03-29_12-08-22_client.log`):

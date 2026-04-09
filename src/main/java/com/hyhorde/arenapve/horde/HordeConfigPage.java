@@ -512,7 +512,7 @@ extends CustomUIPage {
                 .set("#BossEditHp.Value", this.getDraftValue("bossEditHp", "1"))
                 .set("#BossEditDamage.Value", this.getDraftValue("bossEditDamage", "1"))
                 .set("#BossEditSize.Value", this.getDraftValue("bossEditSize", "1"))
-                .set("#BossEditAttackRate.Value", this.getDraftValue("bossEditAttackRate", "1"))
+                .set("#BossEditAttackRate.Value", this.getDraftValue("bossEditAttackRate", "0"))
                 .set("#BossStatusLabel.Text", this.bossStatusText == null ? "" : this.bossStatusText)
                 .set("#ArenaSelected.Value", arenaSelectedValue)
                 .set("#ArenaEditId.Value", this.getDraftValue("arenaEditId", arenaSelectedValue))
@@ -2235,16 +2235,16 @@ extends CustomUIPage {
             this.putDraftIfMissing("bossEditAmount", Integer.toString(selectedBoss.amount));
             this.putDraftIfMissing("bossEditHp", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.hp));
             this.putDraftIfMissing("bossEditDamage", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.damage));
-            this.putDraftIfMissing("bossEditSize", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.size));
-            this.putDraftIfMissing("bossEditAttackRate", HordeConfigPage.formatDouble(selectedBoss.modifiers == null ? 1.0 : selectedBoss.modifiers.attackRate));
+            this.putDraftIfMissing("bossEditSize", Integer.toString(Math.max(0, selectedBoss.levelOverride)));
+            this.putDraftIfMissing("bossEditAttackRate", Integer.toString(Math.max(0, selectedBoss.experiencePoints)));
         }
         this.putDraftIfMissing("bossEditTier", "common");
         this.putDraftIfMissing("bossEditIconItemId", HordeConfigPage.resolveBossAutoIconToken(this.getDraftValue("bossEditNpcId", "")));
         this.putDraftIfMissing("bossEditAmount", "1");
         this.putDraftIfMissing("bossEditHp", "1");
         this.putDraftIfMissing("bossEditDamage", "1");
-        this.putDraftIfMissing("bossEditSize", "1");
-        this.putDraftIfMissing("bossEditAttackRate", "1");
+        this.putDraftIfMissing("bossEditSize", "0");
+        this.putDraftIfMissing("bossEditAttackRate", "0");
     }
 
     private void ensureArenaDraftDefaults(List<BossArenaCatalogService.ArenaDefinitionSnapshot> arenaRows) {
@@ -2413,8 +2413,8 @@ extends CustomUIPage {
         this.draftValues.put("bossEditAmount", Integer.toString(snapshot.amount));
         this.draftValues.put("bossEditHp", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.hp));
         this.draftValues.put("bossEditDamage", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.damage));
-        this.draftValues.put("bossEditSize", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.size));
-        this.draftValues.put("bossEditAttackRate", HordeConfigPage.formatDouble(snapshot.modifiers == null ? 1.0 : snapshot.modifiers.attackRate));
+        this.draftValues.put("bossEditSize", Integer.toString(Math.max(0, snapshot.levelOverride)));
+        this.draftValues.put("bossEditAttackRate", Integer.toString(Math.max(0, snapshot.experiencePoints)));
     }
 
     private void applyEnemyCategoryDraftFromSnapshot(HordeService.EnemyCategorySnapshot snapshot) {
@@ -2502,9 +2502,10 @@ extends CustomUIPage {
         HordeConfigPage.putIfNotBlank(values, "bossEditAmount", this.getDraftValue("bossEditAmount", "1"));
         HordeConfigPage.putIfNotBlank(values, "bossEditHp", this.getDraftValue("bossEditHp", "1"));
         HordeConfigPage.putIfNotBlank(values, "bossEditDamage", this.getDraftValue("bossEditDamage", "1"));
-        HordeConfigPage.putIfNotBlank(values, "bossEditSize", this.getDraftValue("bossEditSize", "1"));
-        HordeConfigPage.putIfNotBlank(values, "bossEditAttackRate", this.getDraftValue("bossEditAttackRate", "1"));
-        values.put("bossEditLevelOverride", "0");
+        values.put("bossEditSize", "1");
+        values.put("bossEditAttackRate", "1");
+        HordeConfigPage.putIfNotBlank(values, "bossEditLevelOverride", this.getDraftValue("bossEditSize", "0"));
+        HordeConfigPage.putIfNotBlank(values, "bossEditXpPoints", this.getDraftValue("bossEditAttackRate", "0"));
         // Boss advanced trigger/reward fields were removed from UI.
         // Persist deterministic defaults so older rows don't keep stale values.
         values.put("bossEditLootRadius", "0");
@@ -4806,8 +4807,8 @@ extends CustomUIPage {
                 .set("#BossEditAmountLabel.Text", HordeConfigPage.t(language, english, "Amount", "Cantidad"))
                 .set("#BossEditHpLabel.Text", HordeConfigPage.t(language, english, "HP multiplier", "Multiplicador HP"))
                 .set("#BossEditDamageLabel.Text", HordeConfigPage.t(language, english, "Damage multiplier", "Multiplicador dano"))
-                .set("#BossEditSizeLabel.Text", HordeConfigPage.t(language, english, "Size multiplier", "Multiplicador tamano"))
-                .set("#BossEditAttackRateLabel.Text", HordeConfigPage.t(language, english, "Attack rate x", "Velocidad ataque x"))
+                .set("#BossEditSizeLabel.Text", HordeConfigPage.t(language, english, "Level", "Nivel"))
+                .set("#BossEditAttackRateLabel.Text", HordeConfigPage.t(language, english, "Experience points", "Puntos de experiencia"))
                 .set("#BossPagePrevButton.Text", "<")
                 .set("#BossPageNextButton.Text", ">")
                 .set("#BossSaveButton.Text", HordeConfigPage.t(language, english, "Save boss", "Guardar boss"))
