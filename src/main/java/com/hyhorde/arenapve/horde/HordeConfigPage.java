@@ -692,7 +692,7 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, selectorBase + "TabToolsButton", this.buildConfigSnapshotEvent(actionScope + "_icon_filter:" + ICON_CATEGORY_TOOL))
                 .addEventBinding(CustomUIEventBindingType.Activating, selectorBase + "TabConsumablesButton", this.buildConfigSnapshotEvent(actionScope + "_icon_filter:" + ICON_CATEGORY_CONSUMABLE))
                 .addEventBinding(CustomUIEventBindingType.Activating, selectorBase + "TabOtherButton", this.buildConfigSnapshotEvent(actionScope + "_icon_filter:" + ICON_CATEGORY_OTHER))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, selectorBase + "Search #SearchInput", this.buildConfigSnapshotEvent(actionScope + "_icon_search_change"));
+                .addEventBinding(CustomUIEventBindingType.Validating, selectorBase + "Search #SearchInput", this.buildConfigSnapshotEvent(actionScope + "_icon_search_change"));
     }
 
     public void handleDataEvent(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, String payloadText) {
@@ -3262,7 +3262,7 @@ extends CustomUIPage {
                     continue;
                 }
                 String selectorPrefix = "#ArenaRowsList[" + renderedRows + "]";
-                String coords = String.format(Locale.ROOT, "%.1f %.1f %.1f", row.x, row.y, row.z);
+                String coords = String.format(Locale.ROOT, "X: %.1f | Y: %.1f | Z: %.1f", row.x, row.y, row.z);
                 String iconItemId = HordeConfigPage.firstNonEmpty(row.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID);
                 commandBuilder.append("#ArenaRowsList", "Pages/HordeArenaRow.ui")
                         .set(selectorPrefix + " #ArenaName.Text", row.arenaId)
@@ -4580,7 +4580,7 @@ extends CustomUIPage {
                 .set("#EnemyCatEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Create enemy", "Crear enemigo"))
                 .set("#EnemyCatRoleAddButton.Text", HordeConfigPage.t(language, english, "Add", "Anadir"))
                 .set("#EnemyCatEditRolesLabel.Text", HordeConfigPage.t(language, english, "Enemy IDs in category", "Enemy IDs en categoria"))
-                .set("#EnemyCatEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy IDs", "Selecciona Enemy IDs"))
+                .set("#EnemyCatEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy", "Selecciona enemigo"))
                 .set("#EnemyCatEditRolesHelpLabel.Text", "")
                 .set("#EnemyCatRolesOverflowLabel.Text", "")
                 .set("#EnemyCatPagePrevButton.Text", "<")
@@ -4666,7 +4666,7 @@ extends CustomUIPage {
                 .set("#BossIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
                 .set("#BossEnemyPickerLabel.Text", HordeConfigPage.t(language, english, "Enemy ID", "Enemy ID"))
                 .set("#BossEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose Enemy ID", "Elegir Enemy ID"))
-                .set("#BossEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select Enemy ID", "Selecciona Enemy ID"))
+                .set("#BossEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy", "Selecciona enemigo"))
                 .set("#BossEditAmountLabel.Text", HordeConfigPage.t(language, english, "Amount", "Cantidad"))
                 .set("#BossEditHpLabel.Text", HordeConfigPage.t(language, english, "HP multiplier", "Multiplicador HP"))
                 .set("#BossEditDamageLabel.Text", HordeConfigPage.t(language, english, "Damage multiplier", "Multiplicador dano"))

@@ -2028,8 +2028,8 @@ Group {
   }
 
   Label #EnemyCatEnemyPickerTitleLabel {
-    Anchor: (Left: 580, Top: 338, Width: 780, Height: 16);
-    Text: "Selecciona Enemy IDs";
+    Anchor: (Left: 580, Top: 348, Width: 780, Height: 16);
+    Text: "Selecciona enemigo";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
@@ -2812,8 +2812,8 @@ Group {
   }
 
   Label #BossEnemyPickerTitleLabel {
-    Anchor: (Left: 580, Top: 338, Width: 780, Height: 16);
-    Text: "Selecciona Enemy IDs";
+    Anchor: (Left: 580, Top: 348, Width: 780, Height: 16);
+    Text: "Selecciona enemigo";
     Visible: false;
     Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
   }
