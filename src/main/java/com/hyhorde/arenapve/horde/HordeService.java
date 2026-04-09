@@ -222,6 +222,9 @@ public final class HordeService {
     private final Map<Ref<EntityStore>, Integer> bossExperiencePointsByEnemyRef;
     private final Map<UUID, Integer> bossExperiencePointsByEntityUuid;
     private Object rpgExperienceGainedListener;
+    private boolean rpgLevelingAvailabilityChecked;
+    private boolean rpgLevelingAvailable;
+    private boolean rpgLevelingMissingNoticeLogged;
     private long nextAutoStartPollAtMillis;
     private long nextAutoStartAtMillis;
     private long lastStartDiagnosticAtMillis;
@@ -255,6 +258,9 @@ public final class HordeService {
         this.bossExperiencePointsByEnemyRef = new HashMap<Ref<EntityStore>, Integer>();
         this.bossExperiencePointsByEntityUuid = new HashMap<UUID, Integer>();
         this.rpgExperienceGainedListener = null;
+        this.rpgLevelingAvailabilityChecked = false;
+        this.rpgLevelingAvailable = false;
+        this.rpgLevelingMissingNoticeLogged = false;
         this.nextAutoStartPollAtMillis = 0L;
         this.nextAutoStartAtMillis = 0L;
         this.lastStartDiagnosticAtMillis = 0L;
@@ -2194,19 +2200,27 @@ public final class HordeService {
                 }
                 if (bossSpawn) {
                     int forcedBossLevel = configuredBossDefinition == null ? 0 : Math.max(0, configuredBossDefinition.levelOverride);
+                    boolean rpgAvailable = this.isRpgLevelingAvailable();
+                    if (!rpgAvailable && (forcedBossLevel > 0 || configuredBossDefinition != null && Math.max(0, configuredBossDefinition.experiencePoints) > 0)) {
+                        this.logRpgLevelingMissingNoticeOnce();
+                    }
                     if (forcedBossLevel > 0) {
-                        this.applyEnemyLevelIfSupported(sessionToAdvance.store, enemyRef, forcedBossLevel, true);
-                        this.plugin.getLogger().at(Level.INFO).log("Boss level override applied | boss=%s | level=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(forcedBossLevel));
+                        if (rpgAvailable) {
+                            this.applyEnemyLevelIfSupported(sessionToAdvance.store, enemyRef, forcedBossLevel, true);
+                            this.plugin.getLogger().at(Level.INFO).log("Boss level override applied | boss=%s | level=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(forcedBossLevel));
+                        }
                     }
                     int bossXpPoints = configuredBossDefinition == null ? 0 : Math.max(0, configuredBossDefinition.experiencePoints);
                     if (bossXpPoints > 0) {
-                        this.bossExperiencePointsByEnemyRef.put(enemyRef, bossXpPoints);
-                        UUID enemyUuid = this.resolveEntityUuid(sessionToAdvance.store, enemyRef);
-                        if (enemyUuid != null) {
-                            this.bossExperiencePointsByEntityUuid.put(enemyUuid, bossXpPoints);
+                        if (rpgAvailable) {
+                            this.bossExperiencePointsByEnemyRef.put(enemyRef, bossXpPoints);
+                            UUID enemyUuid = this.resolveEntityUuid(sessionToAdvance.store, enemyRef);
+                            if (enemyUuid != null) {
+                                this.bossExperiencePointsByEntityUuid.put(enemyUuid, bossXpPoints);
+                            }
+                            this.ensureRpgExperienceOverrideListenerRegistered();
+                            this.plugin.getLogger().at(Level.INFO).log("Boss XP override armed | boss=%s | xp=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(bossXpPoints));
                         }
-                        this.ensureRpgExperienceOverrideListenerRegistered();
-                        this.plugin.getLogger().at(Level.INFO).log("Boss XP override armed | boss=%s | xp=%d", (Object)(configuredBossDefinition == null ? "<none>" : configuredBossDefinition.bossId), (Object)Integer.valueOf(bossXpPoints));
                     } else {
                         this.bossExperiencePointsByEnemyRef.remove(enemyRef);
                         UUID enemyUuid = this.resolveEntityUuid(sessionToAdvance.store, enemyRef);
@@ -2351,6 +2365,30 @@ public final class HordeService {
             return;
         }
         this.bossExperiencePointsByEnemyRef.entrySet().removeIf(entry -> entry == null || entry.getKey() == null || !entry.getKey().isValid() || !trackedSession.activeEnemies.contains(entry.getKey()));
+    }
+
+    private boolean isRpgLevelingAvailable() {
+        if (this.rpgLevelingAvailabilityChecked) {
+            return this.rpgLevelingAvailable;
+        }
+        this.rpgLevelingAvailabilityChecked = true;
+        try {
+            Class.forName("org.zuxaw.plugin.RPGLevelingPlugin");
+            Class.forName("org.zuxaw.plugin.api.RPGLevelingAPI");
+            this.rpgLevelingAvailable = true;
+        }
+        catch (ClassNotFoundException ignored) {
+            this.rpgLevelingAvailable = false;
+        }
+        return this.rpgLevelingAvailable;
+    }
+
+    private void logRpgLevelingMissingNoticeOnce() {
+        if (this.rpgLevelingMissingNoticeLogged) {
+            return;
+        }
+        this.rpgLevelingMissingNoticeLogged = true;
+        this.plugin.getLogger().at(Level.INFO).log("RPGLeveling not detected. Boss level/XP overrides are disabled (no-op).");
     }
 
     private UUID resolveEntityUuid(Store<EntityStore> store, Ref<EntityStore> enemyRef) {
@@ -6086,6 +6124,9 @@ public final class HordeService {
 
     private void applyEnemyLevelIfSupported(Store<EntityStore> store, Ref<EntityStore> enemyRef, int level, boolean bossSpawn) {
         if (store == null || enemyRef == null || !enemyRef.isValid()) {
+            return;
+        }
+        if (!this.isRpgLevelingAvailable()) {
             return;
         }
         boolean appliedWithLevelComponent = false;

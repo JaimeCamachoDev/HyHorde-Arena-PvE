@@ -122,7 +122,7 @@ final class BossArenaCatalogService {
         BossDefinition target = creating ? BossDefinition.defaults(requested) : existing.copy();
         target.bossId = requested;
         target.npcId = BossArenaCatalogService.clean(BossArenaCatalogService.firstNonBlank(values.get("bossEditNpcId"), target.npcId));
-        target.tier = BossArenaCatalogService.normalizeTier(BossArenaCatalogService.firstNonBlank(values.get("bossEditTier"), target.tier));
+        target.tier = "common";
         target.iconItemId = BossArenaCatalogService.clean(BossArenaCatalogService.firstNonBlank(values.get("bossEditIconItemId"), target.iconItemId, DEFAULT_BOSS_ICON_ITEM_ID));
         if (target.iconItemId.isBlank()) {
             target.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
@@ -661,7 +661,7 @@ final class BossArenaCatalogService {
             BossDefinition clean = source.copy();
             clean.bossId = BossArenaCatalogService.clean(clean.bossId);
             clean.npcId = BossArenaCatalogService.clean(clean.npcId);
-            clean.tier = BossArenaCatalogService.normalizeTier(clean.tier);
+            clean.tier = "common";
             clean.iconItemId = BossArenaCatalogService.clean(clean.iconItemId);
             if (clean.iconItemId.isBlank()) {
                 clean.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;

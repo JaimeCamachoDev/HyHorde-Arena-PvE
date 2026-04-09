@@ -93,6 +93,13 @@ Key signatures:
 ### Why this avoids duplication
 - XP is now controlled in a single place (RPGLeveling event stream), replacing amount instead of adding a second grant.
 
+### Compatibility note
+- Boss `Level` and `Experience points` parameters are **RPGLeveling-only**.
+- If `RPGLeveling` is not installed, HyHorde treats them as safe no-op:
+  - no crash
+  - no error spam
+  - no fallback stat mutation from these two parameters.
+
 ### Runtime verification logs
 - `RPGLeveling XP override listener registered.`
 - `Boss XP override armed | boss=<id> | xp=<n>`

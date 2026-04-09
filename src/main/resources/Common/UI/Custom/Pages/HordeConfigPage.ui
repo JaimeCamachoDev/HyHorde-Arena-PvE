@@ -2703,9 +2703,9 @@ Group {
     Background: #000000(0);
   }
 
-  Label #BossEditNameLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Boss ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+        Label #BossEditNameLabel { Anchor: (Left: 480, Top: 290, Width: 960, Height: 16); Text: "Nombre de Boss"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@TextField #BossEditName { @Anchor = (Left: 480, Top: 312, Width: 960); Value: ""; }
-  Label #BossEditNpcIdLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "Enemy ID"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
+        Label #BossEditNpcIdLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   $C.@DropdownBox #BossEditNpcId { @Anchor = (Left: 0, Top: 0, Width: 1, Height: 1); Value: ""; Visible: false; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 1); }
   $C.@TextField #BossEditIconItemId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "Ingredient_Bar_Gold"; Visible: false; }
   Label #BossIconSelectorLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Icono"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
@@ -2713,10 +2713,12 @@ Group {
   ItemIcon #BossEditIconPreview { Anchor: (Left: 492, Top: 388, Width: 52, Height: 52); Visible: false; }
   Label #BossEditIconCurrentLabel { Anchor: (Left: 556, Top: 402, Width: 624, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
   TextButton #BossIconPickerOpenButton { Anchor: (Left: 1192, Top: 394, Width: 232, Height: 40); Text: "Elegir icono"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  Label #BossEditTierLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Tier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  DropdownBox #BossEditTier { Anchor: (Left: 480, Top: 378, Width: 960, Height: 34); Value: "common"; Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 960); }
-  Label #BossEnemyPickerLabel { Anchor: (Left: 480, Top: 422, Width: 960, Height: 16); Text: "Enemy ID"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  TextButton #BossEnemyPickerOpenButton { Anchor: (Left: 480, Top: 444, Width: 960, Height: 34); Text: "Elegir Enemy ID"; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+        Label #BossEnemyPickerLabel { Anchor: (Left: 480, Top: 356, Width: 960, Height: 16); Text: "Boss"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
+  Panel #BossEnemySelectorCard { Anchor: (Left: 480, Top: 378, Width: 960, Height: 72); Background: #0f1825(0.92); Visible: false; }
+  ItemIcon #BossEnemySelectorIcon { Anchor: (Left: 492, Top: 388, Width: 52, Height: 52); Visible: false; }
+  AssetImage #BossEnemySelectorFace { Anchor: (Left: 492, Top: 388, Width: 52, Height: 52); Visible: false; Background: #000000(0); }
+  Label #BossEnemyPickerOpenButtonLabel { Anchor: (Left: 556, Top: 402, Width: 868, Height: 24); Text: "Boss: -"; Visible: false; Style: (FontSize: 12, TextColor: #d8e3f4, VerticalAlignment: Center); }
+  TextButton #BossEnemyPickerOpenButton { Anchor: (Left: 480, Top: 378, Width: 960, Height: 72); Text: ""; Visible: false; Style: @ListRowHitboxButtonStyle; }
   Label #BossEditAmountLabel { Anchor: (Left: 480, Top: 488, Width: 304, Height: 16); Text: "Cantidad"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
   $C.@TextField #BossEditAmount { @Anchor = (Left: 480, Top: 510, Width: 304); Value: "1"; }
   Label #BossEditHpLabel { Anchor: (Left: 808, Top: 488, Width: 304, Height: 16); Text: "HP multiplier"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
