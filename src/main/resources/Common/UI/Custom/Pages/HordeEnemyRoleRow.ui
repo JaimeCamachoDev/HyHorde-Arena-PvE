@@ -36,6 +36,12 @@ Group #HordeEnemyRoleRow {
     Anchor: (Left: 10, Top: 6, Width: 34, Height: 34);
   }
 
+  AssetImage #RoleFace {
+    Anchor: (Left: 10, Top: 6, Width: 34, Height: 34);
+    Visible: false;
+    Background: #000000(0);
+  }
+
   Label #RoleName {
     Anchor: (Left: 56, Top: 6, Right: 50, Height: 18);
     Text: "";

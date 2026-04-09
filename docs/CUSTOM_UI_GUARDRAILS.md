@@ -2,6 +2,128 @@
 
 Este documento recoge errores reales vistos en logs y las reglas para evitarlos al tocar `HordeConfigPage.ui`.
 
+## Error actual (2026-04-08 - picker de enemigos NPC, cruces rojas + refresco lento)
+
+Firma en cliente:
+
+- iconos NPC con cruz roja (missing texture)
+- refresco por lotes al navegar (no carga inmediata de todas las caras)
+
+Causa:
+
+- Se mezclaron dos enfoques:
+  - `AssetImage.AssetPath` con ruta incorrecta (`Common/UI/...`).
+  - carga dinamica de muchos assets NPC (stream + rebuild), que en listas grandes provoca refresco por lotes.
+
+Solucion aplicada:
+
+- Mantener `AssetImage` en las celdas del picker (`#EnemyPickFace1..4`).
+- Usar rutas estaticas del mod en `AssetPath` con formato:
+  - `UI/Custom/Icons/Npcs/<Nombre>.png`
+- No usar prefijo `Common/` en `AssetPath`.
+- Filtrar opciones del picker para mostrar solo enemigos con icono NPC resoluble.
+
+Regla:
+
+- Para iconos NPC de pickers masivos, priorizar assets estaticos empaquetados en el mod.
+- Reservar streaming de assets para casos puntuales (ej. caras de jugador), no para cientos de NPCs.
+
+## Error actual (2026-04-08 - crash al seleccionar enemigo en picker)
+
+Firma en cliente:
+
+- `CustomUI Set command couldn't set value. Selector: #EnemyCatEnemyPickerGrid[0] #EnemyPickFace1.Visible`
+
+Causa:
+
+- En esta build, usar `Sprite` para `#EnemyPickFaceX` en filas append dinamicas del picker causaba fallo al aplicar comandos de UI.
+
+Solucion aplicada:
+
+- Revertir `#EnemyPickFaceX` a `AssetImage`.
+- Actualizar desde Java con `AssetPath` (no `TexturePath`).
+
+Regla:
+
+- En listas append del picker de enemigos, usar `AssetImage` para miniaturas NPC.
+- Evitar `Sprite` en ese punto concreto aunque compile.
+
+## Error actual (2026-04-08 - buscador de Enemy ID se borra al escribir)
+
+Firma:
+
+- al teclear en `#EnemyCatEnemyPickerSearch #SearchInput` / `#BossEnemyPickerSearch #SearchInput`, el texto vuelve atras (parece que solo deja 1 letra o vacia el campo).
+
+Causa:
+
+- El evento `ValueChanged` disparaba rebuild, pero `shouldCaptureFieldFromPayload(...)` no permitia capturar:
+  - `enemycatEnemyPickerSearch`
+  - `bossEnemyPickerSearch`
+
+Solucion aplicada:
+
+- Incluir ambas claves en captura para `TAB_ENEMIES` y `TAB_BOSSES`.
+
+Regla:
+
+- Todo `SearchInput` con `ValueChanged` debe tener:
+  - `UiFieldBinding` definido.
+  - clave permitida en `shouldCaptureFieldFromPayload(...)` para su tab.
+  - reconstruccion que lea desde `draftValues`.
+
+## Error actual (2026-04-08 - buscador de Enemy ID pierde foco en cada letra)
+
+Firma:
+
+- En `#EnemyCatEnemyPickerSearch #SearchInput` y `#BossEnemyPickerSearch #SearchInput`, al escribir una letra el foco se pierde y obliga a hacer click de nuevo.
+
+Causa:
+
+- El binding en `ValueChanged` disparaba rebuild completo de la UI en cada tecla.
+
+Solucion aplicada:
+
+- Cambiar el binding de buscador de enemigos/bosses a:
+  - `Validating`
+  - `FocusLost`
+- Mantener `draftValues` + lectura de payload para que el filtro siga funcionando al confirmar.
+
+Regla:
+
+- Para `TextInput` con listas pesadas (picker de enemigos con miniaturas), evitar `ValueChanged` si causa rebuild/focus thrash.
+- Usar `Validating` + `FocusLost` para permitir escritura fluida y refrescar al confirmar.
+
+## Error actual (2026-04-09 - buscador de Enemy ID casi no deja hacer click/escribir)
+
+Firma:
+
+- En la ventana `Selecciona Enemy IDs`, el `SearchInput` responde mal al click.
+- Hay que insistir varias veces para enfocar el campo o empezar a escribir.
+- Sensacion de refresco continuo de fondo que bloquea la interaccion.
+
+Causa:
+
+- El binding `FocusLost` del `SearchInput` disparaba `enemycat_enemy_search_change` / `boss_enemy_search_change`.
+- Ese evento terminaba en rebuild de la UI, lo que podia volver a provocar perdida de foco y otro ciclo.
+- Resultado: thrash de foco/interaccion (el campo parece “pelearse” con el refresco).
+
+Solucion final aplicada:
+
+- Quitar `FocusLost` en:
+  - `#EnemyCatEnemyPickerSearch #SearchInput`
+  - `#BossEnemyPickerSearch #SearchInput`
+- Dejar solo `Validating` para aplicar filtro al confirmar (Enter).
+
+Estado validado:
+
+- El buscador vuelve a ser usable: click estable + escritura fluida.
+- Se evita el bucle de refresco por perdida de foco.
+
+Regla:
+
+- En buscadores de pickers pesados, usar `Validating` como trigger principal.
+- No usar `FocusLost` si el handler provoca rebuild completo de pantalla.
+
 ## Error actual (2026-03-29)
 
 Firma en cliente (`C:\Users\Jaime\AppData\Roaming\Hytale\UserData\Logs\2026-03-29_12-08-22_client.log`):

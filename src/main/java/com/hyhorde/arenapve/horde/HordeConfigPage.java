@@ -649,8 +649,8 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#AutoStartApplyButton", this.buildConfigSnapshotEvent("apply_auto_start"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#Language", this.buildLanguageEvent("set_language"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaJoinRadius", this.buildConfigSnapshotEvent("playerdef_radius_autosave"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#EnemyCatEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("enemycat_enemy_search_change"))
-                .addEventBinding(CustomUIEventBindingType.ValueChanged, "#BossEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("boss_enemy_search_change"))
+                .addEventBinding(CustomUIEventBindingType.Validating, "#EnemyCatEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("enemycat_enemy_search_change"))
+                .addEventBinding(CustomUIEventBindingType.Validating, "#BossEnemyPickerSearch #SearchInput", this.buildConfigSnapshotEvent("boss_enemy_search_change"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditId", this.buildConfigSnapshotEvent("arena_autosave"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditX", this.buildConfigSnapshotEvent("arena_autosave"))
                 .addEventBinding(CustomUIEventBindingType.ValueChanged, "#ArenaEditY", this.buildConfigSnapshotEvent("arena_autosave"))
@@ -2715,9 +2715,14 @@ extends CustomUIPage {
                 }
                 String rowSelector = "#EnemyCatRolesRowsList[" + renderedRows + "]";
                 String iconItemId = HordeConfigPage.resolveEnemyRoleIcon(roleId, rewardItemCatalogOptions);
+                String npcFaceKey = HordeConfigPage.resolveEnemyRoleNpcFaceKey(roleId);
+                boolean useNpcFace = npcFaceKey != null && !npcFaceKey.isBlank();
                 commandBuilder.append("#EnemyCatRolesRowsList", ENEMY_ROLE_ROW_LAYOUT)
                         .set(rowSelector + " #RoleName.Text", HordeConfigPage.compactName(roleId, 44))
                         .set(rowSelector + " #RoleMeta.Text", HordeConfigPage.t(language, english, "Enemy ID in category", "Enemy ID en categoria"))
+                        .set(rowSelector + " #RoleIcon.Visible", !useNpcFace)
+                        .set(rowSelector + " #RoleFace.Visible", useNpcFace)
+                        .set(rowSelector + " #RoleFace.AssetPath", useNpcFace ? HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey) : "")
                         .set(rowSelector + " #RoleIcon.ItemId", iconItemId)
                         .set(rowSelector + " #RoleDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #RoleDeleteButton", this.buildConfigSnapshotEvent("enemycat_role_remove:" + HordeConfigPage.firstNonEmpty(roleId, "")));
@@ -2865,6 +2870,9 @@ extends CustomUIPage {
                 commandBuilder.append("#RewardCatItemsRowsList", ENEMY_ROLE_ROW_LAYOUT)
                         .set(rowSelector + " #RoleName.Text", HordeConfigPage.compactName(itemId, 44))
                         .set(rowSelector + " #RoleMeta.Text", HordeConfigPage.t(language, english, "Reward item in category", "Item de recompensa en categoria"))
+                        .set(rowSelector + " #RoleFace.Visible", false)
+                        .set(rowSelector + " #RoleFace.AssetPath", "")
+                        .set(rowSelector + " #RoleIcon.Visible", true)
                         .set(rowSelector + " #RoleIcon.ItemId", iconItemId)
                         .set(rowSelector + " #RoleDeleteButton.Visible", true);
                 eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #RoleDeleteButton", this.buildConfigSnapshotEvent("rewardcat_item_remove:" + HordeConfigPage.firstNonEmpty(itemId, "")));
@@ -4039,6 +4047,7 @@ extends CustomUIPage {
                         || "enemyCategoryEditRoles".equals(field.configKey)
                         || "enemyCategoryRolePicker".equals(field.configKey)
                         || "enemyCategoryEditIconItemId".equals(field.configKey)
+                        || "enemycatEnemyPickerSearch".equals(field.configKey)
                         || "enemycatIconPickerSearch".equals(field.configKey);
             case TAB_PLAYERS:
                 return "playerSelected".equals(field.configKey)
@@ -4067,6 +4076,7 @@ extends CustomUIPage {
                         || "bossEditNpcId".equals(field.configKey)
                         || "bossEditTier".equals(field.configKey)
                         || "bossEditIconItemId".equals(field.configKey)
+                        || "bossEnemyPickerSearch".equals(field.configKey)
                         || "bossIconPickerSearch".equals(field.configKey)
                         || "bossEditAmount".equals(field.configKey)
                         || "bossEditHp".equals(field.configKey)
@@ -4575,17 +4585,17 @@ extends CustomUIPage {
                 .set("#PlayersPageNextButton.Text", ">")
                 .set("#AudienceHelpLabel.Text", "")
                 .set("#EnemyCatTitleLabel.Text", HordeConfigPage.t(language, english, "Enemy list", "Lista de enemigos"))
-                .set("#EnemyCatAddButton.Text", HordeConfigPage.t(language, english, "Create enemies", "Crear enemigos"))
+                .set("#EnemyCatAddButton.Text", HordeConfigPage.t(language, english, "Create list", "Crear lista"))
                 .set("#EnemyCatHeaderName.Text", HordeConfigPage.t(language, english, "Category ID", "Categoria ID"))
                 .set("#EnemyCatHeaderPreview.Text", HordeConfigPage.t(language, english, "Enemy IDs", "Enemy IDs"))
                 .set("#EnemyCatHeaderActions.Text", "")
-                .set("#EnemyCatEditorTitleLabel.Text", HordeConfigPage.t(language, english, "Enemy category editor", "Editor de categoria de enemigos"))
-                .set("#EnemyCatEditIdLabel.Text", HordeConfigPage.t(language, english, "Category ID", "Categoria ID"))
+                .set("#EnemyCatEditorTitleLabel.Text", HordeConfigPage.t(language, english, "List editor", "Editor de lista"))
+                .set("#EnemyCatEditIdLabel.Text", HordeConfigPage.t(language, english, "List name", "Nombre de lista"))
                 .set("#EnemyCatIconSelectorLabel.Text", HordeConfigPage.t(language, english, "Category icon", "Icono de categoria"))
                 .set("#EnemyCatIconPickerOpenButton.Text", HordeConfigPage.t(language, english, "Choose icon", "Elegir icono"))
                 .set("#EnemyCatIconPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select an icon", "Selecciona un icono"))
                 .set("#EnemyCatRolePickerLabel.Text", HordeConfigPage.t(language, english, "Enemy ID", "Enemy ID"))
-                .set("#EnemyCatEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Add enemy", "Anadir enemigo"))
+                .set("#EnemyCatEnemyPickerOpenButton.Text", HordeConfigPage.t(language, english, "Create enemy", "Crear enemigo"))
                 .set("#EnemyCatRoleAddButton.Text", HordeConfigPage.t(language, english, "Add", "Anadir"))
                 .set("#EnemyCatEditRolesLabel.Text", HordeConfigPage.t(language, english, "Enemy IDs in category", "Enemy IDs en categoria"))
                 .set("#EnemyCatEnemyPickerTitleLabel.Text", HordeConfigPage.t(language, english, "Select enemy IDs", "Selecciona Enemy IDs"))
@@ -4595,7 +4605,7 @@ extends CustomUIPage {
                 .set("#EnemyCatPageNextButton.Text", ">")
                 .set("#EnemyCatRolesPagePrevButton.Text", "<")
                 .set("#EnemyCatRolesPageNextButton.Text", ">")
-                .set("#EnemyCatSaveButton.Text", HordeConfigPage.t(language, english, "Save category", "Guardar categoria"))
+                .set("#EnemyCatSaveButton.Text", HordeConfigPage.t(language, english, "Save list", "Guardar lista"))
                 .set("#RewardCatTitleLabel.Text", HordeConfigPage.t(language, english, "Reward category definitions", "Definiciones de categorias de recompensa"))
                 .set("#RewardCatAddButton.Text", HordeConfigPage.t(language, english, "Add category", "Anadir categoria"))
                 .set("#RewardCatHeaderName.Text", HordeConfigPage.t(language, english, "Category ID", "Categoria ID"))
