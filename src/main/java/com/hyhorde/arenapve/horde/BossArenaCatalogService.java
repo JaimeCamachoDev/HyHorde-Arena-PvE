@@ -29,6 +29,7 @@ final class BossArenaCatalogService {
     private static final int DEFAULT_NOTIFICATION_RADIUS = 100;
     private static final String DEFAULT_ARENA_ICON_ITEM_ID = "Ingredient_Bar_Gold";
     private static final String DEFAULT_BOSS_ICON_ITEM_ID = "Ingredient_Bar_Gold";
+    private static final String DEFAULT_BOSS_NPC_ID = "Goblin_Ogre";
     private static final int MAX_LEVEL_OVERRIDE = 300;
     private static final int MAX_BOSS_XP_POINTS = 1000000;
     private static final Set<String> BOSS_SPAWN_TRIGGERS = Set.of("before_boss", "on_spawn", "after_spawn_seconds", "since_last_wave", "boss_hp_percent");
@@ -101,6 +102,9 @@ final class BossArenaCatalogService {
         BossDefinition removed = this.bossesById.remove(BossArenaCatalogService.key(cleanBossId));
         if (removed == null) {
             return HordeService.OperationResult.fail(english ? "Boss not found." : "Boss no encontrado.");
+        }
+        if (this.bossesById.isEmpty()) {
+            this.addDefaultBossDefinitions();
         }
         this.saveBosses();
         return HordeService.OperationResult.ok(english ? "Deleted boss: " + removed.bossId + "." : "Boss eliminado: " + removed.bossId + ".");
@@ -261,7 +265,31 @@ final class BossArenaCatalogService {
         catch (Exception ex) {
             this.plugin.getLogger().at(Level.WARNING).log("Could not load bosses.json: %s", (Object)ex.getMessage());
         }
+        if (this.bossesById.isEmpty()) {
+            this.addDefaultBossDefinitions();
+            this.saveBosses();
+        }
         return templateCreated;
+    }
+
+    private void addDefaultBossDefinitions() {
+        this.upsertDefaultBoss("trex", "Cave_Rex");
+        this.upsertDefaultBoss("golem", "Golem_Crystal_Flame");
+        this.upsertDefaultBoss("goblin_ogre", "Goblin_Ogre");
+        this.upsertDefaultBoss("aberrant_zombie", "Aberrant_Zombie");
+        this.upsertDefaultBoss("scarak_broodmother", "Scarak_Broodmother");
+    }
+
+    private void upsertDefaultBoss(String bossId, String npcId) {
+        String safeBossId = this.uniqueBossId(BossArenaCatalogService.clean(bossId));
+        BossDefinition row = BossDefinition.defaults(safeBossId);
+        row.npcId = BossArenaCatalogService.clean(BossArenaCatalogService.firstNonBlank(npcId, DEFAULT_BOSS_NPC_ID));
+        row.levelOverride = 100;
+        row.experiencePoints = 1000;
+        row.modifiers.hp = 10.0;
+        row.modifiers.damage = 3.0;
+        row.tier = "common";
+        this.bossesById.put(BossArenaCatalogService.key(safeBossId), BossDefinition.sanitize(row));
     }
 
     private boolean loadArenasFromDisk() {
@@ -611,7 +639,7 @@ final class BossArenaCatalogService {
         private static BossDefinition defaults(String bossId) {
             BossDefinition row = new BossDefinition();
             row.bossId = BossArenaCatalogService.clean(bossId);
-            row.npcId = "enemy";
+            row.npcId = DEFAULT_BOSS_NPC_ID;
             row.tier = "common";
             row.iconItemId = DEFAULT_BOSS_ICON_ITEM_ID;
             row.amount = 1;

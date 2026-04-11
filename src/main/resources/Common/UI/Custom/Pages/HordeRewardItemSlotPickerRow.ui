@@ -1,0 +1,55 @@
+$C = "../Common.ui";
+
+Group #HordeRewardItemSlotPickerRow {
+  Anchor: (Left: 0, Right: 0, Height: 86, Bottom: 4);
+  Background: #000000(0);
+
+  ItemSlotButton #IconPickButton1 {
+    Anchor: (Left: 0, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot1 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon1 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton2 {
+    Anchor: (Left: 90, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot2 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon2 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton3 {
+    Anchor: (Left: 180, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot3 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon3 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton4 {
+    Anchor: (Left: 270, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot4 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon4 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton5 {
+    Anchor: (Left: 360, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot5 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon5 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton6 {
+    Anchor: (Left: 450, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot6 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon6 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton7 {
+    Anchor: (Left: 540, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot7 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon7 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+  ItemSlotButton #IconPickButton8 {
+    Anchor: (Left: 630, Top: 0, Width: 86, Height: 86);
+    Visible: false;
+    ItemSlot #IconPickSlot8 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Visible: false; ShowQuantity: false; ShowDurabilityBar: false; ShowQualityBackground: true; }
+    ItemIcon #IconPickIcon8 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  }
+}

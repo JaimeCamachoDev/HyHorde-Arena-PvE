@@ -1,30 +1,33 @@
 $C = "../Common.ui";
 
 Group #HordeArenaIconPickerRow {
-  Anchor: (Left: 0, Right: 0, Height: 86, Bottom: 8);
+  Anchor: (Left: 0, Right: 0, Height: 86, Bottom: 4);
   Background: #000000(0);
 
-  TextButton #IconPickButton1 { Anchor: (Left: 0, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton2 { Anchor: (Left: 112, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton3 { Anchor: (Left: 224, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton4 { Anchor: (Left: 336, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton5 { Anchor: (Left: 448, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton6 { Anchor: (Left: 560, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
-  TextButton #IconPickButton7 { Anchor: (Left: 672, Top: 0, Width: 104, Height: 82); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton1 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton2 { Anchor: (Left: 90, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton3 { Anchor: (Left: 180, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton4 { Anchor: (Left: 270, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton5 { Anchor: (Left: 360, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton6 { Anchor: (Left: 450, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton7 { Anchor: (Left: 540, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #IconPickButton8 { Anchor: (Left: 630, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
 
-  ItemIcon #IconPickIcon1 { Anchor: (Left: 28, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon2 { Anchor: (Left: 140, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon3 { Anchor: (Left: 252, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon4 { Anchor: (Left: 364, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon5 { Anchor: (Left: 476, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon6 { Anchor: (Left: 588, Top: 17, Width: 48, Height: 48); Visible: false; }
-  ItemIcon #IconPickIcon7 { Anchor: (Left: 700, Top: 17, Width: 48, Height: 48); Visible: false; }
+  ItemIcon #IconPickIcon1 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon2 { Anchor: (Left: 101, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon3 { Anchor: (Left: 191, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon4 { Anchor: (Left: 281, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon5 { Anchor: (Left: 371, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon6 { Anchor: (Left: 461, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon7 { Anchor: (Left: 551, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #IconPickIcon8 { Anchor: (Left: 641, Top: 11, Width: 64, Height: 64); Visible: false; }
 
-  AssetImage #IconPickFace1 { Anchor: (Left: 28, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace2 { Anchor: (Left: 140, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace3 { Anchor: (Left: 252, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace4 { Anchor: (Left: 364, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace5 { Anchor: (Left: 476, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace6 { Anchor: (Left: 588, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
-  AssetImage #IconPickFace7 { Anchor: (Left: 700, Top: 17, Width: 48, Height: 48); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace1 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace2 { Anchor: (Left: 101, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace3 { Anchor: (Left: 191, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace4 { Anchor: (Left: 281, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace5 { Anchor: (Left: 371, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace6 { Anchor: (Left: 461, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace7 { Anchor: (Left: 551, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #IconPickFace8 { Anchor: (Left: 641, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
 }

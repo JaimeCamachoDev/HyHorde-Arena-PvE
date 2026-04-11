@@ -36,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -75,6 +76,31 @@ public final class HordeService {
             "Tool_Hatchet_Iron",
             "Tool_Pickaxe_Thorium",
             "Tool_Hatchet_Thorium",
+            "Tool_Hatchet_Adamantite",
+            "Tool_Hammer_Crude",
+            "Tool_Hatchet_Crude",
+            "Tool_Hoe_Crude",
+            "Tool_Pickaxe_Crude",
+            "Tool_Repair_Kit_Crude",
+            "Tool_Shears_Basic",
+            "Tool_Shovel_Crude",
+            "Tool_Sickle_Crude",
+            "Tool_Sickle_Steel_Rusty",
+            "Tool_Trap_Bait",
+            "Tool_Watering_Can",
+            "Tool_Growth_Potion",
+            "Tool_Hammer_Iron",
+            "Tool_Pickaxe_Scrap",
+            "Tool_Hoe_Iron",
+            "Tool_Hoe_Copper",
+            "Tool_Repair_Kit_Iron",
+            "Tool_Repair_Kit_Rare",
+            "Tool_Shovel_Cobalt",
+            "Tool_Shovel_Thorium",
+            "Tool_Shovel_Iron",
+            "Tool_Shovel_Copper",
+            "Tool_Hatchet_Wood",
+            "Tool_Pickaxe_Wood",
             "Ingredient_Bar_Iron",
             "Ingredient_Bar_Thorium",
             "Ingredient_Bar_Mithril",
@@ -85,11 +111,113 @@ public final class HordeService {
             "Ingredient_Crystal_Blue",
             "Ingredient_Crystal_Green",
             "Ingredient_Crystal_Yellow",
-            "Ingredient_Crystal_Purple"
+            "Ingredient_Crystal_Purple",
+            "Weapon_Shield_Mithril",
+            "Weapon_Shield_Adamantite",
+            "Weapon_Shield_Cobalt",
+            "Weapon_Shield_Doomed",
+            "Weapon_Shield_Thorium",
+            "Weapon_Shield_Copper",
+            "Weapon_Shield_Iron",
+            "Weapon_Shield_Scrap",
+            "Weapon_Shield_Onyxium",
+            "Weapon_Shield_Orbis_Incandescent",
+            "Weapon_Shield_Praetorian",
+            "Weapon_Shield_Rusty",
+            "Weapon_Shield_Scrap_Spiked",
+            "Weapon_Shield_Wood",
+            "Weapon_Longsword_Flame",
+            "Weapon_Axe_Mithril",
+            "Weapon_Axe_Onyxium",
+            "Weapon_Club_Mithril",
+            "Weapon_Club_Onyxium",
+            "Weapon_Longsword_Mithril",
+            "Weapon_Longsword_Onyxium",
+            "Weapon_Spear_Mithril",
+            "Weapon_Spear_Onyxium",
+            "Weapon_Staff_Mithril",
+            "Weapon_Axe_Adamantite",
+            "Weapon_Axe_Bone",
+            "Weapon_Axe_Cobalt",
+            "Weapon_Axe_Doomed",
+            "Weapon_Axe_Thorium",
+            "Weapon_Club_Adamantite",
+            "Weapon_Club_Cobalt",
+            "Weapon_Club_Doomed",
+            "Weapon_Club_Thorium",
+            "Weapon_Longsword_Adamantite",
+            "Weapon_Longsword_Adamantite_Saurian",
+            "Weapon_Longsword_Cobalt",
+            "Weapon_Longsword_Thorium",
+            "Weapon_Spear_Adamantite",
+            "Weapon_Spear_Adamantite_Saurian",
+            "Weapon_Spear_Bone",
+            "Weapon_Spear_Cobalt",
+            "Weapon_Spear_Thorium",
+            "Weapon_Staff_Adamantite",
+            "Weapon_Staff_Cobalt",
+            "Weapon_Staff_Crystal_Flame",
+            "Weapon_Staff_Crystal_Ice",
+            "Weapon_Staff_Thorium",
+            "Weapon_Arrow_Iron",
+            "Weapon_Arrow_Clearshot",
+            "Weapon_Arrow_Crude",
+            "Weapon_Arrow_Deadeye",
+            "Weapon_Arrow_Trueshot",
+            "Weapon_Axe_Iron",
+            "Weapon_Axe_Copper",
+            "Weapon_Axe_Crude",
+            "Weapon_Axe_Iron_Rusty",
+            "Weapon_Axe_Tribal",
+            "Weapon_Axe_Stone_Trork",
+            "Weapon_Bomb_Continuous",
+            "Weapon_Bomb_Large_Fire",
+            "Weapon_Bomb_Popberry",
+            "Weapon_Bomb_Potion_Poison",
+            "Weapon_Bomb_Stun",
+            "Weapon_Bomb",
+            "Weapon_Blowgun_Tribal",
+            "Weapon_Club_Iron",
+            "Weapon_Club_Scrap",
+            "Weapon_Club_Stone_Trork",
+            "Weapon_Club_Copper",
+            "Weapon_Club_Crude",
+            "Weapon_Club_Iron_Rusty",
+            "Weapon_Club_Steel_Flail_Rusty",
+            "Weapon_Club_Tribal",
+            "Weapon_Club_Zombie_Arm",
+            "Weapon_Club_Zombie_Burnt_Arm",
+            "Weapon_Club_Zombie_Burnt_Leg",
+            "Weapon_Club_Zombie_Frost_Arm",
+            "Weapon_Club_Zombie_Frost_Leg",
+            "Weapon_Club_Zombie_Leg",
+            "Weapon_Club_Zombie_Sand_Arm",
+            "Weapon_Club_Zombie_Sand_Leg",
+            "Weapon_Longsword_Iron",
+            "Weapon_Longsword_Stone_Trork",
+            "Weapon_Spear_Bronze",
+            "Weapon_Spear_Iron",
+            "Weapon_Spear_Leaf",
+            "Weapon_Spear_Scrap",
+            "Weapon_Spear_Stone_Trork",
+            "Weapon_Staff_Copper",
+            "Weapon_Staff_Iron",
+            "Halloween_Broomstick",
+            "Weapon_Claws_Tribal",
+            "Weapon_Dart_Tribal",
+            "Weapon_Deployable_Healing_Totem",
+            "Weapon_Deployable_Slowness_Totem",
+            "Weapon_Deployable_Turret",
+            "Weapon_Kunai"
     );
     private static final String ENEMY_MODE_RANDOM = "random";
     private static final String ENEMY_MODE_RANDOM_ALL = "random-all";
     private static final String DEFAULT_ENEMY_TYPE = "undead";
+    private static final List<String> PREFERRED_NEW_LIST_ENEMY_DEFAULTS = List.of(
+            "Skeleton_Frost_Fighter",
+            "Goblin_Ogre",
+            "Skeleton"
+    );
     private static final String HORDE_MODE_WAVE = "wave";
     private static final String HORDE_MODE_TIMED = "timed";
     private static final String HORDE_MODE_HORDE = "horde";
@@ -472,6 +600,98 @@ public final class HordeService {
         return HordeService.buildResolvedRewardSuggestions(rewardCategory);
     }
 
+    public synchronized List<String> getRewardItemCatalogForUi() {
+        LinkedHashSet<String> candidates = new LinkedHashSet<String>();
+        HordeService.addConfiguredRewardSuggestions(candidates, HordeService.getAllConfiguredRewardItems());
+        HordeService.addConfiguredRewardSuggestions(candidates, HordeService.getAllRewardItemsFromCatalog(DEFAULT_REWARD_CATEGORY_ITEMS));
+        HordeService.addUsableRewardSuggestions(candidates, PREFERRED_REWARD_TEST_ITEMS);
+        HordeService.addUsableRewardSuggestions(candidates, HordeService.buildFallbackRewardSuggestions());
+
+        LinkedHashSet<String> resolved = new LinkedHashSet<String>();
+        for (String candidate : candidates) {
+            String normalized = HordeService.normalizeRewardItemId(candidate);
+            if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            String resolvedItem = HordeService.resolveRewardItemAssetId(normalized);
+            if (resolvedItem == null || resolvedItem.isBlank()) {
+                resolvedItem = normalized;
+            }
+            if (HordeService.isUiExcludedRewardItemId(resolvedItem)) {
+                continue;
+            }
+            if (!HordeService.isUsableRewardItemIdRaw(resolvedItem, 1)) {
+                continue;
+            }
+            resolved.add(resolvedItem);
+        }
+        if (resolved.isEmpty()) {
+            resolved.add("Ingredient_Bar_Gold");
+        }
+        ArrayList<String> result = new ArrayList<String>(resolved);
+        int maxUiOptions = Math.max(MAX_REWARD_SUGGESTIONS, 4096);
+        if (result.size() > maxUiOptions) {
+            return new ArrayList<String>(result.subList(0, maxUiOptions));
+        }
+        return result;
+    }
+
+    public synchronized String getRewardItemTooltip(String itemIdInput, String languageInput) {
+        String normalized = HordeService.normalizeRewardItemId(itemIdInput);
+        String resolved = HordeService.resolveRewardItemAssetId(normalized);
+        String itemId = resolved == null || resolved.isBlank() ? normalized : resolved;
+        String fallbackName = HordeService.humanizeItemId(itemId);
+        String name = "";
+        String description = "";
+        try {
+            Map<String, Item> items = Item.getAssetMap().getAssetMap();
+            if (items != null && !items.isEmpty()) {
+                Item item = items.get(itemId);
+                if (item == null || item == Item.UNKNOWN) {
+                    String key = HordeService.findRewardAssetKey(items, itemId);
+                    if (key != null && !key.isBlank()) {
+                        item = items.get(key);
+                        if (item != null && item != Item.UNKNOWN) {
+                            itemId = key;
+                        }
+                    }
+                }
+                if (item != null && item != Item.UNKNOWN) {
+                    if (item.getTranslationProperties() != null) {
+                        name = HordeService.firstNonBlankValue(item.getTranslationProperties().getName(), "");
+                        description = HordeService.firstNonBlankValue(item.getTranslationProperties().getDescription(), "");
+                    }
+                    if (name.isBlank()) {
+                        name = HordeService.firstNonBlankValue(item.getTranslationKey(), "");
+                    }
+                    if (description.isBlank()) {
+                        description = HordeService.firstNonBlankValue(item.getDescriptionTranslationKey(), "");
+                    }
+                }
+            }
+        }
+        catch (Exception ignored) {
+            // Best-effort tooltip only.
+        }
+
+        if (HordeService.looksLikeTranslationKey(name)) {
+            name = fallbackName;
+        }
+        if (name == null || name.isBlank()) {
+            name = fallbackName;
+        }
+        if (HordeService.looksLikeTranslationKey(description) || description.equalsIgnoreCase(name)) {
+            description = "";
+        }
+
+        String language = HordeService.normalizeLanguage(languageInput);
+        String idLabel = HordeService.isEnglishLanguage(language) ? "ID" : "ID";
+        if (description == null || description.isBlank()) {
+            return name + "\n" + idLabel + ": " + itemId;
+        }
+        return name + "\n" + description + "\n" + idLabel + ": " + itemId;
+    }
+
     public synchronized List<String> getRewardCategoryOptions() {
         return new ArrayList<String>(REWARD_CATEGORY_OPTIONS);
     }
@@ -738,12 +958,31 @@ public final class HordeService {
             ++suffix;
             uniqueCategoryId = baseCategoryId + "_" + suffix;
         }
-        String fallbackRole = "enemy";
+        String fallbackRole = "Skeleton_Frost_Fighter";
         List<String> availableRoles = this.getAvailableRoles();
         if (availableRoles != null && !availableRoles.isEmpty()) {
-            String firstRole = availableRoles.get(0);
-            if (firstRole != null && !firstRole.isBlank()) {
-                fallbackRole = firstRole.trim();
+            String preferred = null;
+            for (String candidate : PREFERRED_NEW_LIST_ENEMY_DEFAULTS) {
+                String resolved = HordeService.findRoleByExactName(availableRoles, candidate);
+                if (resolved != null && !resolved.isBlank()) {
+                    preferred = resolved.trim();
+                    break;
+                }
+            }
+            if (preferred != null && !preferred.isBlank()) {
+                fallbackRole = preferred;
+            } else {
+                for (String role : availableRoles) {
+                    if (role == null || role.isBlank()) {
+                        continue;
+                    }
+                    String normalized = role.trim().toLowerCase(Locale.ROOT);
+                    if (normalized.startsWith("test_") || normalized.contains("test_weapon")) {
+                        continue;
+                    }
+                    fallbackRole = role.trim();
+                    break;
+                }
             }
         }
         editableConfig.categories.put(uniqueCategoryId, List.of(fallbackRole));
@@ -1185,6 +1424,23 @@ public final class HordeService {
             return 1.0f;
         }
         return HordeService.clampRuntimeMultiplier(runtime.damageMultiplier);
+    }
+
+    public synchronized float getTrackedBossIncomingDamageMultiplier(Ref<EntityStore> enemyRef) {
+        if (this.session == null || enemyRef == null || !this.session.activeEnemies.contains(enemyRef)) {
+            return 1.0f;
+        }
+        BossRuntimeModifiers runtime = this.bossRuntimeModifiersByEnemyRef.get(enemyRef);
+        if (runtime == null) {
+            return 1.0f;
+        }
+        float hp = HordeService.clampRuntimeMultiplier(runtime.hpMultiplier);
+        float divisor = Math.max(MIN_BOSS_RUNTIME_MULTIPLIER, hp);
+        float incomingMultiplier = 1.0f / divisor;
+        if (!Float.isFinite(incomingMultiplier)) {
+            return 1.0f;
+        }
+        return Math.max(0.0001f, Math.min(MAX_BOSS_RUNTIME_MULTIPLIER, incomingMultiplier));
     }
 
     public synchronized void registerEnemyKill(Ref<EntityStore> enemyRef, PlayerRef attackerPlayer) {
@@ -2383,6 +2639,10 @@ public final class HordeService {
         return this.rpgLevelingAvailable;
     }
 
+    public synchronized boolean isRpgLevelingDetected() {
+        return this.isRpgLevelingAvailable();
+    }
+
     private void logRpgLevelingMissingNoticeOnce() {
         if (this.rpgLevelingMissingNoticeLogged) {
             return;
@@ -2513,7 +2773,7 @@ public final class HordeService {
             if (nowMillis < pending.nextAttemptAtMillis) {
                 continue;
             }
-            if (pending.definition != null && pending.definition.levelOverride > 0) {
+            if (this.isRpgLevelingAvailable() && pending.definition != null && pending.definition.levelOverride > 0) {
                 this.applyEnemyLevelIfSupported(trackedSession.store, enemyRef, pending.definition.levelOverride, true);
             }
             BossModifierApplyResult applyResult = this.applyBossRuntimeModifiers(
@@ -2523,12 +2783,16 @@ public final class HordeService {
                     pending.runtimeModifiers,
                     pending.roundNumber,
                     !pending.hpApplied,
+                    !pending.damageApplied,
                     !pending.sizeApplied,
-                    !pending.attackRateApplied
+                    !pending.attackRateApplied,
+                    !pending.movementApplied
             );
             pending.hpApplied = pending.hpApplied || applyResult.hpApplied;
+            pending.damageApplied = pending.damageApplied || applyResult.damageApplied;
             pending.sizeApplied = pending.sizeApplied || applyResult.sizeApplied;
             pending.attackRateApplied = pending.attackRateApplied || applyResult.attackRateApplied;
+            pending.movementApplied = pending.movementApplied || applyResult.movementApplied;
             if (pending.isComplete()) {
                 refsToRemove.add(enemyRef);
                 continue;
@@ -2537,11 +2801,13 @@ public final class HordeService {
             if (pending.remainingAttempts <= 0) {
                 String bossIdText = pending.definition == null || pending.definition.bossId == null || pending.definition.bossId.isBlank() ? "<legacy>" : pending.definition.bossId;
                 this.plugin.getLogger().at(Level.WARNING).log(
-                        "Boss modifiers could not be fully applied after retries | boss=%s | hp=%s | size=%s | attackRate=%s",
+                        "Boss modifiers could not be fully applied after retries | boss=%s | hp=%s | damage=%s | size=%s | attackRate=%s | movement=%s",
                         (Object)bossIdText,
                         (Object)Boolean.valueOf(pending.hpApplied),
+                        (Object)Boolean.valueOf(pending.damageApplied),
                         (Object)Boolean.valueOf(pending.sizeApplied),
-                        (Object)Boolean.valueOf(pending.attackRateApplied)
+                        (Object)Boolean.valueOf(pending.attackRateApplied),
+                        (Object)Boolean.valueOf(pending.movementApplied)
                 );
                 refsToRemove.add(enemyRef);
                 continue;
@@ -2559,19 +2825,31 @@ public final class HordeService {
         if (definition == null) {
             return BossRuntimeModifiers.defaults();
         }
+        boolean rpgDetected = this.isRpgLevelingAvailable();
         double baseHp = definition.modifiers == null ? 1.0 : definition.modifiers.hp;
         double baseDamage = definition.modifiers == null ? 1.0 : definition.modifiers.damage;
-        double baseSize = definition.modifiers == null ? 1.0 : definition.modifiers.size;
-        double baseAttackRate = definition.modifiers == null ? 1.0 : definition.modifiers.attackRate;
+        // Runtime NPC API currently does not expose stable boss modifiers for scale/attack cadence/movement.
+        // Keep them neutral to avoid misleading non-functional behavior.
+        double baseSize = 1.0;
+        double baseAttackRate = 1.0;
+        double baseMovement = 1.0;
         double perHp = definition.perPlayerIncrease == null ? 0.0 : definition.perPlayerIncrease.hp;
         double perDamage = definition.perPlayerIncrease == null ? 0.0 : definition.perPlayerIncrease.damage;
-        double perSize = definition.perPlayerIncrease == null ? 0.0 : definition.perPlayerIncrease.size;
-        double perAttackRate = definition.perPlayerIncrease == null ? 0.0 : definition.perPlayerIncrease.attackRate;
+        double perSize = 0.0;
+        double perAttackRate = 0.0;
+        double perMovement = 0.0;
+        if (rpgDetected) {
+            baseHp = 1.0;
+            baseDamage = 1.0;
+            perHp = 0.0;
+            perDamage = 0.0;
+        }
         float hpMultiplier = HordeService.clampRuntimeMultiplier((float)(baseHp + perHp * (double)extraPlayers));
         float damageMultiplier = HordeService.clampRuntimeMultiplier((float)(baseDamage + perDamage * (double)extraPlayers));
         float sizeMultiplier = HordeService.clampRuntimeMultiplier((float)(baseSize + perSize * (double)extraPlayers));
         float attackRateMultiplier = HordeService.clampRuntimeMultiplier((float)(baseAttackRate + perAttackRate * (double)extraPlayers));
-        return new BossRuntimeModifiers(hpMultiplier, damageMultiplier, sizeMultiplier, attackRateMultiplier);
+        float movementMultiplier = HordeService.clampRuntimeMultiplier((float)(baseMovement + perMovement * (double)extraPlayers));
+        return new BossRuntimeModifiers(hpMultiplier, damageMultiplier, sizeMultiplier, attackRateMultiplier, movementMultiplier);
     }
 
     private static float clampRuntimeMultiplier(float value) {
@@ -2587,17 +2865,52 @@ public final class HordeService {
         return value;
     }
 
-    private BossModifierApplyResult applyBossRuntimeModifiers(Store<EntityStore> store, Ref<EntityStore> enemyRef, BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber, boolean applyHp, boolean applySize, boolean applyAttackRate) {
+    private BossModifierApplyResult applyBossRuntimeModifiers(Store<EntityStore> store, Ref<EntityStore> enemyRef, BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber, boolean applyHp, boolean applyDamage, boolean applySize, boolean applyAttackRate, boolean applyMovement) {
         if (store == null || enemyRef == null || runtimeModifiers == null) {
             return BossModifierApplyResult.NONE;
         }
         boolean hpApplied = !applyHp || this.applyBossHealthMultiplier(store, enemyRef, runtimeModifiers.hpMultiplier);
+        boolean damageApplied = !applyDamage || this.applyBossDamageMultiplier(store, enemyRef, runtimeModifiers.damageMultiplier);
         boolean sizeApplied = !applySize || this.applyBossSizeMultiplier(store, enemyRef, runtimeModifiers.sizeMultiplier);
         boolean attackRateApplied = !applyAttackRate || this.applyBossAttackRateMultiplier(store, enemyRef, runtimeModifiers.attackRateMultiplier);
+        boolean movementApplied = !applyMovement || this.applyBossMovementMultiplier(store, enemyRef, runtimeModifiers.movementMultiplier);
         this.bossRuntimeModifiersByEnemyRef.put(enemyRef, runtimeModifiers);
         String bossIdText = definition == null || definition.bossId == null || definition.bossId.isBlank() ? "<legacy>" : definition.bossId;
-        this.plugin.getLogger().at(Level.INFO).log("Boss modifiers | round=%d | boss=%s | hp=%.3f | damage=%.3f | size=%.3f | attackRate=%.3f | applied(hp=%s,size=%s,attackRate=%s)", (Object)Integer.valueOf(roundNumber), (Object)bossIdText, (Object)Float.valueOf(runtimeModifiers.hpMultiplier), (Object)Float.valueOf(runtimeModifiers.damageMultiplier), (Object)Float.valueOf(runtimeModifiers.sizeMultiplier), (Object)Float.valueOf(runtimeModifiers.attackRateMultiplier), (Object)Boolean.valueOf(hpApplied), (Object)Boolean.valueOf(sizeApplied), (Object)Boolean.valueOf(attackRateApplied));
-        return new BossModifierApplyResult(hpApplied, sizeApplied, attackRateApplied);
+        this.plugin.getLogger().at(Level.INFO).log("Boss modifiers | round=%d | boss=%s | hp=%.3f | damage=%.3f | size=%.3f | attackRate=%.3f | move=%.3f | applied(hp=%s,damage=%s,size=%s,attackRate=%s,move=%s)", (Object)Integer.valueOf(roundNumber), (Object)bossIdText, (Object)Float.valueOf(runtimeModifiers.hpMultiplier), (Object)Float.valueOf(runtimeModifiers.damageMultiplier), (Object)Float.valueOf(runtimeModifiers.sizeMultiplier), (Object)Float.valueOf(runtimeModifiers.attackRateMultiplier), (Object)Float.valueOf(runtimeModifiers.movementMultiplier), (Object)Boolean.valueOf(hpApplied), (Object)Boolean.valueOf(damageApplied), (Object)Boolean.valueOf(sizeApplied), (Object)Boolean.valueOf(attackRateApplied), (Object)Boolean.valueOf(movementApplied));
+        return new BossModifierApplyResult(hpApplied, damageApplied, sizeApplied, attackRateApplied, movementApplied);
+    }
+
+    private boolean applyBossDamageMultiplier(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
+        if (store == null || enemyRef == null || !enemyRef.isValid() || Math.abs(multiplier - 1.0f) < 0.0001f) {
+            return true;
+        }
+        try {
+            EntityStatMap statMap = (EntityStatMap)store.getComponent(enemyRef, EntityStatMap.getComponentType());
+            if (statMap == null) {
+                return false;
+            }
+            String[] candidateStatAccessors = new String[]{"getDamage", "getAttackDamage", "getMeleeDamage", "getBaseDamage"};
+            for (String accessor : candidateStatAccessors) {
+                try {
+                    Method method = DefaultEntityStatTypes.class.getMethod(accessor, new Class[0]);
+                    Object statType = method.invoke(null, new Object[0]);
+                    if (!(statType instanceof Number)) {
+                        continue;
+                    }
+                    int typeIndex = ((Number)statType).intValue();
+                    if (this.tryApplyStatMultiplierByType(statMap, typeIndex, multiplier)) {
+                        return true;
+                    }
+                }
+                catch (Exception ignored) {
+                    // try next stat accessor
+                }
+            }
+        }
+        catch (Exception exception) {
+            return false;
+        }
+        return false;
     }
 
     private boolean applyBossHealthMultiplier(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
@@ -2609,21 +2922,59 @@ public final class HordeService {
             if (statMap == null) {
                 return false;
             }
+            String[] candidateHealthAccessors = new String[]{"getHealth", "getMaxHealth", "getHitpoints", "getHp"};
+            for (String accessor : candidateHealthAccessors) {
+                if (this.tryApplyHealthMultiplierByType(statMap, accessor, multiplier)) {
+                    return true;
+                }
+            }
             EntityStatValue health = statMap.get(DefaultEntityStatTypes.getHealth());
-            if (health == null) {
+            if (health != null) {
+                float currentHealth = Math.max(1.0f, health.get());
+                float maxHealth = this.readNumericValue(health, currentHealth, new String[]{"getMax", "getMaxValue", "getBase", "getBaseValue"}, new String[]{"max", "maxValue", "base", "baseValue"});
+                float sourceHealth = Math.max(currentHealth, maxHealth);
+                float scaledHealth = Math.max(1.0f, sourceHealth * multiplier);
+                boolean applied = this.trySetEntityStatValue(health, scaledHealth);
+                if (!applied) {
+                    applied = this.trySetHealthOnStatMap(statMap, health, scaledHealth);
+                }
+                if (applied) {
+                    return true;
+                }
+            }
+        }
+        catch (Exception exception) {
+            return false;
+        }
+        return false;
+    }
+
+    private boolean tryApplyHealthMultiplierByType(EntityStatMap statMap, String accessor, float multiplier) {
+        if (statMap == null || accessor == null || accessor.isBlank()) {
+            return false;
+        }
+        try {
+            Method method = DefaultEntityStatTypes.class.getMethod(accessor, new Class[0]);
+            Object statType = method.invoke(null, new Object[0]);
+            if (!(statType instanceof Number)) {
                 return false;
             }
-            float currentHealth = Math.max(1.0f, health.get());
-            float maxHealth = this.readNumericValue(health, currentHealth, new String[]{"getMax", "getMaxValue", "getBase", "getBaseValue"}, new String[]{"max", "maxValue", "base", "baseValue"});
+            int typeIndex = ((Number)statType).intValue();
+            EntityStatValue healthValue = statMap.get(typeIndex);
+            if (healthValue == null) {
+                return false;
+            }
+            float currentHealth = Math.max(1.0f, healthValue.get());
+            float maxHealth = this.readNumericValue(healthValue, currentHealth, new String[]{"getMax", "getMaxValue", "getBase", "getBaseValue"}, new String[]{"max", "maxValue", "base", "baseValue"});
             float sourceHealth = Math.max(currentHealth, maxHealth);
             float scaledHealth = Math.max(1.0f, sourceHealth * multiplier);
-            boolean applied = this.trySetEntityStatValue(health, scaledHealth);
+            boolean applied = this.trySetEntityStatValue(healthValue, scaledHealth);
             if (!applied) {
-                applied = this.trySetHealthOnStatMap(statMap, health, scaledHealth);
+                applied = this.trySetHealthOnStatMap(statMap, healthValue, scaledHealth);
             }
             return applied;
         }
-        catch (Exception exception) {
+        catch (Exception ignored) {
             return false;
         }
     }
@@ -2686,6 +3037,242 @@ public final class HordeService {
         }
         return false;
     }
+
+    private boolean applyBossMovementMultiplier(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
+        if (store == null || enemyRef == null || !enemyRef.isValid() || Math.abs(multiplier - 1.0f) < 0.0001f) {
+            return true;
+        }
+        try {
+            EntityStatMap statMap = (EntityStatMap)store.getComponent(enemyRef, EntityStatMap.getComponentType());
+            if (statMap == null) {
+                return false;
+            }
+            String[] candidateStatAccessors = new String[]{"getMovementSpeed", "getMoveSpeed", "getSpeed"};
+            for (String accessor : candidateStatAccessors) {
+                try {
+                    Method method = DefaultEntityStatTypes.class.getMethod(accessor, new Class[0]);
+                    Object statType = method.invoke(null, new Object[0]);
+                    if (!(statType instanceof Number)) {
+                        continue;
+                    }
+                    int typeIndex = ((Number)statType).intValue();
+                    if (this.tryApplyStatMultiplierByType(statMap, typeIndex, multiplier)) {
+                        return true;
+                    }
+                }
+                catch (Exception ignored) {
+                    // try next accessor
+                }
+            }
+            if (this.tryApplyByDynamicDefaultStatTypeName(statMap, multiplier, new String[]{"move", "movement", "speed", "walk", "run", "sprint"}, new String[]{"attack"})) {
+                return true;
+            }
+            if (this.tryApplyMovementWithStepComponent(store, enemyRef, multiplier)) {
+                return true;
+            }
+            if (this.tryApplyMovementByComponents(store, enemyRef, multiplier)) {
+                return true;
+            }
+        }
+        catch (Exception exception) {
+            return false;
+        }
+        return false;
+    }
+
+    private boolean tryApplyMovementWithStepComponent(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
+        if (store == null || enemyRef == null || !enemyRef.isValid() || !Float.isFinite(multiplier) || multiplier <= 0.0f) {
+            return false;
+        }
+        try {
+            Class<?> stepComponentClass = Class.forName("com.hypixel.hytale.server.npc.components.StepComponent");
+            Object componentType = null;
+            try {
+                Method getComponentTypeMethod = stepComponentClass.getMethod("getComponentType", new Class[0]);
+                componentType = getComponentTypeMethod.invoke(null, new Object[0]);
+            }
+            catch (Exception ignored) {
+                Method getStepComponentTypeMethod = stepComponentClass.getMethod("getStepComponentType", new Class[0]);
+                componentType = getStepComponentTypeMethod.invoke(null, new Object[0]);
+            }
+            if (componentType == null) {
+                return false;
+            }
+            Object stepComponent = this.invokeStoreGetComponent(store, enemyRef, componentType);
+            if (stepComponent == null) {
+                return false;
+            }
+            float baseTickLength = this.readNumericValue(stepComponent, Float.NaN, new String[]{"getTickLength"}, new String[]{"tickLength"});
+            if (!Float.isFinite(baseTickLength) || baseTickLength <= 0.0f) {
+                return false;
+            }
+            // Lower tick length = faster movement cadence on NPC steps.
+            float scaledTickLength = Math.max(0.0001f, baseTickLength / multiplier);
+            Object updatedStepComponent;
+            try {
+                Constructor<?> constructor = stepComponentClass.getConstructor(Float.TYPE);
+                updatedStepComponent = constructor.newInstance(Float.valueOf(scaledTickLength));
+            }
+            catch (Exception ignored) {
+                // Fallback for future runtimes that might add mutators.
+                boolean applied = this.tryInvokeNumericSetter(stepComponent, "setTickLength", scaledTickLength)
+                        || this.trySetNumericField(stepComponent, "tickLength", scaledTickLength);
+                if (!applied) {
+                    for (Method method : stepComponent.getClass().getMethods()) {
+                        if (method.getParameterCount() != 1) {
+                            continue;
+                        }
+                        Class<?> parameterType = method.getParameterTypes()[0];
+                        Object numericArg = this.toNumericArgument(parameterType, scaledTickLength);
+                        if (numericArg == null) {
+                            continue;
+                        }
+                        String methodName = method.getName() == null ? "" : method.getName().toLowerCase(Locale.ROOT);
+                        if (methodName.startsWith("get") || methodName.startsWith("is")) {
+                            continue;
+                        }
+                        try {
+                            method.invoke(stepComponent, numericArg);
+                            applied = true;
+                            break;
+                        }
+                        catch (Exception ignoredSetter) {
+                            // try next setter-like method
+                        }
+                    }
+                }
+                if (!applied) {
+                    return false;
+                }
+                updatedStepComponent = stepComponent;
+            }
+            this.invokeStorePutComponent(store, enemyRef, componentType, updatedStepComponent);
+            return true;
+        }
+        catch (Exception ignored) {
+            return false;
+        }
+    }
+
+    private boolean tryApplyByDynamicDefaultStatTypeName(EntityStatMap statMap, float multiplier, String[] includeTokens, String[] excludeTokens) {
+        if (statMap == null) {
+            return false;
+        }
+        Method[] methods = DefaultEntityStatTypes.class.getMethods();
+        for (Method method : methods) {
+            if (method == null || method.getParameterCount() != 0) {
+                continue;
+            }
+            String methodName = method.getName();
+            if (methodName == null || methodName.isBlank()) {
+                continue;
+            }
+            String normalizedName = methodName.toLowerCase(Locale.ROOT);
+            if (!this.containsAnyToken(normalizedName, includeTokens)) {
+                continue;
+            }
+            if (this.containsAnyToken(normalizedName, excludeTokens)) {
+                continue;
+            }
+            try {
+                Object statType = method.invoke(null, new Object[0]);
+                if (!(statType instanceof Number)) {
+                    continue;
+                }
+                int typeIndex = ((Number)statType).intValue();
+                if (this.tryApplyStatMultiplierByType(statMap, typeIndex, multiplier)) {
+                    return true;
+                }
+            }
+            catch (Exception ignored) {
+                // optional accessor or unsupported stat type
+            }
+        }
+        return false;
+    }
+
+    private boolean containsAnyToken(String text, String[] tokens) {
+        if (text == null || text.isBlank() || tokens == null || tokens.length == 0) {
+            return false;
+        }
+        for (String token : tokens) {
+            if (token == null || token.isBlank()) {
+                continue;
+            }
+            if (text.contains(token.toLowerCase(Locale.ROOT))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean tryApplyMovementByComponents(Store<EntityStore> store, Ref<EntityStore> enemyRef, float multiplier) {
+        if (store == null || enemyRef == null || !enemyRef.isValid()) {
+            return false;
+        }
+        String[] componentClasses = new String[]{
+                "com.hypixel.hytale.server.core.modules.entity.component.MovementComponent",
+                "com.hypixel.hytale.server.core.modules.entity.component.EntityMovementComponent",
+                "com.hypixel.hytale.server.core.modules.entity.movement.MovementComponent",
+                "com.hypixel.hytale.server.core.modules.entity.npc.NpcMovementComponent",
+                "com.hypixel.hytale.server.core.modules.entity.npc.NPCMovementComponent",
+                "com.hypixel.hytale.server.core.entity.ai.nav.NavAgentComponent"
+        };
+        for (String componentClassName : componentClasses) {
+            try {
+                Class<?> componentClass = Class.forName(componentClassName);
+                Method getComponentTypeMethod = componentClass.getMethod("getComponentType", new Class[0]);
+                Object componentType = getComponentTypeMethod.invoke(null, new Object[0]);
+                Object component = this.invokeStoreGetComponent(store, enemyRef, componentType);
+                if (component == null) {
+                    continue;
+                }
+                float current = this.readNumericValue(component, Float.NaN, new String[]{
+                        "getMovementSpeed",
+                        "getMoveSpeed",
+                        "getSpeed",
+                        "getWalkSpeed",
+                        "getRunSpeed",
+                        "getMaxSpeed",
+                        "getValue"
+                }, new String[]{
+                        "movementSpeed",
+                        "moveSpeed",
+                        "speed",
+                        "walkSpeed",
+                        "runSpeed",
+                        "maxSpeed",
+                        "value"
+                });
+                if (!Float.isFinite(current) || current <= 0.0f) {
+                    continue;
+                }
+                float scaled = Math.max(MIN_BOSS_RUNTIME_MULTIPLIER, current * multiplier);
+                if (this.tryInvokeNumericSetter(component, "setMovementSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setMoveSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setWalkSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setRunSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setMaxSpeed", scaled)
+                        || this.tryInvokeNumericSetter(component, "setValue", scaled)
+                        || this.trySetNumericField(component, "movementSpeed", scaled)
+                        || this.trySetNumericField(component, "moveSpeed", scaled)
+                        || this.trySetNumericField(component, "speed", scaled)
+                        || this.trySetNumericField(component, "walkSpeed", scaled)
+                        || this.trySetNumericField(component, "runSpeed", scaled)
+                        || this.trySetNumericField(component, "maxSpeed", scaled)
+                        || this.trySetNumericField(component, "value", scaled)) {
+                    this.invokeStorePutComponent(store, enemyRef, componentType, component);
+                    return true;
+                }
+            }
+            catch (Exception ignored) {
+                // optional runtime components vary between versions
+            }
+        }
+        return false;
+    }
+
 
     private boolean tryApplyStatMultiplierByType(EntityStatMap statMap, int statType, float multiplier) {
         if (statMap == null || statType < 0) {
@@ -4466,19 +5053,19 @@ public final class HordeService {
         if ("onyxium".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Ingredient_Bar_Onyxium", "Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        if ("metales".equals(normalizedCategory)) {
+        if ("metals".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        if ("gemas".equals(normalizedCategory)) {
+        if ("gems".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Rock_Gem_Diamond", "Ingredient_Crystal_Blue", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        if ("materiales_raros".equals(normalizedCategory)) {
+        if ("rare_materials".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Ingredient_Voidheart", "Ingredient_Bar_Thorium", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        if ("armas_especiales".equals(normalizedCategory)) {
+        if ("special_weapons".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Weapon_Sword_Runic", "Weapon_Sword_Iron", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
-        if ("items_especiales".equals(normalizedCategory)) {
+        if ("special_items".equals(normalizedCategory)) {
             return HordeService.firstUsableIconItemId("Potion_Signature_Greater", "Ingredient_Bar_Gold", DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID);
         }
         List<String> cleanedItems = HordeService.sanitizeRoleIdList(categoryItems);
@@ -4497,17 +5084,23 @@ public final class HordeService {
     }
 
     private static String normalizeRewardCategoryIconItemId(String iconItemId, String categoryId, List<String> categoryItems) {
+        String recommended = HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
         String selected = HordeService.trimToEmpty(iconItemId);
         if (selected.isBlank()) {
-            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+            return recommended;
         }
         String lower = selected.toLowerCase(Locale.ROOT);
         if ("auto".equals(lower) || "none".equals(lower) || lower.startsWith("random")) {
-            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+            return recommended;
         }
         String normalized = HordeService.normalizeRewardItemId(selected);
         if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized) || !HordeService.isUsableRewardItemId(normalized, 1)) {
-            return HordeService.resolveDefaultRewardCategoryIconItemId(categoryId, categoryItems);
+            return recommended;
+        }
+        String normalizedCategory = HordeService.normalizeRewardCategoryKey(categoryId);
+        boolean isDefaultCategory = DEFAULT_REWARD_CATEGORY_ITEMS.containsKey(normalizedCategory);
+        if (isDefaultCategory && DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID.equalsIgnoreCase(normalized) && !recommended.equalsIgnoreCase(DEFAULT_REWARD_CATEGORY_ICON_ITEM_ID)) {
+            return recommended;
         }
         return normalized;
     }
@@ -4622,6 +5215,52 @@ public final class HordeService {
             }
         }
         return "";
+    }
+
+    private static boolean looksLikeTranslationKey(String value) {
+        if (value == null) {
+            return false;
+        }
+        String text = value.trim();
+        if (text.isBlank()) {
+            return false;
+        }
+        if (!(text.contains(".") || text.contains("_"))) {
+            return false;
+        }
+        boolean hasLower = false;
+        for (int i = 0; i < text.length(); ++i) {
+            char c = text.charAt(i);
+            if (Character.isWhitespace(c)) {
+                return false;
+            }
+            if (Character.isLowerCase(c)) {
+                hasLower = true;
+            }
+        }
+        return hasLower;
+    }
+
+    private static String humanizeItemId(String itemId) {
+        String raw = HordeService.trimToEmpty(itemId);
+        if (raw.isBlank()) {
+            return "Unknown item";
+        }
+        String[] parts = raw.split("_");
+        ArrayList<String> words = new ArrayList<String>();
+        for (String part : parts) {
+            String token = HordeService.trimToEmpty(part);
+            if (token.isBlank()) {
+                continue;
+            }
+            String lower = token.toLowerCase(Locale.ROOT);
+            String word = Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
+            words.add(word);
+        }
+        if (words.isEmpty()) {
+            return raw;
+        }
+        return String.join(" ", words);
     }
 
     private static List<String> sanitizeBlockedHintList(List<String> candidates) {
@@ -4750,7 +5389,7 @@ public final class HordeService {
                 if (normalizedCategory.isBlank()) {
                     continue;
                 }
-                List<String> cleanedItems = HordeService.sanitizeRoleIdList(entry.getValue());
+                List<String> cleanedItems = HordeService.filterUsableRewardItemIds(HordeService.sanitizeRoleIdList(entry.getValue()));
                 if (cleanedItems.isEmpty()) {
                     continue;
                 }
@@ -4775,6 +5414,25 @@ public final class HordeService {
         REWARD_CATEGORY_ITEMS = safeCategories;
         REWARD_CATEGORY_ICONS = safeIcons;
         REWARD_CATEGORY_OPTIONS = HordeService.buildRewardCategoryOptions();
+    }
+
+    private static List<String> filterUsableRewardItemIds(List<String> source) {
+        LinkedHashSet<String> filtered = new LinkedHashSet<String>();
+        if (source == null || source.isEmpty()) {
+            return new ArrayList<String>(filtered);
+        }
+        for (String rawItemId : source) {
+            String normalized = HordeService.normalizeRewardItemId(rawItemId);
+            if (normalized.isBlank() || HordeService.isRandomRewardMode(normalized)) {
+                continue;
+            }
+            String resolved = HordeService.resolveRewardItemAssetId(normalized);
+            if (!HordeService.isUsableRewardItemIdRaw(resolved, 1)) {
+                continue;
+            }
+            filtered.add(resolved);
+        }
+        return new ArrayList<String>(filtered);
     }
 
     private static void applyRoundSoundCatalogRuntime(List<String> roundStartHints, List<String> roundVictoryHints, List<String> roundDefeatHints, List<String> roundStartBlockedKeywords, List<String> roundVictoryBlockedKeywords, List<String> roundDefeatBlockedKeywords, List<String> weakKeywords) {
@@ -5205,6 +5863,11 @@ public final class HordeService {
             mergedCategoryIcons.put(normalizedCategory, HordeService.normalizeRewardCategoryIconItemId(loadedCategoryIcons.get(normalizedCategory), normalizedCategory, cleanedItems));
             ++report.appliedCategories;
         }
+        if (mergedCategories.isEmpty()) {
+            mergedCategories.putAll(HordeService.copyRewardCategoryItems(DEFAULT_REWARD_CATEGORY_ITEMS));
+            mergedCategoryIcons.putAll(HordeService.copyRewardCategoryIcons(DEFAULT_REWARD_CATEGORY_ICONS));
+            report.fallbackToDefaults = true;
+        }
         HordeService.applyRewardCatalogRuntime(mergedCategories, mergedCategoryIcons);
         report.totalActiveCategories = REWARD_CATEGORY_ITEMS.size();
         return report;
@@ -5392,7 +6055,7 @@ public final class HordeService {
                 "Weapon_Staff_Onyxium",
                 "Weapon_Shield_Onyxium"
         ));
-        categories.put("gemas", List.of(
+        categories.put("gems", List.of(
                 "Ingredient_Crystal_Red",
                 "Ingredient_Crystal_Green",
                 "Ingredient_Crystal_Blue",
@@ -5412,7 +6075,7 @@ public final class HordeService {
                 "Weapon_Staff_Crystal_Purple",
                 "Weapon_Staff_Crystal_Red"
         ));
-        categories.put("metales", List.of(
+        categories.put("metals", List.of(
                 "Ingredient_Bar_Bronze",
                 "Ingredient_Bar_Copper",
                 "Ingredient_Bar_Iron",
@@ -5445,9 +6108,33 @@ public final class HordeService {
                 "Tool_Hatchet_Iron",
                 "Tool_Hatchet_Cobalt",
                 "Tool_Hatchet_Thorium",
-                "Tool_Hatchet_Adamantite"
+                "Tool_Hatchet_Adamantite",
+                "Tool_Hammer_Crude",
+                "Tool_Hatchet_Crude",
+                "Tool_Hoe_Crude",
+                "Tool_Pickaxe_Crude",
+                "Tool_Repair_Kit_Crude",
+                "Tool_Shears_Basic",
+                "Tool_Shovel_Crude",
+                "Tool_Sickle_Crude",
+                "Tool_Sickle_Steel_Rusty",
+                "Tool_Trap_Bait",
+                "Tool_Watering_Can",
+                "Tool_Growth_Potion",
+                "Tool_Hammer_Iron",
+                "Tool_Pickaxe_Scrap",
+                "Tool_Hoe_Iron",
+                "Tool_Hoe_Copper",
+                "Tool_Repair_Kit_Iron",
+                "Tool_Repair_Kit_Rare",
+                "Tool_Shovel_Cobalt",
+                "Tool_Shovel_Thorium",
+                "Tool_Shovel_Iron",
+                "Tool_Shovel_Copper",
+                "Tool_Hatchet_Wood",
+                "Tool_Pickaxe_Wood"
         ));
-        categories.put("materiales_raros", List.of(
+        categories.put("rare_materials", List.of(
                 "Ingredient_Voidheart",
                 "Ingredient_Void_Essence",
                 "Ingredient_Fire_Essence",
@@ -5472,7 +6159,7 @@ public final class HordeService {
                 "Ingredient_Life_Essence",
                 "Ingredient_Crystal_Purple"
         ));
-        categories.put("armas_especiales", List.of(
+        categories.put("special_weapons", List.of(
                 "Weapon_Daggers_Thorium",
                 "Weapon_Daggers_Adamantite",
                 "Weapon_Daggers_Adamantite_Saurian",
@@ -5492,11 +6179,287 @@ public final class HordeService {
                 "Weapon_Staff_Crystal_Flame",
                 "Weapon_Staff_Crystal_Ice",
                 "Weapon_Staff_Adamantite",
+                "Weapon_Shield_Mithril",
+                "Weapon_Shield_Adamantite",
+                "Weapon_Shield_Cobalt",
+                "Weapon_Shield_Doomed",
+                "Weapon_Shield_Thorium",
+                "Weapon_Shield_Copper",
+                "Weapon_Shield_Iron",
+                "Weapon_Shield_Scrap",
+                "Weapon_Shield_Onyxium",
                 "Weapon_Shield_Orbis_Knight",
                 "Weapon_Shield_Orbis_Incandescent",
-                "Weapon_Shield_Praetorian"
+                "Weapon_Shield_Praetorian",
+                "Weapon_Shield_Rusty",
+                "Weapon_Shield_Scrap_Spiked",
+                "Weapon_Shield_Wood",
+                "Weapon_Axe_Mithril",
+                "Weapon_Axe_Onyxium",
+                "Weapon_Club_Mithril",
+                "Weapon_Club_Onyxium",
+                "Weapon_Longsword_Mithril",
+                "Weapon_Longsword_Onyxium",
+                "Weapon_Spear_Mithril",
+                "Weapon_Spear_Onyxium",
+                "Weapon_Staff_Mithril",
+                "Weapon_Axe_Adamantite",
+                "Weapon_Axe_Bone",
+                "Weapon_Axe_Cobalt",
+                "Weapon_Axe_Doomed",
+                "Weapon_Axe_Thorium",
+                "Weapon_Club_Adamantite",
+                "Weapon_Club_Cobalt",
+                "Weapon_Club_Doomed",
+                "Weapon_Club_Thorium",
+                "Weapon_Longsword_Adamantite",
+                "Weapon_Longsword_Adamantite_Saurian",
+                "Weapon_Longsword_Cobalt",
+                "Weapon_Longsword_Thorium",
+                "Weapon_Spear_Adamantite",
+                "Weapon_Spear_Adamantite_Saurian",
+                "Weapon_Spear_Bone",
+                "Weapon_Spear_Cobalt",
+                "Weapon_Spear_Thorium",
+                "Weapon_Staff_Adamantite",
+                "Weapon_Staff_Cobalt",
+                "Weapon_Staff_Crystal_Flame",
+                "Weapon_Staff_Crystal_Ice",
+                "Weapon_Staff_Thorium",
+                "Weapon_Arrow_Iron",
+                "Weapon_Arrow_Clearshot",
+                "Weapon_Arrow_Crude",
+                "Weapon_Arrow_Deadeye",
+                "Weapon_Arrow_Trueshot",
+                "Weapon_Axe_Iron",
+                "Weapon_Axe_Copper",
+                "Weapon_Axe_Crude",
+                "Weapon_Axe_Iron_Rusty",
+                "Weapon_Axe_Tribal",
+                "Weapon_Axe_Stone_Trork",
+                "Weapon_Bomb_Continuous",
+                "Weapon_Bomb_Large_Fire",
+                "Weapon_Bomb_Popberry",
+                "Weapon_Bomb_Potion_Poison",
+                "Weapon_Bomb_Stun",
+                "Weapon_Bomb",
+                "Weapon_Blowgun_Tribal",
+                "Weapon_Club_Iron",
+                "Weapon_Club_Scrap",
+                "Weapon_Club_Stone_Trork",
+                "Weapon_Club_Copper",
+                "Weapon_Club_Crude",
+                "Weapon_Club_Iron_Rusty",
+                "Weapon_Club_Steel_Flail_Rusty",
+                "Weapon_Club_Tribal",
+                "Weapon_Club_Zombie_Arm",
+                "Weapon_Club_Zombie_Burnt_Arm",
+                "Weapon_Club_Zombie_Burnt_Leg",
+                "Weapon_Club_Zombie_Frost_Arm",
+                "Weapon_Club_Zombie_Frost_Leg",
+                "Weapon_Club_Zombie_Leg",
+                "Weapon_Club_Zombie_Sand_Arm",
+                "Weapon_Club_Zombie_Sand_Leg",
+                "Weapon_Longsword_Copper",
+                "Weapon_Longsword_Crude",
+                "Weapon_Longsword_Katana",
+                "Weapon_Longsword_Praetorian",
+                "Weapon_Longsword_Scarab",
+                "Weapon_Longsword_Tribal",
+                "Weapon_Longsword_Iron",
+                "Weapon_Longsword_Stone_Trork",
+                "Weapon_Shortbow_Bomb",
+                "Weapon_Shortbow_Combat",
+                "Weapon_Shortbow_Vampire",
+                "Weapon_Spear_Copper",
+                "Weapon_Spear_Crude",
+                "Weapon_Spear_Double_Incandescent",
+                "Weapon_Spear_Fishbone",
+                "Weapon_Spear_Bronze",
+                "Weapon_Spear_Iron",
+                "Weapon_Spear_Leaf",
+                "Weapon_Spear_Scrap",
+                "Weapon_Spear_Stone_Trork",
+                "Weapon_Spear_Tribal",
+                "Weapon_Spellbook_Demon",
+                "Weapon_Spellbook_Fire",
+                "Weapon_Spellbook_Frost",
+                "Weapon_Spellbook_Grimoire_Brown",
+                "Weapon_Spellbook_Grimoire_Purple",
+                "Weapon_Staff_Bo_Bamboo",
+                "Weapon_Staff_Bo_Wood",
+                "Weapon_Staff_Bone",
+                "Weapon_Staff_Bronze",
+                "Weapon_Staff_Cane",
+                "Weapon_Staff_Crystal_Fire_Trork",
+                "Weapon_Staff_Crystal_Purple",
+                "Weapon_Staff_Crystal_Red",
+                "Weapon_Staff_Copper",
+                "Weapon_Staff_Doomed",
+                "Weapon_Staff_Frost",
+                "Weapon_Staff_Iron",
+                "Weapon_Staff_Onion",
+                "Weapon_Staff_Onyxium",
+                "Weapon_Staff_Wizard",
+                "Weapon_Staff_Wood",
+                "Weapon_Staff_Wood_Kweebec",
+                "Weapon_Staff_Wood_Rotten",
+                "Weapon_Wand_Root",
+                "Weapon_Wand_Stoneskin",
+                "Weapon_Wand_Tribal",
+                "Weapon_Wand_Wood",
+                "Weapon_Wand_Wood_Rotten",
+                "Halloween_Broomstick",
+                "Weapon_Claws_Tribal",
+                "Weapon_Dart_Tribal",
+                "Weapon_Deployable_Healing_Totem",
+                "Weapon_Deployable_Slowness_Totem",
+                "Weapon_Deployable_Turret",
+                "Weapon_Kunai",
+                "Weapon_Assault_Rifle",
+                "Weapon_Grenade_Frag",
+                "Weapon_Gun",
+                "Weapon_Gun_Blunderbuss",
+                "Weapon_Gun_Blunderbuss_Rusty",
+                "Weapon_Handgun",
+                "Weapon_Spellbook_Rekindle_Embers",
+                "Weapon_Battleaxe_Scythe_Void",
+                "Weapon_Mace_Copper",
+                "Weapon_Sword_Steel",
+                "Weapon_Sword_Stone_Trork",
+                "Weapon_Sword_Cobalt",
+                "Weapon_Sword_Frost",
+                "Weapon_Sword_Thorium",
+                "Weapon_Sword_Iron",
+                "Weapon_Sword_Adamantite",
+                "Weapon_Sword_Scrap",
+                "Weapon_Sword_Nexus",
+                "Weapon_Sword_Onyxium",
+                "Weapon_Sword_Cutlass",
+                "Weapon_Sword_Wood",
+                "Weapon_Sword_Doomed",
+                "Weapon_Sword_Bronze",
+                "Weapon_Sword_Crude",
+                "Weapon_Sword_Mithril",
+                "Weapon_Sword_Steel_Rusty",
+                "Weapon_Sword_Bronze_Ancient",
+                "Weapon_Daggers_Doomed",
+                "Weapon_Daggers_Bronze",
+                "Weapon_Daggers_Iron",
+                "Weapon_Daggers_Mithril",
+                "Weapon_Daggers_Copper",
+                "Weapon_Daggers_Stone_Trork",
+                "Weapon_Daggers_Crude",
+                "Weapon_Daggers_Cobalt",
+                "Weapon_Daggers_Fang_Doomed",
+                "Weapon_Daggers_Bronze_Ancient",
+                "Weapon_Daggers_Claw_Bone",
+                "Weapon_Crossbow_Iron",
+                "Weapon_Bomb_Fire",
+                "Weapon_Mace_Thorium",
+                "Weapon_Mace_Scrap",
+                "Weapon_Mace_Iron",
+                "Weapon_Mace_Cobalt",
+                "Weapon_Mace_Prisma",
+                "Weapon_Mace_Scrap_NPC",
+                "Weapon_Mace_Adamantite",
+                "Weapon_Mace_Onyxium",
+                "Weapon_Mace_Stone_Trork",
+                "Weapon_Battleaxe_Onyxium",
+                "Weapon_Battleaxe_Tribal",
+                "Weapon_Battleaxe_Scarab",
+                "Weapon_Battleaxe_Wood_Fence",
+                "Weapon_Battleaxe_Steel_Rusty",
+                "Weapon_Battleaxe_Mithril",
+                "Weapon_Battleaxe_Cobalt",
+                "Weapon_Battleaxe_Stone_Trork",
+                "Weapon_Battleaxe_Iron",
+                "Weapon_Battleaxe_Crude",
+                "Weapon_Battleaxe_Copper",
+                "Weapon_Battleaxe_Adamantite",
+                "Weapon_Battleaxe_Thorium",
+                "Weapon_Battleaxe_Doomed",
+                "Weapon_Longsword_Praetorian_NPC",
+                "Weapon_Shortbow_Ricochet",
+                "Weapon_Shortbow_Flame",
+                "Weapon_Shortbow_Onyxium",
+                "Weapon_Shortbow_Cobalt",
+                "Weapon_Shortbow_Iron",
+                "Weapon_Shortbow_Crude",
+                "Weapon_Shortbow_Iron_Rusty",
+                "Weapon_Shortbow_Mithril",
+                "Weapon_Shortbow_Copper",
+                "Weapon_Shortbow_Adamantite",
+                "Weapon_Shortbow_Pull",
+                "Weapon_Shortbow_Doomed",
+                "Weapon_Shortbow_Bronze",
+                "Weapon_Shortbow_Frost",
+                "Weapon_Shortbow_Thorium",
+                "Weapon_Axe_Prisma",
+                "Weapon_Blunderbuss",
+                "Weapon_Bomb_Fire_Goblin",
+                "Weapon_Bow_Adamantite",
+                "Weapon_Bow_Bronze",
+                "Weapon_Bow_Cobalt",
+                "Weapon_Bow_Copper",
+                "Weapon_Bow_Crude",
+                "Weapon_Bow_Doomed",
+                "Weapon_Bow_Flame",
+                "Weapon_Bow_Frost",
+                "Weapon_Bow_Iron",
+                "Weapon_Bow_Iron_Rusty",
+                "Weapon_Bow_Mithril",
+                "Weapon_Bow_Onyxium",
+                "Weapon_Bow_Thorium",
+                "Weapon_Club_Scrap_Goblin",
+                "Weapon_Crossbow_Iron_Rusty",
+                "Weapon_Crossbow_Iron",
+                "Weapon_Dagger_Adamantite",
+                "Weapon_Dagger_Bone",
+                "Weapon_Dagger_Bronze",
+                "Weapon_Dagger_Bronze_Ancient",
+                "Weapon_Dagger_Cobalt",
+                "Weapon_Dagger_Copper",
+                "Weapon_Dagger_Crude",
+                "Weapon_Dagger_Doomed",
+                "Weapon_Dagger_Fang_Doomed",
+                "Weapon_Dagger_Iron",
+                "Weapon_Dagger_Onyxium",
+                "Weapon_Dagger_Stone_Trork",
+                "Weapon_Dagger_Thorium",
+                "Weapon_Daggers_Claw_Tribal",
+                "Weapon_Dual_Sword_Shield_Cobalt",
+                "Weapon_Dual_Sword_Shield_Copper",
+                "Weapon_Dual_Sword_Shield_Doomed",
+                "Weapon_Dual_Sword_Shield_Iron",
+                "Weapon_Dual_Sword_Shield_Rusty",
+                "Weapon_Dual_Sword_Shield_Scrap",
+                "Weapon_Dual_Sword_Shield_Thorium",
+                "Weapon_Dual_Sword_Shield_Wood",
+                "Weapon_Mace_Crude",
+                "Weapon_Mace_Scrap_Goblin",
+                "Weapon_Shield_Scrap_Goblin",
+                "Weapon_Spear_Iron_Rusty",
+                "Weapon_Spear_Steel_Rusty",
+                "Weapon_Staff_Cane_Klops",
+                "Weapon_Staff_Onion_Klops",
+                "Weapon_Stick_Fire",
+                "Weapon_Sword_Copper",
+                "Weapon_Sword_Scrap_Goblin",
+                "Weapon_Daggers_Mithril",
+                "Weapon_Daggers_Onyxium",
+                "Weapon_Daggers_Thorium",
+                "Weapon_Daggers_Adamantite",
+                "Weapon_Daggers_Doomed",
+                "Weapon_Daggers_Copper",
+                "Weapon_Daggers_Cobalt",
+                "Weapon_Daggers_Iron",
+                "Weapon_Daggers_Bronze",
+                "Weapon_Daggers_Crude",
+                "Weapon_Daggers_Stone_Trork",
+                "Weapon_Daggers_Fang_Doomed"
         ));
-        categories.put("items_especiales", List.of(
+        categories.put("special_items", List.of(
                 "Armor_Steel_Ancient_Head",
                 "Armor_Steel_Ancient_Chest",
                 "Armor_Steel_Ancient_Hands",
@@ -5520,6 +6483,41 @@ public final class HordeService {
                 "Potion_Signature_Lesser",
                 "Potion_Regen_Health_Large",
                 "Potion_Regen_Mana_Large",
+                "Potion_Empty",
+                "Potion_Health_Lesser",
+                "Potion_Stamina_Lesser",
+                "Potion_Health_Greater",
+                "Potion_Empty_Large",
+                "Potion_Stamina_Greater",
+                "Potion_Health",
+                "Potion_Empty_Small",
+                "Potion_Regen_Health",
+                "Potion_Regen_Stamina_Large",
+                "Potion_Morph_Dog",
+                "Potion_Morph_Frog",
+                "Potion_Morph_Mouse",
+                "Potion_Stamina",
+                "Potion_Poison",
+                "Potion_Regen_Stamina_Small",
+                "Potion_Mana",
+                "Potion_Morph_Pigeon",
+                "Potion_Regen_Health_Small",
+                "Potion_Mana_Small",
+                "Potion_Poison_Minor",
+                "Potion_Stamina_Small",
+                "Potion_Health_Large",
+                "Potion_Mana_Large",
+                "Potion_Regen_Mana_Small",
+                "Potion_Stamina_Large",
+                "Potion_Health_Small",
+                "Potion_Regen_Stamina",
+                "Potion_Purify",
+                "Potion_Poison_Large",
+                "Potion_Regen_Mana",
+                "Bandage_Crude",
+                "Potion_Signature",
+                "Potion_Signature_Large",
+                "Potion_Signature_Small",
                 "Food_Fish_Raw_Legendary"
         ));
         return categories;
@@ -5576,29 +6574,29 @@ public final class HordeService {
                 return "mithril";
             case "onyxium":
                 return "onyxium";
+            case "gems":
             case "gemas":
             case "gem":
-            case "gems":
-                return "gemas";
+                return "gems";
+            case "metals":
             case "metales":
             case "metal":
-            case "metals":
-                return "metales";
+                return "metals";
+            case "rare_materials":
             case "materiales_raros":
             case "material_raro":
-            case "rare_materials":
             case "rares":
-                return "materiales_raros";
+                return "rare_materials";
+            case "special_weapons":
             case "armas_especiales":
             case "armas":
-            case "special_weapons":
             case "weapons_special":
-                return "armas_especiales";
+                return "special_weapons";
+            case "special_items":
             case "items_especiales":
             case "trofeos":
             case "trophies":
-            case "special_items":
-                return "items_especiales";
+                return "special_items";
         }
         return normalized;
     }
@@ -5617,6 +6615,20 @@ public final class HordeService {
         for (String category : REWARD_CATEGORY_OPTIONS) {
             List<String> items = HordeService.getRewardCategoryItems(category);
             HordeService.addConfiguredRewardSuggestions(all, items);
+        }
+        return new ArrayList<String>(all);
+    }
+
+    private static List<String> getAllRewardItemsFromCatalog(Map<String, List<String>> categories) {
+        LinkedHashSet<String> all = new LinkedHashSet<String>();
+        if (categories == null || categories.isEmpty()) {
+            return new ArrayList<String>(all);
+        }
+        for (Map.Entry<String, List<String>> entry : categories.entrySet()) {
+            if (entry == null) {
+                continue;
+            }
+            HordeService.addConfiguredRewardSuggestions(all, entry.getValue());
         }
         return new ArrayList<String>(all);
     }
@@ -6081,6 +7093,21 @@ public final class HordeService {
             return false;
         }
         return normalized.contains("armor_") || normalized.contains("weapon_") || normalized.contains("tool_") || normalized.contains("fish_") || normalized.contains("consumable") || normalized.contains("potion") || normalized.contains("food") || normalized.contains("resource") || normalized.contains("material") || normalized.contains("ingot") || normalized.contains("gem") || normalized.contains("rune") || normalized.contains("item/weapon") || normalized.contains("item/tool") || normalized.contains("item/armor") || normalized.contains("item/consumable") || normalized.contains("item/resource") || normalized.contains("item/material");
+    }
+
+    private static boolean isUiExcludedRewardItemId(String itemId) {
+        if (itemId == null || itemId.isBlank()) {
+            return true;
+        }
+        String normalized = itemId.toLowerCase(Locale.ROOT);
+        return normalized.startsWith("debug")
+                || normalized.contains("debug_")
+                || normalized.contains("_debug")
+                || normalized.contains("/debug")
+                || normalized.startsWith("debur")
+                || normalized.contains("debur_")
+                || normalized.contains("_debur")
+                || normalized.contains("/debur");
     }
 
     private static boolean isRandomEnemyType(String enemyType) {
@@ -6823,6 +7850,7 @@ public final class HordeService {
         updated.enemyLevelMin = HordeService.parseInt(values.get("enemyLevelMin"), updated.enemyLevelMin, "enemyLevelMin", english);
         updated.enemyLevelMax = HordeService.parseInt(values.get("enemyLevelMax"), updated.enemyLevelMax, "enemyLevelMax", english);
         updated.finalBossEnabled = HordeService.parseBoolean(values.get("finalBossEnabled"), updated.finalBossEnabled, "finalBossEnabled", english);
+        updated.rpgLevelingEnabled = HordeService.parseBoolean(values.get("rpgLevelingEnabled"), updated.rpgLevelingEnabled, "rpgLevelingEnabled", english);
         updated.roundStartVolume = HordeService.parseUiVolume(values.get("roundStartVolume"), updated.roundStartVolume, "roundStartVolume", english);
         updated.roundVictoryVolume = HordeService.parseUiVolume(values.get("roundVictoryVolume"), updated.roundVictoryVolume, "roundVictoryVolume", english);
         updated.roundDefeatVolume = HordeService.parseUiVolume(values.get("roundDefeatVolume"), updated.roundDefeatVolume, "roundDefeatVolume", english);
@@ -7405,6 +8433,7 @@ public final class HordeService {
         public String roundDefeatSoundId;
         public double roundDefeatVolume = 1.0;
         public boolean finalBossEnabled;
+        public boolean rpgLevelingEnabled;
         public int enemyLevelMin;
         public int enemyLevelMax;
 
@@ -7442,6 +8471,7 @@ public final class HordeService {
             defaults.roundDefeatSoundId = SOUND_SELECTION_AUTO;
             defaults.roundDefeatVolume = 1.0;
             defaults.finalBossEnabled = false;
+            defaults.rpgLevelingEnabled = false;
             defaults.enemyLevelMin = HordeConfigRules.DEFAULT_ENEMY_LEVEL_MIN;
             defaults.enemyLevelMax = HordeConfigRules.DEFAULT_ENEMY_LEVEL_MAX;
             return defaults;
@@ -7481,6 +8511,7 @@ public final class HordeService {
             copy.roundDefeatSoundId = this.roundDefeatSoundId;
             copy.roundDefeatVolume = this.roundDefeatVolume;
             copy.finalBossEnabled = this.finalBossEnabled;
+            copy.rpgLevelingEnabled = this.rpgLevelingEnabled;
             copy.enemyLevelMin = this.enemyLevelMin;
             copy.enemyLevelMax = this.enemyLevelMax;
             return copy;
@@ -7504,35 +8535,43 @@ public final class HordeService {
         private final float damageMultiplier;
         private final float sizeMultiplier;
         private final float attackRateMultiplier;
+        private final float movementMultiplier;
 
-        private BossRuntimeModifiers(float hpMultiplier, float damageMultiplier, float sizeMultiplier, float attackRateMultiplier) {
+        private BossRuntimeModifiers(float hpMultiplier, float damageMultiplier, float sizeMultiplier, float attackRateMultiplier, float movementMultiplier) {
             this.hpMultiplier = HordeService.clampRuntimeMultiplier(hpMultiplier);
             this.damageMultiplier = HordeService.clampRuntimeMultiplier(damageMultiplier);
             this.sizeMultiplier = HordeService.clampRuntimeMultiplier(sizeMultiplier);
             this.attackRateMultiplier = HordeService.clampRuntimeMultiplier(attackRateMultiplier);
+            this.movementMultiplier = HordeService.clampRuntimeMultiplier(movementMultiplier);
         }
 
         private static BossRuntimeModifiers defaults() {
-            return new BossRuntimeModifiers(1.0f, 1.0f, 1.0f, 1.0f);
+            return new BossRuntimeModifiers(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
         }
 
         private boolean requiresApplication() {
             return Math.abs(this.hpMultiplier - 1.0f) >= 0.0001f
+                    || Math.abs(this.damageMultiplier - 1.0f) >= 0.0001f
                     || Math.abs(this.sizeMultiplier - 1.0f) >= 0.0001f
-                    || Math.abs(this.attackRateMultiplier - 1.0f) >= 0.0001f;
+                    || Math.abs(this.attackRateMultiplier - 1.0f) >= 0.0001f
+                    || Math.abs(this.movementMultiplier - 1.0f) >= 0.0001f;
         }
     }
 
     private static final class BossModifierApplyResult {
-        private static final BossModifierApplyResult NONE = new BossModifierApplyResult(false, false, false);
+        private static final BossModifierApplyResult NONE = new BossModifierApplyResult(false, false, false, false, false);
         private final boolean hpApplied;
+        private final boolean damageApplied;
         private final boolean sizeApplied;
         private final boolean attackRateApplied;
+        private final boolean movementApplied;
 
-        private BossModifierApplyResult(boolean hpApplied, boolean sizeApplied, boolean attackRateApplied) {
+        private BossModifierApplyResult(boolean hpApplied, boolean damageApplied, boolean sizeApplied, boolean attackRateApplied, boolean movementApplied) {
             this.hpApplied = hpApplied;
+            this.damageApplied = damageApplied;
             this.sizeApplied = sizeApplied;
             this.attackRateApplied = attackRateApplied;
+            this.movementApplied = movementApplied;
         }
     }
 
@@ -7543,8 +8582,10 @@ public final class HordeService {
         private int remainingAttempts;
         private long nextAttemptAtMillis;
         private boolean hpApplied;
+        private boolean damageApplied;
         private boolean sizeApplied;
         private boolean attackRateApplied;
+        private boolean movementApplied;
 
         private PendingBossModifierApplication(BossArenaCatalogService.BossDefinitionSnapshot definition, BossRuntimeModifiers runtimeModifiers, int roundNumber, int remainingAttempts, long nextAttemptAtMillis) {
             this.definition = definition;
@@ -7553,12 +8594,14 @@ public final class HordeService {
             this.remainingAttempts = Math.max(1, remainingAttempts);
             this.nextAttemptAtMillis = Math.max(0L, nextAttemptAtMillis);
             this.hpApplied = false;
+            this.damageApplied = false;
             this.sizeApplied = false;
             this.attackRateApplied = false;
+            this.movementApplied = false;
         }
 
         private boolean isComplete() {
-            return this.hpApplied && this.sizeApplied && this.attackRateApplied;
+            return this.hpApplied && this.damageApplied && this.sizeApplied && this.attackRateApplied && this.movementApplied;
         }
     }
 

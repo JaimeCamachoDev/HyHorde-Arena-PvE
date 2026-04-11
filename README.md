@@ -106,3 +106,19 @@ Salida esperada:
 ## Troubleshooting UI
 
 - Guia de errores recurrentes de Custom UI: `docs/CUSTOM_UI_GUARDRAILS.md`
+
+## Categorias UI (Selecciona Recompensa)
+
+Categorias oficiales usadas en el selector de recompensas y sus iconos:
+
+- `Tools` -> `../Icons/ItemCategories/Items-Tools.png`
+- `Weapons` -> `../Icons/ItemCategories/Items-Weapons.png`
+- `Armor` -> `../Icons/ItemCategories/Items-Armor.png`
+- `Foods` -> `../Icons/ItemCategories/Items-Food.png`
+- `Potions` -> `../Icons/ItemCategories/Items-Potion.png`
+- `Ingredients` -> `../Icons/ItemCategories/Items-Ingredients.png`
+
+Notas:
+
+- Los iconos viven en `src/main/resources/Common/UI/Custom/Icons/ItemCategories/`.
+- IDs de items validados para clasificacion (fuente de referencia): `Armor_*`, `Weapon_*`, `Tool_*`.

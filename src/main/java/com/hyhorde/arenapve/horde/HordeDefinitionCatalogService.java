@@ -20,6 +20,9 @@ import java.util.logging.Level;
 
 final class HordeDefinitionCatalogService {
     private static final String DEFAULT_HORDE_ICON_ITEM_ID = "Ingredient_Bar_Gold";
+    private static final String DEFAULT_HORDE_ID_WAVE = "wave";
+    private static final String DEFAULT_HORDE_ID_TIMED = "timed";
+    private static final String DEFAULT_HORDE_ID_HORDE = "horde";
     private final PluginBase plugin;
     private final Gson gson;
     private final Path definitionsPath;
@@ -37,8 +40,7 @@ final class HordeDefinitionCatalogService {
         this.definitionsById.clear();
         this.ensureDataDirectory();
         if (!Files.exists(this.definitionsPath, new LinkOption[0])) {
-            HordeDefinition defaults = HordeDefinition.defaults(this.nextId(), HordeService.HordeConfig.defaults());
-            this.definitionsById.put(HordeDefinitionCatalogService.key(defaults.hordeId), defaults);
+            this.addDefaultDefinitions(HordeService.HordeConfig.defaults());
             this.saveToDisk();
             return;
         }
@@ -50,6 +52,7 @@ final class HordeDefinitionCatalogService {
                     if (clean == null || clean.hordeId == null || clean.hordeId.isBlank()) {
                         continue;
                     }
+                    clean = this.migrateLegacyDefaultDefinition(clean, HordeService.HordeConfig.defaults());
                     String rowKey = HordeDefinitionCatalogService.key(clean.hordeId);
                     if (this.definitionsById.containsKey(rowKey)) {
                         continue;
@@ -62,8 +65,7 @@ final class HordeDefinitionCatalogService {
             this.plugin.getLogger().at(Level.WARNING).log("No se pudo leer horde-definitions.json, se regenerara plantilla: %s", (Object)ex.getMessage());
         }
         if (this.definitionsById.isEmpty()) {
-            HordeDefinition defaults = HordeDefinition.defaults(this.nextId(), HordeService.HordeConfig.defaults());
-            this.definitionsById.put(HordeDefinitionCatalogService.key(defaults.hordeId), defaults);
+            this.addDefaultDefinitions(HordeService.HordeConfig.defaults());
             this.saveToDisk();
         }
     }
@@ -101,11 +103,68 @@ final class HordeDefinitionCatalogService {
             return HordeService.OperationResult.fail(english ? "Horde not found." : "Horda no encontrada.");
         }
         if (this.definitionsById.isEmpty()) {
-            HordeDefinition defaults = HordeDefinition.defaults(this.nextId(), HordeService.HordeConfig.defaults());
-            this.definitionsById.put(HordeDefinitionCatalogService.key(defaults.hordeId), defaults);
+            this.addDefaultDefinitions(HordeService.HordeConfig.defaults());
         }
         this.saveToDisk();
         return HordeService.OperationResult.ok(english ? "Deleted horde: " + removed.hordeId + "." : "Horda eliminada: " + removed.hordeId + ".");
+    }
+
+    private void addDefaultDefinitions(HordeService.HordeConfig fallbackConfig) {
+        HordeService.HordeConfig config = fallbackConfig == null ? HordeService.HordeConfig.defaults() : fallbackConfig.copy();
+
+        HordeDefinition wave = HordeDefinition.defaults(this.uniqueId(DEFAULT_HORDE_ID_WAVE), config);
+        wave.hordeMode = HordeService.normalizeHordeMode("wave");
+        wave.iconItemId = "Ingredient_Bar_Iron";
+        wave.rounds = HordeDefinitionCatalogService.clamp(Math.max(8, wave.rounds), HordeConfigRules.MIN_ROUNDS, HordeConfigRules.MAX_ROUNDS);
+        wave.baseEnemies = HordeDefinitionCatalogService.clamp(Math.max(8, wave.baseEnemies), HordeConfigRules.MIN_ENEMIES_PER_ROUND, HordeConfigRules.MAX_ENEMIES_PER_ROUND);
+        wave.enemiesPerRound = HordeDefinitionCatalogService.clamp(Math.max(2, wave.enemiesPerRound), HordeConfigRules.MIN_ENEMY_INCREMENT, HordeConfigRules.MAX_ENEMY_INCREMENT);
+        wave.waveDelay = HordeDefinitionCatalogService.clamp(Math.max(12, wave.waveDelay), HordeConfigRules.MIN_WAVE_DELAY_SECONDS, HordeConfigRules.MAX_WAVE_DELAY_SECONDS);
+        this.definitionsById.put(HordeDefinitionCatalogService.key(wave.hordeId), HordeDefinition.sanitize(wave, config));
+
+        HordeDefinition timed = HordeDefinition.defaults(this.uniqueId(DEFAULT_HORDE_ID_TIMED), config);
+        timed.hordeMode = HordeService.normalizeHordeMode("timed");
+        timed.iconItemId = "Ingredient_Crystal_Yellow";
+        timed.rounds = HordeDefinitionCatalogService.clamp(Math.max(6, timed.rounds), HordeConfigRules.MIN_ROUNDS, HordeConfigRules.MAX_ROUNDS);
+        timed.baseEnemies = HordeDefinitionCatalogService.clamp(Math.max(10, timed.baseEnemies), HordeConfigRules.MIN_ENEMIES_PER_ROUND, HordeConfigRules.MAX_ENEMIES_PER_ROUND);
+        timed.enemiesPerRound = HordeDefinitionCatalogService.clamp(Math.max(3, timed.enemiesPerRound), HordeConfigRules.MIN_ENEMY_INCREMENT, HordeConfigRules.MAX_ENEMY_INCREMENT);
+        timed.waveDelay = HordeDefinitionCatalogService.clamp(Math.max(180, timed.waveDelay), HordeConfigRules.MIN_WAVE_DELAY_SECONDS, HordeConfigRules.MAX_WAVE_DELAY_SECONDS);
+        this.definitionsById.put(HordeDefinitionCatalogService.key(timed.hordeId), HordeDefinition.sanitize(timed, config));
+
+        HordeDefinition horde = HordeDefinition.defaults(this.uniqueId(DEFAULT_HORDE_ID_HORDE), config);
+        horde.hordeMode = HordeService.normalizeHordeMode("horde");
+        horde.iconItemId = "Ingredient_Bar_Gold";
+        horde.rounds = HordeDefinitionCatalogService.clamp(Math.max(1, horde.rounds), HordeConfigRules.MIN_ROUNDS, HordeConfigRules.MAX_ROUNDS);
+        horde.baseEnemies = HordeDefinitionCatalogService.clamp(Math.max(16, horde.baseEnemies), HordeConfigRules.MIN_ENEMIES_PER_ROUND, HordeConfigRules.MAX_ENEMIES_PER_ROUND);
+        horde.enemiesPerRound = HordeDefinitionCatalogService.clamp(Math.max(0, horde.enemiesPerRound), HordeConfigRules.MIN_ENEMY_INCREMENT, HordeConfigRules.MAX_ENEMY_INCREMENT);
+        horde.waveDelay = HordeDefinitionCatalogService.clamp(Math.max(180, horde.waveDelay), HordeConfigRules.MIN_WAVE_DELAY_SECONDS, HordeConfigRules.MAX_WAVE_DELAY_SECONDS);
+        this.definitionsById.put(HordeDefinitionCatalogService.key(horde.hordeId), HordeDefinition.sanitize(horde, config));
+    }
+
+    private HordeDefinition migrateLegacyDefaultDefinition(HordeDefinition source, HordeService.HordeConfig fallbackConfig) {
+        if (source == null) {
+            return null;
+        }
+        HordeDefinition migrated = source.copy();
+        String id = HordeDefinitionCatalogService.clean(migrated.hordeId).toLowerCase(Locale.ROOT);
+        if ("wave_default".equals(id)) {
+            migrated.hordeId = this.uniqueId(DEFAULT_HORDE_ID_WAVE);
+            migrated.hordeMode = HordeService.normalizeHordeMode("wave");
+            migrated.iconItemId = "Ingredient_Bar_Iron";
+            return HordeDefinition.sanitize(migrated, fallbackConfig);
+        }
+        if ("timed_default".equals(id)) {
+            migrated.hordeId = this.uniqueId(DEFAULT_HORDE_ID_TIMED);
+            migrated.hordeMode = HordeService.normalizeHordeMode("timed");
+            migrated.iconItemId = "Ingredient_Crystal_Yellow";
+            return HordeDefinition.sanitize(migrated, fallbackConfig);
+        }
+        if ("horde_default".equals(id)) {
+            migrated.hordeId = this.uniqueId(DEFAULT_HORDE_ID_HORDE);
+            migrated.hordeMode = HordeService.normalizeHordeMode("horde");
+            migrated.iconItemId = "Ingredient_Bar_Gold";
+            return HordeDefinition.sanitize(migrated, fallbackConfig);
+        }
+        return migrated;
     }
 
     synchronized HordeService.OperationResult upsertFromValues(Map<String, String> values, HordeService.HordeConfig fallbackConfig, boolean english) {

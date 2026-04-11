@@ -1,0 +1,33 @@
+$C = "../Common.ui";
+
+Group #HordeEnemyDensePickerRow {
+  Anchor: (Left: 0, Right: 0, Height: 86, Bottom: 4);
+  Background: #000000(0);
+
+  TextButton #EnemyPickButton1 { Anchor: (Left: 0, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton2 { Anchor: (Left: 90, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton3 { Anchor: (Left: 180, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton4 { Anchor: (Left: 270, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton5 { Anchor: (Left: 360, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton6 { Anchor: (Left: 450, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton7 { Anchor: (Left: 540, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #EnemyPickButton8 { Anchor: (Left: 630, Top: 0, Width: 86, Height: 86); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+
+  ItemIcon #EnemyPickIcon1 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon2 { Anchor: (Left: 101, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon3 { Anchor: (Left: 191, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon4 { Anchor: (Left: 281, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon5 { Anchor: (Left: 371, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon6 { Anchor: (Left: 461, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon7 { Anchor: (Left: 551, Top: 11, Width: 64, Height: 64); Visible: false; }
+  ItemIcon #EnemyPickIcon8 { Anchor: (Left: 641, Top: 11, Width: 64, Height: 64); Visible: false; }
+
+  AssetImage #EnemyPickFace1 { Anchor: (Left: 11, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace2 { Anchor: (Left: 101, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace3 { Anchor: (Left: 191, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace4 { Anchor: (Left: 281, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace5 { Anchor: (Left: 371, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace6 { Anchor: (Left: 461, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace7 { Anchor: (Left: 551, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+  AssetImage #EnemyPickFace8 { Anchor: (Left: 641, Top: 11, Width: 64, Height: 64); Visible: false; Background: #000000(0); }
+}
