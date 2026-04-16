@@ -1,15 +1,27 @@
 $C = "../Common.ui";
 
+@UiButtonsLight = (
+  Activate: (SoundPath: "Sounds/ButtonsLightActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 4),
+  MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+);
+
+@UiButtonsCancel = (
+  Activate: (SoundPath: "Sounds/ButtonsCancelActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 6),
+  MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+);
+
 @ArenaRowHitboxStyle = TextButtonStyle(
   Default: (Background: #000000(0), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: #ffffff(0.07), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: #ffffff(0.12), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Pressed: (Background: #ffffff(0.12), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Sounds: @UiButtonsLight
 );
 
 @TrashDeleteButtonStyle = TextButtonStyle(
   Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Sounds: @UiButtonsCancel
 );
 
 Group #HordeArenaRow {

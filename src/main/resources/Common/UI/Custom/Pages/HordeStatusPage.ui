@@ -1,4 +1,9 @@
 Group {
+  @UiButtonsLight = (
+    Activate: (SoundPath: "Sounds/ButtonsLightActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 4),
+    MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+  );
+
   Anchor: (Left: 0, Top: 0, Width: 1920, Height: 1080);
 
   Panel #Card {
@@ -196,7 +201,8 @@ Group {
     Style: TextButtonStyle(
       Default: (Background: #2d4565, LabelStyle: (FontSize: 15, TextColor: #f3f7ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #3b5f8d, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #233751, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #233751, LabelStyle: (FontSize: 15, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 }

@@ -1,5 +1,15 @@
 $C = "../Common.ui";
 
+@UiButtonsLight = (
+  Activate: (SoundPath: "Sounds/ButtonsLightActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 4),
+  MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+);
+
+@UiButtonsCancel = (
+  Activate: (SoundPath: "Sounds/ButtonsCancelActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 6),
+  MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+);
+
 @OfficialDropdownBoxStyle = DropdownBoxStyle(
   ...$C.@DefaultDropdownBoxStyle,
   LabelStyle: (
@@ -22,20 +32,28 @@ $C = "../Common.ui";
 @ListRowHitboxButtonStyle = TextButtonStyle(
   Default: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #8ea1bb(0.34)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #d6e3f5(0.58)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #f3f8ff(0.76)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Pressed: (Background: (TexturePath: "../Common/Tab.png", Border: 3, Color: #f3f8ff(0.76)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Sounds: @UiButtonsLight
 );
 
 @ArenaListRowHitboxStyle = TextButtonStyle(
   Default: (Background: #000000(0), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: #ffffff(0.08), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: #ffffff(0.14), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Pressed: (Background: #ffffff(0.14), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Sounds: @UiButtonsLight
 );
 
 @TrashDeleteButtonStyle = TextButtonStyle(
   Default: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffd7d1(0.84)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
   Hovered: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #fff4f1), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
-  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0)))
+  Pressed: (Background: (TexturePath: "../Icons/AssetNotifications/Trash.png", Color: #ffbfb6(0.92)), LabelStyle: (FontSize: 1, TextColor: #000000(0))),
+  Sounds: @UiButtonsCancel
 );
+@SecondaryButtonWithSoundStyle = (...$C.@SecondaryTextButtonStyle, Sounds: @UiButtonsLight);
+@SmallSecondaryButtonWithSoundStyle = (...$C.@SmallSecondaryTextButtonStyle, Sounds: @UiButtonsLight);
+@TertiaryButtonWithSoundStyle = (...$C.@TertiaryTextButtonStyle, Sounds: @UiButtonsLight);
+@DefaultButtonWithSoundStyle = (...$C.@DefaultTextButtonStyle, Sounds: @UiButtonsLight);
+@CancelButtonWithSoundStyle = (...$C.@CancelTextButtonStyle, Sounds: @UiButtonsCancel);
 
 @ArenaNameLabelStyle = (...$C.@DefaultLabelStyle, FontSize: 13, TextColor: #ecf4ff, RenderBold: true, VerticalAlignment: Center);
 @ArenaCoordsLabelStyle = (...$C.@DefaultLabelStyle, FontSize: 11, TextColor: #b8cbe5, VerticalAlignment: Center);
@@ -620,60 +638,148 @@ Group {
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@DropdownBox #GeneralArenaId {
-    @Anchor = (Left: 456, Top: 262, Width: 500);
-    Value: "";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  $C.@TextField #GeneralArenaId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: ""; Visible: false; }
+  $C.@TextField #GeneralBossId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: ""; Visible: false; }
+  $C.@TextField #GeneralHordeId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: ""; Visible: false; }
+  $C.@TextField #GeneralRewardId { @Anchor = (Left: 0, Top: 0, Width: 1); Value: ""; Visible: false; }
+  $C.@TextField #GeneralPickerType { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "arena"; Visible: false; }
+
+  Panel #GeneralArenaSelectorCard {
+    Anchor: (Left: 456, Top: 262, Width: 500, Height: 62);
+    Background: #2f4c6f(0.96);
   }
+  Panel #GeneralArenaSelectorAccent { Anchor: (Left: 456, Top: 262, Width: 6, Height: 62); Background: #e0b84a; }
+  ItemIcon #GeneralArenaSelectorIcon { Anchor: (Left: 468, Top: 268, Width: 50, Height: 50); }
+  Label #GeneralArenaSelectorName { Anchor: (Left: 532, Top: 272, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
+  Label #GeneralArenaSelectorMeta { Anchor: (Left: 532, Top: 295, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
+  Label #GeneralArenaSelectorAction {
+    Anchor: (Left: 836, Top: 282, Width: 110, Height: 22);
+    Text: "Seleccionar";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #f3d27a, RenderBold: true, VerticalAlignment: Center);
+  }
+  TextButton #GeneralArenaPickerOpenButton { Anchor: (Left: 456, Top: 262, Width: 500, Height: 62); Text: ""; Style: @ArenaListRowHitboxStyle; }
 
   Label #GeneralBossLabel {
-    Anchor: (Left: 456, Top: 304, Width: 500, Height: 24);
+    Anchor: (Left: 456, Top: 336, Width: 500, Height: 24);
     Text: "Boss actual de la horda";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@DropdownBox #GeneralBossId {
-    @Anchor = (Left: 456, Top: 332, Width: 500);
-    Value: "";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  Panel #GeneralBossSelectorCard {
+    Anchor: (Left: 456, Top: 364, Width: 500, Height: 62);
+    Background: #2f4c6f(0.96);
   }
+  Panel #GeneralBossSelectorAccent { Anchor: (Left: 456, Top: 364, Width: 6, Height: 62); Background: #e0b84a; }
+  ItemIcon #GeneralBossSelectorIcon { Anchor: (Left: 468, Top: 370, Width: 50, Height: 50); }
+  Label #GeneralBossSelectorName { Anchor: (Left: 532, Top: 374, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
+  Label #GeneralBossSelectorMeta { Anchor: (Left: 532, Top: 397, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
+  Label #GeneralBossSelectorAction {
+    Anchor: (Left: 836, Top: 384, Width: 110, Height: 22);
+    Text: "Seleccionar";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #f3d27a, RenderBold: true, VerticalAlignment: Center);
+  }
+  TextButton #GeneralBossPickerOpenButton { Anchor: (Left: 456, Top: 364, Width: 500, Height: 62); Text: ""; Style: @ArenaListRowHitboxStyle; }
 
   Label #GeneralHordeLabel {
-    Anchor: (Left: 456, Top: 374, Width: 500, Height: 24);
+    Anchor: (Left: 456, Top: 438, Width: 500, Height: 24);
     Text: "Horda actual";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@DropdownBox #GeneralHordeId {
-    @Anchor = (Left: 456, Top: 402, Width: 500);
-    Value: "";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  Panel #GeneralHordeSelectorCard {
+    Anchor: (Left: 456, Top: 466, Width: 500, Height: 62);
+    Background: #2f4c6f(0.96);
   }
+  Panel #GeneralHordeSelectorAccent { Anchor: (Left: 456, Top: 466, Width: 6, Height: 62); Background: #e0b84a; }
+  ItemIcon #GeneralHordeSelectorIcon { Anchor: (Left: 468, Top: 472, Width: 50, Height: 50); }
+  Label #GeneralHordeSelectorName { Anchor: (Left: 532, Top: 476, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
+  Label #GeneralHordeSelectorMeta { Anchor: (Left: 532, Top: 499, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
+  Label #GeneralHordeSelectorAction {
+    Anchor: (Left: 836, Top: 486, Width: 110, Height: 22);
+    Text: "Seleccionar";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #f3d27a, RenderBold: true, VerticalAlignment: Center);
+  }
+  TextButton #GeneralHordePickerOpenButton { Anchor: (Left: 456, Top: 466, Width: 500, Height: 62); Text: ""; Style: @ArenaListRowHitboxStyle; }
 
-  Label #RoleLabel {
-    Anchor: (Left: 456, Top: 444, Width: 500, Height: 24);
-    Text: "Tipo enemigo";
-    Visible: false;
+  Label #GeneralEnemyTypeLabel {
+    Anchor: (Left: 456, Top: 540, Width: 500, Height: 24);
+    Text: "Tipo enemigo actual";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@DropdownBox #EnemyType {
-    @Anchor = (Left: 456, Top: 472, Width: 500);
-    Value: "undead";
-    Visible: false;
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  $C.@TextField #EnemyType { @Anchor = (Left: 0, Top: 0, Width: 1); Value: "undead"; Visible: false; }
+
+  Panel #GeneralEnemyTypeSelectorCard {
+    Anchor: (Left: 456, Top: 568, Width: 500, Height: 62);
+    Background: #2f4c6f(0.96);
   }
+  Panel #GeneralEnemyTypeSelectorAccent { Anchor: (Left: 456, Top: 568, Width: 6, Height: 62); Background: #e0b84a; }
+  ItemIcon #GeneralEnemyTypeSelectorIcon { Anchor: (Left: 468, Top: 574, Width: 50, Height: 50); }
+  Label #GeneralEnemyTypeSelectorName { Anchor: (Left: 532, Top: 578, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
+  Label #GeneralEnemyTypeSelectorMeta { Anchor: (Left: 532, Top: 601, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
+  Label #GeneralEnemyTypeSelectorAction {
+    Anchor: (Left: 836, Top: 588, Width: 110, Height: 22);
+    Text: "Seleccionar";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #f3d27a, RenderBold: true, VerticalAlignment: Center);
+  }
+  TextButton #GeneralEnemyTypePickerOpenButton { Anchor: (Left: 456, Top: 568, Width: 500, Height: 62); Text: ""; Style: @ArenaListRowHitboxStyle; }
 
   Label #GeneralRewardLabel {
-    Anchor: (Left: 456, Top: 514, Width: 500, Height: 24);
+    Anchor: (Left: 456, Top: 642, Width: 500, Height: 24);
     Text: "Categoria de recompensa actual";
     Style: (FontSize: 14, TextColor: #dde8f8, RenderBold: true, VerticalAlignment: Center);
   }
 
-  $C.@DropdownBox #GeneralRewardId {
-    @Anchor = (Left: 456, Top: 542, Width: 500);
-    Value: "";
-    Style: DropdownBoxStyle(...@OfficialDropdownBoxStyle, PanelWidth: 500);
+  Panel #GeneralRewardSelectorCard {
+    Anchor: (Left: 456, Top: 670, Width: 500, Height: 62);
+    Background: #2f4c6f(0.96);
+  }
+  Panel #GeneralRewardSelectorAccent { Anchor: (Left: 456, Top: 670, Width: 6, Height: 62); Background: #e0b84a; }
+  ItemIcon #GeneralRewardSelectorIcon { Anchor: (Left: 468, Top: 676, Width: 50, Height: 50); }
+  Label #GeneralRewardSelectorName { Anchor: (Left: 532, Top: 680, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
+  Label #GeneralRewardSelectorMeta { Anchor: (Left: 532, Top: 703, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
+  Label #GeneralRewardSelectorAction {
+    Anchor: (Left: 836, Top: 690, Width: 110, Height: 22);
+    Text: "Seleccionar";
+    Style: (...$C.@DefaultLabelStyle, FontSize: 12, TextColor: #f3d27a, RenderBold: true, VerticalAlignment: Center);
+  }
+  TextButton #GeneralRewardPickerOpenButton { Anchor: (Left: 456, Top: 670, Width: 500, Height: 62); Text: ""; Style: @ArenaListRowHitboxStyle; }
+
+  Panel #GeneralPickerShade {
+    Anchor: (Full: 0);
+    Background: #000000(0.66);
+    Visible: false;
+  }
+  $C.@DecoratedContainer #GeneralPickerFrame {
+    Anchor: (Left: 456, Top: 224, Width: 1008, Height: 618);
+    Background: #1a2a40(0.98);
+    Visible: false;
+  }
+  TextButton #GeneralPickerCloseButton {
+    Anchor: (Left: 1428, Top: 232, Width: 30, Height: 30);
+    Text: "X";
+    Visible: false;
+    Style: $C.@CancelTextButtonStyle;
+  }
+  Label #GeneralPickerTitleLabel {
+    Anchor: (Left: 480, Top: 232, Width: 936, Height: 24);
+    Text: "Seleccionar";
+    Visible: false;
+    Style: (FontSize: 16, TextColor: #f4f7fc, RenderBold: true, VerticalAlignment: Center);
+  }
+  Label #GeneralPickerStatusLabel {
+    Anchor: (Left: 480, Top: 260, Width: 936, Height: 18);
+    Text: "";
+    Visible: false;
+    Style: (FontSize: 12, TextColor: #b8cbe5, VerticalAlignment: Center);
+  }
+  Panel #GeneralPickerRowsList {
+    Anchor: (Left: 468, Top: 286, Width: 984, Height: 542);
+    LayoutMode: TopScrolling;
+    ScrollbarStyle: $C.@DefaultScrollbarStyle;
+    Padding: (Top: 10, Left: 12, Right: 12, Bottom: 10);
+    Background: #000000(0);
+    Visible: false;
   }
 
   Label #SpawnLabel {
@@ -728,7 +834,7 @@ Group {
   TextButton #AutoStartApplyButton {
     Anchor: (Left: 1148, Top: 444, Width: 316, Height: 34);
     Text: "Aplicar modo auto";
-    Style: $C.@SecondaryTextButtonStyle;
+    Style: @SecondaryButtonWithSoundStyle;
   }
 
   Label #RadiusLabel {
@@ -763,7 +869,7 @@ Group {
   TextButton #ReloadModButton {
     Anchor: (Left: 660, Top: 914, Width: 192, Height: 46);
     Text: "Recargar config";
-    Style: $C.@TertiaryTextButtonStyle;
+    Style: @TertiaryButtonWithSoundStyle;
   }
 
   Label #PlayerMultiplierLabel {
@@ -793,7 +899,8 @@ Group {
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -834,7 +941,8 @@ Group {
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -850,7 +958,8 @@ Group {
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -871,7 +980,8 @@ Group {
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 18, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 18, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -1174,7 +1284,7 @@ Group {
     Anchor: (Left: 1238, Top: 232, Width: 226, Height: 32);
     Text: "Actualizar";
     Visible: false;
-    Style: $C.@SmallSecondaryTextButtonStyle;
+    Style: @SmallSecondaryButtonWithSoundStyle;
   }
   Label #PlayersCountLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "Detectados"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   Label #PlayersCountValue { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: "0"; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
@@ -1351,9 +1461,9 @@ Group {
   }
 
   Label #PlayerEditModeLabel { Anchor: (Left: 480, Top: 422, Width: 960, Height: 16); Text: "Modo de audiencia"; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, RenderBold: true, VerticalAlignment: Center); }
-  TextButton #PlayerModePlayerButton { Anchor: (Left: 480, Top: 446, Width: 308, Height: 34); Text: "Jugador"; Visible: false; Style: $C.@DefaultTextButtonStyle; }
-  TextButton #PlayerModeSpectatorButton { Anchor: (Left: 806, Top: 446, Width: 308, Height: 34); Text: "Espectador"; Visible: false; Style: $C.@SecondaryTextButtonStyle; }
-  TextButton #PlayerModeExitButton { Anchor: (Left: 1132, Top: 446, Width: 308, Height: 34); Text: "Nada"; Visible: false; Style: $C.@CancelTextButtonStyle; }
+  TextButton #PlayerModePlayerButton { Anchor: (Left: 480, Top: 446, Width: 308, Height: 34); Text: "Jugador"; Visible: false; Style: @DefaultButtonWithSoundStyle; }
+  TextButton #PlayerModeSpectatorButton { Anchor: (Left: 806, Top: 446, Width: 308, Height: 34); Text: "Espectador"; Visible: false; Style: @SecondaryButtonWithSoundStyle; }
+  TextButton #PlayerModeExitButton { Anchor: (Left: 1132, Top: 446, Width: 308, Height: 34); Text: "Nada"; Visible: false; Style: @CancelButtonWithSoundStyle; }
   TextButton #PlayersSaveButton { Anchor: (Left: 480, Top: 684, Width: 960, Height: 34); Text: "Guarda"; Visible: false; Style: $C.@DefaultTextButtonStyle; }
   Label #PlayerStatusLabel { Anchor: (Left: 480, Top: 730, Width: 520, Height: 24); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #bcd0e8, VerticalAlignment: Center); }
   Label #AudienceHelpLabel { Anchor: (Left: 480, Top: 758, Width: 520, Height: 36); Text: ""; Visible: false; Style: (FontSize: 12, TextColor: #9cb4d1, VerticalAlignment: Center); }
@@ -1414,7 +1524,7 @@ Group {
 
   Label #PlayersListTitle { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
   Label #PlayersListHint { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
-  TextButton #PlayersRefreshButton { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: $C.@SmallSecondaryTextButtonStyle; }
+  TextButton #PlayersRefreshButton { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: @SmallSecondaryButtonWithSoundStyle; }
   Group #AudiencePlayersRows { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); LayoutMode: TopScrolling; ScrollbarStyle: $C.@DefaultScrollbarStyle; Visible: false; }
   Label #AudiencePlayersEmptyLabel { Anchor: (Left: 0, Top: 0, Width: 1, Height: 1); Text: ""; Visible: false; Style: (FontSize: 1, TextColor: #000000(0)); }
 
@@ -1704,7 +1814,7 @@ Group {
     Anchor: (Left: 1238, Top: 232, Width: 226, Height: 32);
     Text: "Crear enemigos";
     Visible: false;
-    Style: $C.@SmallSecondaryTextButtonStyle;
+    Style: @SmallSecondaryButtonWithSoundStyle;
   }
 
   Panel #EnemyCatListInset {
@@ -1970,7 +2080,7 @@ Group {
     Anchor: (Left: 480, Top: 686, Width: 960, Height: 34);
     Text: "Guardar categoria";
     Visible: false;
-    Style: $C.@SecondaryTextButtonStyle;
+    Style: @SecondaryButtonWithSoundStyle;
   }
 
   Label #EnemyCatStatusLabel {
@@ -3007,7 +3117,7 @@ Group {
     Anchor: (Left: 480, Top: 470, Width: 960, Height: 34);
     Text: "Usar mi posicion actual";
     Visible: false;
-    Style: $C.@SecondaryTextButtonStyle;
+    Style: @SecondaryButtonWithSoundStyle;
   }
 
   Label #ArenaStatusLabel {
@@ -3238,7 +3348,7 @@ Group {
     Anchor: (Left: 1068, Top: 914, Width: 192, Height: 46);
     Text: "Pasar ronda";
     Visible: false;
-    Style: $C.@TertiaryTextButtonStyle;
+    Style: @TertiaryButtonWithSoundStyle;
   }
 
   TextButton #HordeCloseButton {

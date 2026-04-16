@@ -6,7 +6,9 @@ import com.hypixel.hytale.component.Ref;
 import com.hypixel.hytale.component.Store;
 import com.hypixel.hytale.protocol.packets.interface_.CustomPageLifetime;
 import com.hypixel.hytale.protocol.packets.interface_.CustomUIEventBindingType;
+import com.hypixel.hytale.protocol.SoundCategory;
 import com.hypixel.hytale.server.core.Message;
+import com.hypixel.hytale.server.core.asset.type.soundevent.config.SoundEvent;
 import com.hypixel.hytale.server.core.entity.entities.Player;
 import com.hypixel.hytale.server.core.entity.entities.player.pages.CustomUIPage;
 import com.hypixel.hytale.server.core.ui.DropdownEntryInfo;
@@ -15,6 +17,7 @@ import com.hypixel.hytale.server.core.ui.builder.EventData;
 import com.hypixel.hytale.server.core.ui.builder.UICommandBuilder;
 import com.hypixel.hytale.server.core.ui.builder.UIEventBuilder;
 import com.hypixel.hytale.server.core.universe.PlayerRef;
+import com.hypixel.hytale.server.core.universe.world.SoundUtil;
 import com.hypixel.hytale.server.core.universe.world.World;
 import com.hypixel.hytale.server.core.universe.world.storage.EntityStore;
 import com.hypixel.hytale.math.vector.Transform;
@@ -105,6 +108,24 @@ extends CustomUIPage {
     private static final String ENEMY_ROLE_CATEGORY_WILD = "wild";
     private static final String ENEMY_ROLE_CATEGORY_ELEMENTALS = "elementals";
     private static final String ENEMY_ROLE_CATEGORY_OTHER = "other";
+    private static final String[] UI_TOP_TAB_SOUND_CANDIDATES = new String[]{"TopBarActivate", "UI_TopBarActivate"};
+    private static final String[] UI_HEADER_TAB_SOUND_CANDIDATES = new String[]{"TickActivate", "UI_TickActivate", "Tick_Activate"};
+    private static final String[] UI_BUTTON_SOUND_CANDIDATES = new String[]{"ButtonsLightActivate", "UI_ButtonsLightActivate", "TickActivate"};
+    private static final String[] UI_CANCEL_SOUND_CANDIDATES = new String[]{"ButtonsCancelActivate", "UI_ButtonsCancelActivate", "Buttons_Cancel_Activate"};
+    private static final String[] UI_MAIN_ACTIVATE_SOUND_CANDIDATES = new String[]{"ButtonsMainActivate", "UI_ButtonsMainActivate", "Buttons_Main_Activate"};
+    private static final String[] UI_OPEN_SOUND_CANDIDATES = new String[]{"InventoryOpen", "UI_InventoryOpen", "TabOpen", "UI_TabOpen", "TopBarActivate", "TickActivate"};
+    private static final String[] UI_FALLBACK_TICK_HINTS = new String[]{"tick activate", "tick", "button light", "select"};
+    private static final String[] UI_FALLBACK_TOPTAB_HINTS = new String[]{"top bar activate", "topbar activate", "tab activate"};
+    private static final String[] UI_FALLBACK_BUTTON_HINTS = new String[]{"buttons light activate", "button activate", "confirm", "accept", "save", "apply"};
+    private static final String[] UI_FALLBACK_CANCEL_HINTS = new String[]{"buttons cancel activate", "cancel activate", "cancel", "delete", "remove", "trash"};
+    private static final String[] UI_OPEN_SOUND_HINTS = new String[]{"inventory open", "tab open", "menu open", "open ui", "open menu", "open"};
+    private static final String[] UI_SOUND_REJECT_HINTS = new String[]{"hover", "rollover", "drag", "loop", "music", "ambient", "footstep", "voice"};
+    private static volatile Integer cachedUiTopTabSoundEventIndex = null;
+    private static volatile Integer cachedUiHeaderTabSoundEventIndex = null;
+    private static volatile Integer cachedUiButtonSoundEventIndex = null;
+    private static volatile Integer cachedUiCancelSoundEventIndex = null;
+    private static volatile Integer cachedUiMainActivateSoundEventIndex = null;
+    private static volatile Integer cachedUiOpenSoundEventIndex = null;
     private static final String NPC_FACE_RESOURCE_PREFIX = "Common/UI/Custom/Icons/Npcs/";
     private static final Set<String> NPC_FACE_TECH_PREFIXES = Set.of("npc", "enemy", "mob", "role", "template");
     private static final int MAX_NPC_FACE_ASSETS_PER_BUILD = 3;
@@ -151,6 +172,7 @@ extends CustomUIPage {
             new UiFieldBinding("rewardCatEditIconItemId", "RewardCatEditIconItemId", "#RewardCatEditIconItemId.Value"),
             new UiFieldBinding("language", "Language", "#Language.Value"),
             new UiFieldBinding("rewardCategory", "RewardCategory", "#GeneralRewardId.Value"),
+            new UiFieldBinding("generalPickerType", "GeneralPickerType", "#GeneralPickerType.Value"),
             new UiFieldBinding("rewardItemId", "RewardItemId", "#RewardItemId.Value"),
             new UiFieldBinding("rewardItemQuantity", "RewardItemQuantity", "#RewardItemQuantity.Value"),
             new UiFieldBinding("finalBossEnabled", "FinalBossEnabled", "#FinalBossEnabled.Value"),
@@ -231,6 +253,7 @@ extends CustomUIPage {
     private boolean bossIconPickerModalVisible;
     private boolean bossEnemyPickerModalVisible;
     private boolean arenaIconPickerModalVisible;
+    private boolean generalSelectionPickerModalVisible;
 
     private HordeConfigPage(PlayerRef playerRef, HordeService hordeService) {
         super(playerRef, CustomPageLifetime.CanDismiss);
@@ -274,11 +297,13 @@ extends CustomUIPage {
         this.bossIconPickerModalVisible = false;
         this.bossEnemyPickerModalVisible = false;
         this.arenaIconPickerModalVisible = false;
+        this.generalSelectionPickerModalVisible = false;
     }
 
     public static void open(Ref<EntityStore> playerEntityRef, Store<EntityStore> store, Player player, PlayerRef playerRef, HordeService hordeService) {
         HordeConfigPage page = new HordeConfigPage(playerRef, hordeService);
         player.getPageManager().openCustomPage(playerEntityRef, store, (CustomUIPage)page);
+        HordeConfigPage.playUiSoundToPlayer(playerRef, HordeConfigPage.resolveUiOpenSoundEventIndex());
     }
 
     public void build(Ref<EntityStore> playerEntityRef, UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, Store<EntityStore> store) {
@@ -319,7 +344,6 @@ extends CustomUIPage {
         double roundVictoryVolumeValue = HordeConfigPage.clamp(this.getDraftDouble("roundVictoryVolume", HordeConfigPage.toUiVolumePercent(config.roundVictoryVolume)), 0.0, 100.0);
         double roundDefeatVolumeValue = HordeConfigPage.clamp(this.getDraftDouble("roundDefeatVolume", HordeConfigPage.toUiVolumePercent(config.roundDefeatVolume)), 0.0, 100.0);
         boolean finalBossEnabledValue = this.getDraftBoolean("finalBossEnabled", config.finalBossEnabled);
-        List<DropdownEntryInfo> enemyTypeEntries = HordeConfigPage.buildEnemyTypeEntries(enemyTypeOptions, enemyTypeValue, language, english);
         List<DropdownEntryInfo> hordeModeEntries = HordeConfigPage.buildHordeModeEntries(language, english, hordeModeValue);
         List<DropdownEntryInfo> languageEntries = HordeConfigPage.buildLanguageEntries(languageOptions, language);
         String tab = HordeConfigPage.normalizeTab(this.activeTab);
@@ -358,6 +382,12 @@ extends CustomUIPage {
             this.draftValues.put("rewardCategory", selectedRewardCategoryForConfigValue);
         }
         selectedRewardCategoryForConfigValue = this.getDraftValue("rewardCategory", "");
+        String generalPickerTypeValue = HordeConfigPage.normalizeGeneralPickerType(this.getDraftValue("generalPickerType", "arena"));
+        this.draftValues.put("generalPickerType", generalPickerTypeValue);
+        BossArenaCatalogService.ArenaDefinitionSnapshot selectedGeneralArenaSnapshot = HordeConfigPage.findArenaSnapshot(arenaRows, selectedArenaForHordeValue);
+        BossArenaCatalogService.BossDefinitionSnapshot selectedGeneralBossSnapshot = HordeConfigPage.findBossSnapshot(bossRows, selectedBossForHordeValue);
+        HordeDefinitionCatalogService.HordeDefinitionSnapshot selectedGeneralHordeSnapshot = HordeConfigPage.findHordeSnapshot(hordeRows, selectedHordeForConfigValue);
+        HordeService.RewardCategorySnapshot selectedGeneralRewardSnapshot = HordeConfigPage.findRewardCategorySnapshot(rewardCategoryRows, selectedRewardCategoryForConfigValue);
         String bossSelectedValue = this.getDraftValue("bossSelected", "");
         String bossNpcIdValue = this.getDraftValue("bossEditNpcId", "");
         String arenaSelectedValue = this.getDraftValue("arenaSelected", "");
@@ -417,10 +447,6 @@ extends CustomUIPage {
                 )
         );
         this.draftValues.put("bossEditIconItemId", bossEditIconItemIdValue);
-        List<DropdownEntryInfo> generalArenaEntries = HordeConfigPage.buildDropdownEntries(HordeConfigPage.collectArenaIds(arenaRows), selectedArenaForHordeValue);
-        List<DropdownEntryInfo> generalBossEntries = HordeConfigPage.buildDropdownEntries(HordeConfigPage.collectBossIds(bossRows), selectedBossForHordeValue);
-        List<DropdownEntryInfo> generalHordeEntries = HordeConfigPage.buildDropdownEntries(HordeConfigPage.collectHordeIds(hordeRows), selectedHordeForConfigValue);
-        List<DropdownEntryInfo> generalRewardEntries = HordeConfigPage.buildRewardCategoryEntries(rewardCategoryOptions, selectedRewardCategoryForConfigValue, language, english);
         List<DropdownEntryInfo> enemyCategoryRolePickerEntries = HordeConfigPage.buildDropdownEntries(enemyRoleOptions, enemyCategoryRolePickerValue);
         List<DropdownEntryInfo> bossNpcIdEntries = HordeConfigPage.buildDropdownEntries(this.hordeService.getBossNpcIdOptions(), bossNpcIdValue);
         this.playerPage = HordeConfigPage.clamp(this.playerPage, 0, HordeConfigPage.maxPageIndex(audienceRows == null ? 0 : audienceRows.size(), MAX_PLAYER_ROWS));
@@ -445,13 +471,87 @@ extends CustomUIPage {
                 .set("#SpawnY.Value", this.getDraftValue("spawnY", HordeConfigPage.formatDouble(config.spawnY)))
                 .set("#SpawnZ.Value", this.getDraftValue("spawnZ", HordeConfigPage.formatDouble(config.spawnZ)))
                 .set("#GeneralArenaId.Value", selectedArenaForHordeValue)
-                .set("#GeneralArenaId.Entries", generalArenaEntries)
                 .set("#GeneralBossId.Value", selectedBossForHordeValue)
-                .set("#GeneralBossId.Entries", generalBossEntries)
                 .set("#GeneralHordeId.Value", selectedHordeForConfigValue)
-                .set("#GeneralHordeId.Entries", generalHordeEntries)
                 .set("#GeneralRewardId.Value", selectedRewardCategoryForConfigValue)
-                .set("#GeneralRewardId.Entries", generalRewardEntries)
+                .set("#GeneralPickerType.Value", generalPickerTypeValue)
+                .set(
+                        "#GeneralArenaSelectorName.Text",
+                        selectedGeneralArenaSnapshot == null
+                                ? HordeConfigPage.t(language, english, "No arena selected", "Sin arena seleccionada")
+                                : selectedGeneralArenaSnapshot.arenaId
+                )
+                .set(
+                        "#GeneralArenaSelectorMeta.Text",
+                        selectedGeneralArenaSnapshot == null
+                                ? HordeConfigPage.t(language, english, "Create one in Arenas tab", "Crea una en la pestana Arenas")
+                                : String.format(Locale.ROOT, "X: %.1f | Y: %.1f | Z: %.1f", selectedGeneralArenaSnapshot.x, selectedGeneralArenaSnapshot.y, selectedGeneralArenaSnapshot.z)
+                )
+                .set("#GeneralArenaSelectorIcon.ItemId", HordeConfigPage.firstNonEmpty(selectedGeneralArenaSnapshot == null ? "" : selectedGeneralArenaSnapshot.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID))
+                .set(
+                        "#GeneralBossSelectorName.Text",
+                        selectedGeneralBossSnapshot == null
+                                ? HordeConfigPage.t(language, english, "No boss selected", "Sin boss seleccionado")
+                                : selectedGeneralBossSnapshot.bossId
+                )
+                .set(
+                        "#GeneralBossSelectorMeta.Text",
+                        selectedGeneralBossSnapshot == null
+                                ? HordeConfigPage.t(language, english, "Create one in Bosses tab", "Crea uno en la pestana Bosses")
+                                : HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(selectedGeneralBossSnapshot.npcId, "-"), 38) + "  x" + Math.max(1, selectedGeneralBossSnapshot.amount)
+                )
+                .set(
+                        "#GeneralBossSelectorIcon.ItemId",
+                        HordeConfigPage.firstNonEmpty(
+                                HordeConfigPage.resolveBossAutoIconToken(selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.npcId),
+                                selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.iconItemId,
+                                DEFAULT_ARENA_ITEM_ICON_ID
+                        )
+                )
+                .set(
+                        "#GeneralHordeSelectorName.Text",
+                        selectedGeneralHordeSnapshot == null
+                                ? HordeConfigPage.t(language, english, "No horde selected", "Sin horda seleccionada")
+                                : selectedGeneralHordeSnapshot.hordeId
+                )
+                .set(
+                        "#GeneralHordeSelectorMeta.Text",
+                        selectedGeneralHordeSnapshot == null
+                                ? HordeConfigPage.t(language, english, "Create one in Horde tab", "Crea una en la pestana Horda")
+                                : HordeConfigPage.t(language, english, "Rounds", "Rondas") + ": " + selectedGeneralHordeSnapshot.rounds
+                                + "  |  " + HordeConfigPage.t(language, english, "Type", "Tipo") + ": " + HordeConfigPage.hordeModeDisplay(selectedGeneralHordeSnapshot.hordeMode, language, english)
+                )
+                .set(
+                        "#GeneralHordeSelectorIcon.ItemId",
+                        HordeConfigPage.firstNonEmpty(
+                                selectedGeneralHordeSnapshot == null ? "" : selectedGeneralHordeSnapshot.iconItemId,
+                                HordeConfigPage.resolveEnemyCategoryIcon(selectedGeneralHordeSnapshot == null ? "" : selectedGeneralHordeSnapshot.enemyType),
+                                DEFAULT_ARENA_ITEM_ICON_ID
+                        )
+                )
+                .set(
+                        "#GeneralRewardSelectorName.Text",
+                        selectedGeneralRewardSnapshot == null
+                                ? HordeConfigPage.t(language, english, "No reward selected", "Sin recompensa seleccionada")
+                                : selectedGeneralRewardSnapshot.categoryId
+                )
+                .set(
+                        "#GeneralRewardSelectorMeta.Text",
+                        selectedGeneralRewardSnapshot == null
+                                ? HordeConfigPage.t(language, english, "Create one in Rewards tab", "Crea una en la pestana Recompensas")
+                                : HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(selectedGeneralRewardSnapshot.itemsPreview, HordeConfigPage.t(language, english, "No items", "Sin items")), 44)
+                )
+                .set(
+                        "#GeneralRewardSelectorIcon.ItemId",
+                        HordeConfigPage.firstNonEmpty(
+                                selectedGeneralRewardSnapshot == null ? "" : selectedGeneralRewardSnapshot.iconItemId,
+                                HordeConfigPage.resolveListIconCandidate(HordeConfigPage.firstEnemyRoleOption(selectedGeneralRewardSnapshot == null ? List.of() : selectedGeneralRewardSnapshot.items)),
+                                DEFAULT_ARENA_ITEM_ICON_ID
+                        )
+                )
+                .set("#GeneralEnemyTypeSelectorName.Text", HordeConfigPage.enemyTypeDisplay(enemyTypeValue, language, english))
+                .set("#GeneralEnemyTypeSelectorMeta.Text", HordeConfigPage.t(language, english, "Current enemy category type", "Tipo actual de categoria de enemigos"))
+                .set("#GeneralEnemyTypeSelectorIcon.ItemId", HordeConfigPage.firstNonEmpty(HordeConfigPage.resolveEnemyCategoryIcon(enemyTypeValue), DEFAULT_ARENA_ITEM_ICON_ID))
                 .set("#HordeSelected.Value", hordeSelectedValue)
                 .set("#HordeEditId.Value", this.getDraftValue("hordeEditId", hordeSelectedValue))
                 .set("#HordeMode.Value", hordeModeValue)
@@ -492,7 +592,6 @@ extends CustomUIPage {
                 .set("#AutoStartEnabled.Value", autoStartEnabledValue)
                 .set("#AutoStartInterval.Value", Integer.toString(autoStartIntervalMinutesValue))
                 .set("#EnemyType.Value", enemyTypeValue)
-                .set("#EnemyType.Entries", enemyTypeEntries)
                 .set("#Language.Value", language)
                 .set("#Language.Entries", languageEntries)
                 .set("#FinalBossEnabled.Value", finalBossEnabledValue)
@@ -542,6 +641,7 @@ extends CustomUIPage {
                 .set("#SkipRoundButton.Visible", active);
         this.setLocalizedTexts(commandBuilder, language, english);
         this.applyTabVisibility(commandBuilder, tab);
+        this.populateGeneralSelectionPicker(commandBuilder, eventBuilder, arenaRows, bossRows, hordeRows, rewardCategoryRows, enemyTypeOptions, language, english);
         if (TAB_PLAYERS.equals(tab)) {
             this.populatePlayerRows(commandBuilder, eventBuilder, audienceRows, language, english);
             this.populatePlayerFacePreview(commandBuilder, selectedAudienceSnapshot);
@@ -586,6 +686,12 @@ extends CustomUIPage {
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabRewardsButton", this.buildLanguageEvent("tab_rewards"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabSoundsButton", this.buildLanguageEvent("tab_sounds"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#TabHelpButton", this.buildLanguageEvent("tab_help"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralArenaPickerOpenButton", this.buildConfigSnapshotEvent("general_pick_open:arena"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralBossPickerOpenButton", this.buildConfigSnapshotEvent("general_pick_open:boss"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralHordePickerOpenButton", this.buildConfigSnapshotEvent("general_pick_open:horde"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralEnemyTypePickerOpenButton", this.buildConfigSnapshotEvent("general_pick_open:enemy"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralRewardPickerOpenButton", this.buildConfigSnapshotEvent("general_pick_open:reward"))
+                .addEventBinding(CustomUIEventBindingType.Activating, "#GeneralPickerCloseButton", this.buildConfigSnapshotEvent("general_pick_close"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayersAddButton", this.buildConfigSnapshotEvent("playerdef_add"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayerModePlayerButton", this.buildConfigSnapshotEvent("playerdef_mode:player"))
                 .addEventBinding(CustomUIEventBindingType.Activating, "#PlayerModeSpectatorButton", this.buildConfigSnapshotEvent("playerdef_mode:spectator"))
@@ -694,6 +800,7 @@ extends CustomUIPage {
         this.bossIconPickerModalVisible = false;
         this.bossEnemyPickerModalVisible = false;
         this.arenaIconPickerModalVisible = false;
+        this.generalSelectionPickerModalVisible = false;
     }
 
     private void bindIconPickerControlEvents(UIEventBuilder eventBuilder, String pickerPrefix, String actionScope) {
@@ -740,6 +847,7 @@ extends CustomUIPage {
                 this.safeRebuild();
                 return;
             }
+            this.playUiFeedbackForAction(action);
             EntityStore entityStore = (EntityStore)store.getExternalData();
             World world = entityStore == null ? null : entityStore.getWorld();
             if (world == null && HordeConfigPage.requiresWorld(action)) {
@@ -899,6 +1007,10 @@ extends CustomUIPage {
                         result = this.handleArenaAction(action, world, fallbackWorldName(world), english);
                         break;
                     }
+                    if (action != null && action.startsWith("general_pick")) {
+                        result = this.handleGeneralSelectionAction(action, english);
+                        break;
+                    }
                     if (action != null && action.startsWith("sounds_pick:")) {
                         result = this.handleSoundsAction(action, english);
                         break;
@@ -938,6 +1050,249 @@ extends CustomUIPage {
             this.playerRef.sendMessage(Message.raw((String)HordeI18n.translateUi(language, "Internal error while processing horde UI. Check server logs and try again.", "Error interno al procesar la UI de horda. Revisa logs e intenta de nuevo.")));
         }
         this.safeRebuild();
+    }
+
+    private void playUiFeedbackForAction(String action) {
+        if (action == null || action.isBlank()) {
+            return;
+        }
+        if (HordeConfigPage.isUiDeleteAction(action)) {
+            this.playUiSoundByIndex(HordeConfigPage.resolveUiCancelSoundEventIndex());
+            return;
+        }
+        if ("start".equals(action)) {
+            this.playUiSoundByIndex(HordeConfigPage.resolveUiMainActivateSoundEventIndex());
+            return;
+        }
+        if (HordeConfigPage.isUiTopTabAction(action)) {
+            this.playUiSoundByIndex(HordeConfigPage.resolveUiTopTabSoundEventIndex());
+            return;
+        }
+        if (HordeConfigPage.isUiHeaderTabAction(action) || HordeConfigPage.isUiSelectionAction(action) || HordeConfigPage.isUiDarkButtonAction(action)) {
+            this.playUiSoundByIndex(HordeConfigPage.resolveUiHeaderTabSoundEventIndex());
+            return;
+        }
+        if (HordeConfigPage.isUiPrimaryButtonAction(action)) {
+            this.playUiSoundByIndex(HordeConfigPage.resolveUiButtonSoundEventIndex());
+        }
+    }
+
+    private void playUiSoundByIndex(int soundEventIndex) {
+        HordeConfigPage.playUiSoundToPlayer(this.playerRef, soundEventIndex);
+    }
+
+    private static void playUiSoundToPlayer(PlayerRef playerRef, int soundEventIndex) {
+        if (playerRef == null || soundEventIndex < 0) {
+            return;
+        }
+        try {
+            SoundUtil.playSoundEvent2dToPlayer((PlayerRef)playerRef, (int)soundEventIndex, (SoundCategory)SoundCategory.SFX);
+        }
+        catch (Exception ignored) {
+            // best-effort only
+        }
+    }
+
+    private static boolean isUiTopTabAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return action.startsWith("tab_");
+    }
+
+    private static boolean isUiHeaderTabAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return action.contains("_filter:");
+    }
+
+    private static boolean isUiDarkButtonAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return "apply_auto_start".equals(action)
+                || "reload_config".equals(action)
+                || "reload_mod".equals(action)
+                || "refresh_players".equals(action)
+                || "arena_use_current_position".equals(action)
+                || "enemycat_add".equals(action)
+                || "enemycat_save".equals(action)
+                || "playerdef_add".equals(action)
+                || action.startsWith("playerdef_mode:");
+    }
+
+    private static boolean isUiPrimaryButtonAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return "arena_add_from_player".equals(action)
+                || "hordedef_add".equals(action)
+                || "enemycat_add".equals(action)
+                || "enemycat_save".equals(action)
+                || "hordedef_save".equals(action)
+                || "boss_add".equals(action)
+                || "boss_save".equals(action)
+                || "rewardcat_add".equals(action)
+                || "rewardcat_save".equals(action)
+                || "enemycat_enemy_picker_open".equals(action)
+                || "rewardcat_item_picker_open".equals(action)
+                || "boss_enemy_picker_open".equals(action)
+                || "sounds_save".equals(action)
+                || "apply_auto_start".equals(action)
+                || "reload_config".equals(action)
+                || "reload_mod".equals(action)
+                || "refresh_players".equals(action)
+                || "arena_use_current_position".equals(action)
+                || action.endsWith("_add")
+                || action.endsWith("_save");
+    }
+
+    private static boolean isUiDeleteAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return action.contains("_delete:") || action.contains("_remove:");
+    }
+
+    private static boolean isUiSelectionAction(String action) {
+        if (action == null || action.isBlank()) {
+            return false;
+        }
+        return action.contains("_pick:");
+    }
+
+    private static int resolveUiTopTabSoundEventIndex() {
+        Integer cached = cachedUiTopTabSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_TOP_TAB_SOUND_CANDIDATES, UI_FALLBACK_TOPTAB_HINTS);
+        cachedUiTopTabSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiHeaderTabSoundEventIndex() {
+        Integer cached = cachedUiHeaderTabSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_HEADER_TAB_SOUND_CANDIDATES, UI_FALLBACK_TICK_HINTS);
+        cachedUiHeaderTabSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiButtonSoundEventIndex() {
+        Integer cached = cachedUiButtonSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_BUTTON_SOUND_CANDIDATES, UI_FALLBACK_BUTTON_HINTS);
+        cachedUiButtonSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiCancelSoundEventIndex() {
+        Integer cached = cachedUiCancelSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_CANCEL_SOUND_CANDIDATES, UI_FALLBACK_CANCEL_HINTS);
+        cachedUiCancelSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiMainActivateSoundEventIndex() {
+        Integer cached = cachedUiMainActivateSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_MAIN_ACTIVATE_SOUND_CANDIDATES, UI_FALLBACK_TICK_HINTS);
+        cachedUiMainActivateSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiOpenSoundEventIndex() {
+        Integer cached = cachedUiOpenSoundEventIndex;
+        if (cached != null) {
+            return cached;
+        }
+        int resolved = HordeConfigPage.resolveUiSoundEventIndex(UI_OPEN_SOUND_CANDIDATES, UI_OPEN_SOUND_HINTS);
+        cachedUiOpenSoundEventIndex = resolved;
+        return resolved;
+    }
+
+    private static int resolveUiSoundEventIndex(String[] preferredIds, String[] hintKeywords) {
+        try {
+            Map<String, SoundEvent> soundEvents = SoundEvent.getAssetMap().getAssetMap();
+            if (soundEvents == null || soundEvents.isEmpty()) {
+                return -1;
+            }
+            if (preferredIds != null) {
+                for (String preferred : preferredIds) {
+                    if (preferred == null || preferred.isBlank()) {
+                        continue;
+                    }
+                    String preferredNormalized = HordeConfigPage.normalizeUiSoundKey(preferred);
+                    String preferredCompact = HordeConfigPage.normalizeUiSoundKeyCompact(preferred);
+                    for (Map.Entry<String, SoundEvent> entry : soundEvents.entrySet()) {
+                        String key = entry.getKey();
+                        SoundEvent value = entry.getValue();
+                        if (key == null || key.isBlank() || value == null || value == SoundEvent.EMPTY_SOUND_EVENT) {
+                            continue;
+                        }
+                        String normalizedKey = HordeConfigPage.normalizeUiSoundKey(key);
+                        String compactKey = HordeConfigPage.normalizeUiSoundKeyCompact(key);
+                        if (!preferredNormalized.equals(normalizedKey) && !compactKey.contains(preferredCompact)) {
+                            continue;
+                        }
+                        int index = SoundEvent.getAssetMap().getIndex(key);
+                        if (index >= 0) {
+                            return index;
+                        }
+                    }
+                }
+            }
+            for (Map.Entry<String, SoundEvent> entry : soundEvents.entrySet()) {
+                String key = entry.getKey();
+                SoundEvent value = entry.getValue();
+                if (key == null || key.isBlank() || value == null || value == SoundEvent.EMPTY_SOUND_EVENT) {
+                    continue;
+                }
+                String normalized = key.toLowerCase(Locale.ROOT).replace('_', ' ').replace('-', ' ');
+                boolean rejected = false;
+                for (String rejectHint : UI_SOUND_REJECT_HINTS) {
+                    if (normalized.contains(rejectHint)) {
+                        rejected = true;
+                        break;
+                    }
+                }
+                if (rejected) {
+                    continue;
+                }
+                for (String hint : hintKeywords == null ? new String[0] : hintKeywords) {
+                    if (!normalized.contains(hint)) {
+                        continue;
+                    }
+                    int index = SoundEvent.getAssetMap().getIndex(key);
+                    if (index >= 0) {
+                        return index;
+                    }
+                }
+            }
+        }
+        catch (Exception ignored) {
+            // best-effort only
+        }
+        return -1;
+    }
+
+    private static String normalizeUiSoundKey(String value) {
+        return HordeConfigPage.firstNonEmpty(value, "").trim().toLowerCase(Locale.ROOT).replace('_', ' ').replace('-', ' ').replaceAll("\\s+", " ");
+    }
+
+    private static String normalizeUiSoundKeyCompact(String value) {
+        return HordeConfigPage.normalizeUiSoundKey(value).replaceAll("[^a-z0-9]", "");
     }
 
     private static boolean requiresWorld(String action) {
@@ -1973,6 +2328,49 @@ extends CustomUIPage {
         return HordeService.OperationResult.fail(english ? "Unknown arenas action: " + action : "Accion de arenas desconocida: " + action);
     }
 
+    private HordeService.OperationResult handleGeneralSelectionAction(String action, boolean english) {
+        if (action == null || action.isBlank()) {
+            return HordeService.OperationResult.fail(english ? "Unknown general picker action." : "Accion de selector general desconocida.");
+        }
+        if ("general_pick_close".equals(action)) {
+            this.generalSelectionPickerModalVisible = false;
+            return null;
+        }
+        if (action.startsWith("general_pick_open:")) {
+            String pickerType = HordeConfigPage.normalizeGeneralPickerType(HordeConfigPage.extractActionArgument(action));
+            this.draftValues.put("generalPickerType", pickerType);
+            this.generalSelectionPickerModalVisible = true;
+            return null;
+        }
+        if (action.startsWith("general_pick_select:")) {
+            String payload = HordeConfigPage.extractActionArgument(action);
+            String[] parts = payload == null ? new String[0] : payload.split("\\|", 2);
+            if (parts.length < 2) {
+                return HordeService.OperationResult.fail(english ? "Invalid picker selection payload." : "Payload de seleccion invalido.");
+            }
+            String pickerType = HordeConfigPage.normalizeGeneralPickerType(parts[0]);
+            String selectedValue = HordeConfigPage.firstNonEmpty(parts[1], "").trim();
+            if (selectedValue.isBlank()) {
+                return HordeService.OperationResult.fail(english ? "Invalid selected ID." : "ID seleccionado invalido.");
+            }
+            if ("arena".equals(pickerType)) {
+                this.draftValues.put("selectedArenaId", selectedValue);
+            } else if ("boss".equals(pickerType)) {
+                this.draftValues.put("selectedBossId", selectedValue);
+            } else if ("horde".equals(pickerType)) {
+                this.draftValues.put("selectedHordeId", selectedValue);
+            } else if ("enemy".equals(pickerType)) {
+                this.draftValues.put("enemyType", selectedValue);
+            } else {
+                this.draftValues.put("rewardCategory", selectedValue);
+            }
+            this.draftValues.put("generalPickerType", pickerType);
+            this.generalSelectionPickerModalVisible = false;
+            return HordeService.OperationResult.ok(english ? "Selection updated." : "Seleccion actualizada.");
+        }
+        return HordeService.OperationResult.fail(english ? "Unknown general picker action: " + action : "Accion de selector general desconocida: " + action);
+    }
+
     private static String fallbackWorldName(World world) {
         if (world == null || world.getName() == null || world.getName().isBlank()) {
             return "default";
@@ -2216,7 +2614,7 @@ extends CustomUIPage {
         } else {
             this.putDraftIfMissing("enemyCategoryEditId", "enemy_category_1");
             this.putDraftIfMissing("enemyCategoryEditRoles", "enemy");
-            this.putDraftIfMissing("enemyCategoryEditIconItemId", DEFAULT_ARENA_ITEM_ICON_ID);
+            this.putDraftIfMissing("enemyCategoryEditIconItemId", HordeConfigPage.resolveEnemyCategoryIcon(this.getDraftValue("enemyCategoryEditId", "enemy_category_1")));
             this.putDraftIfMissing("enemyCategoryRolePicker", "enemy");
         }
     }
@@ -3408,6 +3806,145 @@ extends CustomUIPage {
                 language,
                 english
         );
+    }
+
+    private void populateGeneralSelectionPicker(
+            UICommandBuilder commandBuilder,
+            UIEventBuilder eventBuilder,
+            List<BossArenaCatalogService.ArenaDefinitionSnapshot> arenaRows,
+            List<BossArenaCatalogService.BossDefinitionSnapshot> bossRows,
+            List<HordeDefinitionCatalogService.HordeDefinitionSnapshot> hordeRows,
+            List<HordeService.RewardCategorySnapshot> rewardRows,
+            List<String> enemyTypeOptions,
+            String language,
+            boolean english
+    ) {
+        boolean pickerVisible = TAB_GENERAL.equals(HordeConfigPage.normalizeTab(this.activeTab)) && this.generalSelectionPickerModalVisible;
+        String pickerType = HordeConfigPage.normalizeGeneralPickerType(this.getDraftValue("generalPickerType", "arena"));
+        this.draftValues.put("generalPickerType", pickerType);
+        commandBuilder.set("#GeneralPickerType.Value", pickerType)
+                .set("#GeneralPickerShade.Visible", pickerVisible)
+                .set("#GeneralPickerFrame.Visible", pickerVisible)
+                .set("#GeneralPickerCloseButton.Visible", pickerVisible)
+                .set("#GeneralPickerTitleLabel.Visible", pickerVisible)
+                .set("#GeneralPickerStatusLabel.Visible", pickerVisible)
+                .set("#GeneralPickerRowsList.Visible", pickerVisible);
+        commandBuilder.clear("#GeneralPickerRowsList");
+        if (!pickerVisible) {
+            return;
+        }
+
+        int renderedRows = 0;
+        String selectedValue = "";
+        String titleText = HordeConfigPage.t(language, english, "Select arena", "Seleccionar arena");
+        if ("arena".equals(pickerType)) {
+            selectedValue = this.getDraftValue("selectedArenaId", "");
+            titleText = HordeConfigPage.t(language, english, "Select current arena", "Selecciona arena actual");
+            if (arenaRows != null) {
+                for (BossArenaCatalogService.ArenaDefinitionSnapshot row : arenaRows) {
+                    if (row == null || row.arenaId == null || row.arenaId.isBlank()) {
+                        continue;
+                    }
+                    String rowSelector = "#GeneralPickerRowsList[" + renderedRows + "]";
+                    commandBuilder.append("#GeneralPickerRowsList", COMMON_LIST_ROW_LAYOUT)
+                            .set(rowSelector + " #ArenaName.Text", row.arenaId)
+                            .set(rowSelector + " #ArenaCoords.Text", String.format(Locale.ROOT, "X: %.1f | Y: %.1f | Z: %.1f", row.x, row.y, row.z))
+                            .set(rowSelector + " #ArenaIconButton.Visible", false)
+                            .set(rowSelector + " #ArenaDeleteButton.Visible", false);
+                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(row.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID));
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("arena", row.arenaId)));
+                    ++renderedRows;
+                }
+            }
+        } else if ("boss".equals(pickerType)) {
+            selectedValue = this.getDraftValue("selectedBossId", "");
+            titleText = HordeConfigPage.t(language, english, "Select current boss", "Selecciona boss actual");
+            if (bossRows != null) {
+                for (BossArenaCatalogService.BossDefinitionSnapshot row : bossRows) {
+                    if (row == null || row.bossId == null || row.bossId.isBlank()) {
+                        continue;
+                    }
+                    String rowSelector = "#GeneralPickerRowsList[" + renderedRows + "]";
+                    commandBuilder.append("#GeneralPickerRowsList", COMMON_LIST_ROW_LAYOUT)
+                            .set(rowSelector + " #ArenaName.Text", row.bossId)
+                            .set(rowSelector + " #ArenaCoords.Text", HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(row.npcId, "-"), 28) + "  x" + Math.max(1, row.amount))
+                            .set(rowSelector + " #ArenaIconButton.Visible", false)
+                            .set(rowSelector + " #ArenaDeleteButton.Visible", false);
+                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(HordeConfigPage.resolveBossAutoIconToken(row.npcId), row.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID));
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("boss", row.bossId)));
+                    ++renderedRows;
+                }
+            }
+        } else if ("horde".equals(pickerType)) {
+            selectedValue = this.getDraftValue("selectedHordeId", "");
+            titleText = HordeConfigPage.t(language, english, "Select current horde", "Selecciona horda actual");
+            if (hordeRows != null) {
+                for (HordeDefinitionCatalogService.HordeDefinitionSnapshot row : hordeRows) {
+                    if (row == null || row.hordeId == null || row.hordeId.isBlank()) {
+                        continue;
+                    }
+                    String rowSelector = "#GeneralPickerRowsList[" + renderedRows + "]";
+                    String subtitle = HordeConfigPage.t(language, english, "Rounds", "Rondas") + ": " + row.rounds
+                            + "  |  " + HordeConfigPage.t(language, english, "Type", "Tipo") + ": " + HordeConfigPage.hordeModeDisplay(row.hordeMode, language, english);
+                    commandBuilder.append("#GeneralPickerRowsList", COMMON_LIST_ROW_LAYOUT)
+                            .set(rowSelector + " #ArenaName.Text", row.hordeId)
+                            .set(rowSelector + " #ArenaCoords.Text", subtitle)
+                            .set(rowSelector + " #ArenaIconButton.Visible", false)
+                            .set(rowSelector + " #ArenaDeleteButton.Visible", false);
+                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(row.iconItemId, HordeConfigPage.resolveEnemyCategoryIcon(row.enemyType), DEFAULT_ARENA_ITEM_ICON_ID));
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("horde", row.hordeId)));
+                    ++renderedRows;
+                }
+            }
+        } else if ("enemy".equals(pickerType)) {
+            selectedValue = this.getDraftValue("enemyType", "undead");
+            titleText = HordeConfigPage.t(language, english, "Select enemy type", "Selecciona tipo enemigo");
+            List<String> options = enemyTypeOptions == null ? List.of() : enemyTypeOptions;
+            for (String option : options) {
+                if (option == null || option.isBlank()) {
+                    continue;
+                }
+                String normalizedOption = HordeConfigPage.normalizeEnemyTypeInput(option);
+                String rowSelector = "#GeneralPickerRowsList[" + renderedRows + "]";
+                commandBuilder.append("#GeneralPickerRowsList", COMMON_LIST_ROW_LAYOUT)
+                        .set(rowSelector + " #ArenaName.Text", HordeConfigPage.enemyTypeDisplay(normalizedOption, language, english))
+                        .set(rowSelector + " #ArenaCoords.Text", normalizedOption)
+                        .set(rowSelector + " #ArenaIconButton.Visible", false)
+                        .set(rowSelector + " #ArenaDeleteButton.Visible", false);
+                HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.resolveEnemyCategoryIcon(normalizedOption));
+                eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("enemy", normalizedOption)));
+                ++renderedRows;
+            }
+        } else {
+            selectedValue = this.getDraftValue("rewardCategory", "");
+            titleText = HordeConfigPage.t(language, english, "Select reward category", "Selecciona categoria de recompensa");
+            if (rewardRows != null) {
+                for (HordeService.RewardCategorySnapshot row : rewardRows) {
+                    if (row == null || row.categoryId == null || row.categoryId.isBlank()) {
+                        continue;
+                    }
+                    String rowSelector = "#GeneralPickerRowsList[" + renderedRows + "]";
+                    String preview = row.itemsPreview == null || row.itemsPreview.isBlank()
+                            ? HordeConfigPage.t(language, english, "No items", "Sin items")
+                            : HordeConfigPage.compactName(row.itemsPreview, 52);
+                    commandBuilder.append("#GeneralPickerRowsList", COMMON_LIST_ROW_LAYOUT)
+                            .set(rowSelector + " #ArenaName.Text", row.categoryId)
+                            .set(rowSelector + " #ArenaCoords.Text", preview)
+                            .set(rowSelector + " #ArenaIconButton.Visible", false)
+                            .set(rowSelector + " #ArenaDeleteButton.Visible", false);
+                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(row.iconItemId, HordeConfigPage.resolveListIconCandidate(HordeConfigPage.firstEnemyRoleOption(row.items)), DEFAULT_ARENA_ITEM_ICON_ID));
+                    eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("reward", row.categoryId)));
+                    ++renderedRows;
+                }
+            }
+        }
+        String currentLabel = selectedValue == null || selectedValue.isBlank() ? "-" : selectedValue;
+        commandBuilder.set("#GeneralPickerTitleLabel.Text", titleText)
+                .set(
+                        "#GeneralPickerStatusLabel.Text",
+                        HordeConfigPage.t(language, english, "Available", "Disponibles") + ": " + renderedRows + "  |  "
+                                + HordeConfigPage.t(language, english, "Current", "Actual") + ": " + currentLabel
+                );
     }
 
     private static List<String> buildArenaIconPickerOptions(List<String> rawOptions, String selectedIconItemId) {
@@ -4939,6 +5476,13 @@ extends CustomUIPage {
                 .set("#GeneralBossLabel.Text", HordeConfigPage.t(language, english, "Current horde boss", "Boss actual de la horda"))
                 .set("#GeneralHordeLabel.Text", HordeConfigPage.t(language, english, "Current horde", "Horda actual"))
                 .set("#GeneralRewardLabel.Text", HordeConfigPage.t(language, english, "Current reward category", "Categoria de recompensa actual"))
+                .set("#GeneralArenaSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralBossSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralHordeSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralEnemyTypeLabel.Text", HordeConfigPage.t(language, english, "Current enemy type", "Tipo enemigo actual"))
+                .set("#GeneralEnemyTypeSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralRewardSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralPickerCloseButton.Text", "X")
                 .set("#SpawnLabel.Text", HordeConfigPage.t(language, english, "Center (X Y Z)", "Centro (X Y Z)"))
                 .set("#SetSpawnButton.Text", HordeConfigPage.t(language, english, "Use my current position", "Usar mi posicion actual"))
                 .set("#RadiusLabel.Text", HordeConfigPage.t(language, english, "Enemy spawn radius setup", "Configuracion del radio de aparicion de enemigos"))
@@ -5024,7 +5568,6 @@ extends CustomUIPage {
                 .set("#BaseEnemiesLabel.Text", HordeConfigPage.t(language, english, "Base enemies per round", "Cantidad base de enemigos por ronda"))
                 .set("#EnemiesPerRoundLabel.Text", HordeConfigPage.t(language, english, "Enemy increment per round", "Incremento de enemigos por ronda"))
                 .set("#WaveDelayLabel.Text", this.resolveWaveDelayLabelByMode(language, english))
-                .set("#RoleLabel.Text", HordeConfigPage.t(language, english, "Enemy type", "Tipo enemigo"))
                 .set("#LanguageLabel.Text", HordeConfigPage.t(language, english, "Interface language", "Idioma interfaz"))
                 .set("#EnemyLevelRangeLabel.Text", "")
                 .set("#EnemyLevelWipLabel.Text", "")
@@ -5129,7 +5672,7 @@ extends CustomUIPage {
         commandBuilder.set("#CategoryTabs.SelectedTab", tab);
         this.setVisible(commandBuilder, definitionsBackdrop, "#DefinitionsColumnBackdrop");
         this.setVisible(commandBuilder, editorBackdrop, "#EditorColumnBackdrop");
-        this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaId", "#GeneralBossLabel", "#GeneralBossId", "#GeneralHordeLabel", "#GeneralHordeId", "#RoleLabel", "#EnemyType", "#GeneralRewardLabel", "#GeneralRewardId", "#FinalBossLabel", "#FinalBossEnabled", "#RpgLevelingDebugLabel", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
+        this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaSelectorCard", "#GeneralArenaSelectorAccent", "#GeneralArenaSelectorIcon", "#GeneralArenaSelectorName", "#GeneralArenaSelectorMeta", "#GeneralArenaSelectorAction", "#GeneralArenaPickerOpenButton", "#GeneralBossLabel", "#GeneralBossSelectorCard", "#GeneralBossSelectorAccent", "#GeneralBossSelectorIcon", "#GeneralBossSelectorName", "#GeneralBossSelectorMeta", "#GeneralBossSelectorAction", "#GeneralBossPickerOpenButton", "#GeneralHordeLabel", "#GeneralHordeSelectorCard", "#GeneralHordeSelectorAccent", "#GeneralHordeSelectorIcon", "#GeneralHordeSelectorName", "#GeneralHordeSelectorMeta", "#GeneralHordeSelectorAction", "#GeneralHordePickerOpenButton", "#GeneralEnemyTypeLabel", "#GeneralEnemyTypeSelectorCard", "#GeneralEnemyTypeSelectorAccent", "#GeneralEnemyTypeSelectorIcon", "#GeneralEnemyTypeSelectorName", "#GeneralEnemyTypeSelectorMeta", "#GeneralEnemyTypeSelectorAction", "#GeneralEnemyTypePickerOpenButton", "#GeneralRewardLabel", "#GeneralRewardSelectorCard", "#GeneralRewardSelectorAccent", "#GeneralRewardSelectorIcon", "#GeneralRewardSelectorName", "#GeneralRewardSelectorMeta", "#GeneralRewardSelectorAction", "#GeneralRewardPickerOpenButton", "#FinalBossLabel", "#FinalBossEnabled", "#RpgLevelingDebugLabel", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
         this.setVisible(commandBuilder, enemiesTab, "#EnemyCatTitleLabel", "#EnemyCatAddButton", "#EnemyCatListInset", "#EnemyCatRowsList", "#EnemyCatEmptyLabel", "#EnemyCatOverflowLabel");
         this.setVisible(commandBuilder, hordeTab, "#HordesTitleLabel", "#HordeAddButton", "#HordeListInset", "#HordeRowsList", "#HordeEmptyLabel", "#HordeOverflowLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#PlayersTitleLabel", "#PlayersAddButton", "#PlayersListInset", "#PlayersRowsList", "#PlayersEmptyLabel", "#PlayersOverflowLabel");
@@ -5146,6 +5689,7 @@ extends CustomUIPage {
         this.applyBossEditorModalVisibility(commandBuilder, bossesTab);
         this.applySoundsEditorModalVisibility(commandBuilder, soundsTab);
         this.applyArenaEditorModalVisibility(commandBuilder, arenasTab);
+        this.applyGeneralPickerModalVisibility(commandBuilder, generalTab);
     }
 
     private void setVisible(UICommandBuilder commandBuilder, boolean visible, String ... elementIds) {
@@ -5164,6 +5708,14 @@ extends CustomUIPage {
         this.setVisible(commandBuilder, false, "#ArenaStatusLabel");
         boolean pickerVisible = arenasTab && this.arenaIconPickerModalVisible;
         this.setVisible(commandBuilder, pickerVisible, "#ArenaIconPickerShade", "#ArenaIconPickerFrame", "#ArenaIconPickerCloseButton", "#ArenaIconPickerTitleLabel", "#ArenaIconPickerCategoryTabs", "#ArenaIconPickerSearch", "#ArenaIconPickerStatusLabel", "#ArenaIconPickerGrid");
+    }
+
+    private void applyGeneralPickerModalVisibility(UICommandBuilder commandBuilder, boolean generalTab) {
+        boolean pickerVisible = generalTab && this.generalSelectionPickerModalVisible;
+        this.setVisible(commandBuilder, pickerVisible, "#GeneralPickerShade", "#GeneralPickerFrame", "#GeneralPickerCloseButton", "#GeneralPickerTitleLabel", "#GeneralPickerStatusLabel", "#GeneralPickerRowsList");
+        if (pickerVisible) {
+            this.setVisible(commandBuilder, false, "#LanguageLabel", "#Language", "#FinalBossLabel", "#FinalBossEnabled", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton", "#RpgLevelingDebugLabel");
+        }
     }
 
     private void applyPlayersEditorModalVisibility(UICommandBuilder commandBuilder, boolean playersTab) {
@@ -5515,6 +6067,18 @@ extends CustomUIPage {
 
     private static String buildArenaAction(String action, String arenaId) {
         return "arena_" + action + ":" + HordeConfigPage.firstNonEmpty(arenaId, "");
+    }
+
+    private static String buildGeneralPickerSelectionAction(String pickerType, String selectedId) {
+        return "general_pick_select:" + HordeConfigPage.normalizeGeneralPickerType(pickerType) + "|" + HordeConfigPage.firstNonEmpty(selectedId, "");
+    }
+
+    private static String normalizeGeneralPickerType(String value) {
+        String normalized = HordeConfigPage.firstNonEmpty(value, "arena").trim().toLowerCase(Locale.ROOT);
+        if ("boss".equals(normalized) || "horde".equals(normalized) || "enemy".equals(normalized) || "reward".equals(normalized)) {
+            return normalized;
+        }
+        return "arena";
     }
 
     private static int maxPageIndex(int totalItems, int pageSize) {

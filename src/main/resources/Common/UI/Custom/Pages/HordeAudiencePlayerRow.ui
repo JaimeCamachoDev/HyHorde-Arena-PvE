@@ -1,4 +1,9 @@
 Group #HordeAudiencePlayerRow {
+  @UiButtonsLight = (
+    Activate: (SoundPath: "Sounds/ButtonsLightActivate.ogg", MinPitch: -0.4, MaxPitch: 0.4, Volume: 4),
+    MouseHover: (SoundPath: "Sounds/ButtonsLightHover.ogg", Volume: 6)
+  );
+
   LayoutMode: Left;
   FlexWeight: 1;
   Anchor: (Bottom: 6);
@@ -30,7 +35,8 @@ Group #HordeAudiencePlayerRow {
     Style: TextButtonStyle(
       Default: (Background: #24553a, LabelStyle: (FontSize: 12, TextColor: #e8fff4, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #2d6e4a, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #1a3f2b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #1a3f2b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -40,7 +46,8 @@ Group #HordeAudiencePlayerRow {
     Style: TextButtonStyle(
       Default: (Background: #2a3d58, LabelStyle: (FontSize: 12, TextColor: #e8f1ff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #38567b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #4b74a5, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 
@@ -50,7 +57,8 @@ Group #HordeAudiencePlayerRow {
     Style: TextButtonStyle(
       Default: (Background: #6b3122, LabelStyle: (FontSize: 12, TextColor: #ffece8, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
       Hovered: (Background: #874032, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
-      Pressed: (Background: #54271b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center))
+      Pressed: (Background: #54271b, LabelStyle: (FontSize: 12, TextColor: #ffffff, RenderBold: true, HorizontalAlignment: Center, VerticalAlignment: Center)),
+      Sounds: @UiButtonsLight
     );
   }
 }
