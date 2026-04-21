@@ -503,8 +503,8 @@ extends CustomUIPage {
                 .set(
                         "#GeneralBossSelectorIcon.ItemId",
                         HordeConfigPage.firstNonEmpty(
-                                HordeConfigPage.resolveBossAutoIconToken(selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.npcId),
                                 selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.iconItemId,
+                                HordeConfigPage.resolveBossAutoIconToken(selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.npcId),
                                 DEFAULT_ARENA_ITEM_ICON_ID
                         )
                 )
@@ -551,7 +551,6 @@ extends CustomUIPage {
                 )
                 .set("#GeneralEnemyTypeSelectorName.Text", HordeConfigPage.enemyTypeDisplay(enemyTypeValue, language, english))
                 .set("#GeneralEnemyTypeSelectorMeta.Text", HordeConfigPage.t(language, english, "Current enemy category type", "Tipo actual de categoria de enemigos"))
-                .set("#GeneralEnemyTypeSelectorIcon.ItemId", HordeConfigPage.firstNonEmpty(HordeConfigPage.resolveEnemyCategoryIcon(enemyTypeValue), DEFAULT_ARENA_ITEM_ICON_ID))
                 .set("#HordeSelected.Value", hordeSelectedValue)
                 .set("#HordeEditId.Value", this.getDraftValue("hordeEditId", hordeSelectedValue))
                 .set("#HordeMode.Value", hordeModeValue)
@@ -641,6 +640,56 @@ extends CustomUIPage {
                 .set("#SkipRoundButton.Visible", active);
         this.setLocalizedTexts(commandBuilder, language, english);
         this.applyTabVisibility(commandBuilder, tab);
+        if (TAB_GENERAL.equals(tab)) {
+            HordeConfigPage.setGeneralSelectorIcon(
+                    commandBuilder,
+                    "#GeneralArenaSelectorIcon",
+                    "#GeneralArenaSelectorFace",
+                    HordeConfigPage.firstNonEmpty(selectedGeneralArenaSnapshot == null ? "" : selectedGeneralArenaSnapshot.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID)
+            );
+            HordeConfigPage.setGeneralSelectorIcon(
+                    commandBuilder,
+                    "#GeneralBossSelectorIcon",
+                    "#GeneralBossSelectorFace",
+                    HordeConfigPage.firstNonEmpty(
+                            selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.iconItemId,
+                            HordeConfigPage.resolveBossAutoIconToken(selectedGeneralBossSnapshot == null ? "" : selectedGeneralBossSnapshot.npcId),
+                            DEFAULT_ARENA_ITEM_ICON_ID
+                    )
+            );
+            HordeConfigPage.setGeneralSelectorIcon(
+                    commandBuilder,
+                    "#GeneralHordeSelectorIcon",
+                    "#GeneralHordeSelectorFace",
+                    HordeConfigPage.firstNonEmpty(
+                            selectedGeneralHordeSnapshot == null ? "" : selectedGeneralHordeSnapshot.iconItemId,
+                            HordeConfigPage.resolveEnemyCategoryIcon(selectedGeneralHordeSnapshot == null ? "" : selectedGeneralHordeSnapshot.enemyType),
+                            DEFAULT_ARENA_ITEM_ICON_ID
+                    )
+            );
+            HordeConfigPage.setGeneralSelectorIcon(
+                    commandBuilder,
+                    "#GeneralEnemyTypeSelectorIcon",
+                    "#GeneralEnemyTypeSelectorFace",
+                    HordeConfigPage.firstNonEmpty(HordeConfigPage.resolveEnemyCategoryIcon(enemyTypeValue), DEFAULT_ARENA_ITEM_ICON_ID)
+            );
+            HordeConfigPage.setGeneralSelectorIcon(
+                    commandBuilder,
+                    "#GeneralRewardSelectorIcon",
+                    "#GeneralRewardSelectorFace",
+                    HordeConfigPage.firstNonEmpty(
+                            selectedGeneralRewardSnapshot == null ? "" : selectedGeneralRewardSnapshot.iconItemId,
+                            HordeConfigPage.resolveListIconCandidate(HordeConfigPage.firstEnemyRoleOption(selectedGeneralRewardSnapshot == null ? List.of() : selectedGeneralRewardSnapshot.items)),
+                            DEFAULT_ARENA_ITEM_ICON_ID
+                    )
+            );
+        } else {
+            HordeConfigPage.hideGeneralSelectorIcon(commandBuilder, "#GeneralArenaSelectorIcon", "#GeneralArenaSelectorFace");
+            HordeConfigPage.hideGeneralSelectorIcon(commandBuilder, "#GeneralBossSelectorIcon", "#GeneralBossSelectorFace");
+            HordeConfigPage.hideGeneralSelectorIcon(commandBuilder, "#GeneralHordeSelectorIcon", "#GeneralHordeSelectorFace");
+            HordeConfigPage.hideGeneralSelectorIcon(commandBuilder, "#GeneralEnemyTypeSelectorIcon", "#GeneralEnemyTypeSelectorFace");
+            HordeConfigPage.hideGeneralSelectorIcon(commandBuilder, "#GeneralRewardSelectorIcon", "#GeneralRewardSelectorFace");
+        }
         this.populateGeneralSelectionPicker(commandBuilder, eventBuilder, arenaRows, bossRows, hordeRows, rewardCategoryRows, enemyTypeOptions, language, english);
         if (TAB_PLAYERS.equals(tab)) {
             this.populatePlayerRows(commandBuilder, eventBuilder, audienceRows, language, english);
@@ -3514,8 +3563,8 @@ extends CustomUIPage {
                 String npcText = HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(row.npcId, "-"), 28);
                 String subtitle = npcText + "  x" + Math.max(1, row.amount);
                 String iconItemId = HordeConfigPage.firstNonEmpty(
-                        HordeConfigPage.resolveBossAutoIconToken(row.npcId),
-                        row.iconItemId
+                        row.iconItemId,
+                        HordeConfigPage.resolveBossAutoIconToken(row.npcId)
                 );
                 commandBuilder.append("#BossRowsList", COMMON_LIST_ROW_LAYOUT)
                         .set(rowSelector + " #ArenaName.Text", row.bossId)
@@ -3827,7 +3876,8 @@ extends CustomUIPage {
                 .set("#GeneralPickerFrame.Visible", pickerVisible)
                 .set("#GeneralPickerCloseButton.Visible", pickerVisible)
                 .set("#GeneralPickerTitleLabel.Visible", pickerVisible)
-                .set("#GeneralPickerStatusLabel.Visible", pickerVisible)
+                .set("#GeneralPickerStatusLabel.Visible", false)
+                .set("#GeneralPickerStatusLabel.Text", "")
                 .set("#GeneralPickerRowsList.Visible", pickerVisible);
         commandBuilder.clear("#GeneralPickerRowsList");
         if (!pickerVisible) {
@@ -3870,7 +3920,7 @@ extends CustomUIPage {
                             .set(rowSelector + " #ArenaCoords.Text", HordeConfigPage.compactName(HordeConfigPage.firstNonEmpty(row.npcId, "-"), 28) + "  x" + Math.max(1, row.amount))
                             .set(rowSelector + " #ArenaIconButton.Visible", false)
                             .set(rowSelector + " #ArenaDeleteButton.Visible", false);
-                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(HordeConfigPage.resolveBossAutoIconToken(row.npcId), row.iconItemId, DEFAULT_ARENA_ITEM_ICON_ID));
+                    HordeConfigPage.setArenaRowIcon(commandBuilder, rowSelector, HordeConfigPage.firstNonEmpty(row.iconItemId, HordeConfigPage.resolveBossAutoIconToken(row.npcId), DEFAULT_ARENA_ITEM_ICON_ID));
                     eventBuilder.addEventBinding(CustomUIEventBindingType.Activating, rowSelector + " #ArenaOpenButton", this.buildConfigSnapshotEvent(HordeConfigPage.buildGeneralPickerSelectionAction("boss", row.bossId)));
                     ++renderedRows;
                 }
@@ -3938,13 +3988,7 @@ extends CustomUIPage {
                 }
             }
         }
-        String currentLabel = selectedValue == null || selectedValue.isBlank() ? "-" : selectedValue;
-        commandBuilder.set("#GeneralPickerTitleLabel.Text", titleText)
-                .set(
-                        "#GeneralPickerStatusLabel.Text",
-                        HordeConfigPage.t(language, english, "Available", "Disponibles") + ": " + renderedRows + "  |  "
-                                + HordeConfigPage.t(language, english, "Current", "Actual") + ": " + currentLabel
-                );
+        commandBuilder.set("#GeneralPickerTitleLabel.Text", titleText);
     }
 
     private static List<String> buildArenaIconPickerOptions(List<String> rawOptions, String selectedIconItemId) {
@@ -3988,6 +4032,27 @@ extends CustomUIPage {
                 .set(rowSelector + " #ArenaFacePreview.Visible", false)
                 .set(rowSelector + " #ArenaFacePreview.AssetPath", "")
                 .set(rowSelector + " #ArenaFaceSpinner.Visible", false);
+    }
+
+    private static void setGeneralSelectorIcon(UICommandBuilder commandBuilder, String iconSelector, String faceSelector, String rawIconToken) {
+        String iconToken = HordeConfigPage.normalizePickedIconToken(rawIconToken);
+        if (HordeConfigPage.isEnemyIconPickerOption(iconToken)) {
+            String npcFaceKey = HordeConfigPage.iconPickerOptionToNpcFaceKey(iconToken);
+            commandBuilder.set(iconSelector + ".Visible", false)
+                    .set(faceSelector + ".Visible", true)
+                    .set(faceSelector + ".AssetPath", HordeConfigPage.resolveNpcFaceAssetPath(npcFaceKey));
+            return;
+        }
+        commandBuilder.set(iconSelector + ".Visible", true)
+                .set(iconSelector + ".ItemId", iconToken)
+                .set(faceSelector + ".Visible", false)
+                .set(faceSelector + ".AssetPath", "");
+    }
+
+    private static void hideGeneralSelectorIcon(UICommandBuilder commandBuilder, String iconSelector, String faceSelector) {
+        commandBuilder.set(iconSelector + ".Visible", false)
+                .set(faceSelector + ".Visible", false)
+                .set(faceSelector + ".AssetPath", "");
     }
 
     private void populateSharedIconPicker(UICommandBuilder commandBuilder, UIEventBuilder eventBuilder, String pickerPrefix, String actionScope, boolean pickerVisible, String selectedIconItemId, List<String> rewardItemCatalogOptions, List<String> enemyRoleOptions, String language, boolean english) {
@@ -5476,12 +5541,12 @@ extends CustomUIPage {
                 .set("#GeneralBossLabel.Text", HordeConfigPage.t(language, english, "Current horde boss", "Boss actual de la horda"))
                 .set("#GeneralHordeLabel.Text", HordeConfigPage.t(language, english, "Current horde", "Horda actual"))
                 .set("#GeneralRewardLabel.Text", HordeConfigPage.t(language, english, "Current reward category", "Categoria de recompensa actual"))
-                .set("#GeneralArenaSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
-                .set("#GeneralBossSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
-                .set("#GeneralHordeSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralArenaSelectorAction.Text", "")
+                .set("#GeneralBossSelectorAction.Text", "")
+                .set("#GeneralHordeSelectorAction.Text", "")
                 .set("#GeneralEnemyTypeLabel.Text", HordeConfigPage.t(language, english, "Current enemy type", "Tipo enemigo actual"))
-                .set("#GeneralEnemyTypeSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
-                .set("#GeneralRewardSelectorAction.Text", HordeConfigPage.t(language, english, "Select", "Seleccionar"))
+                .set("#GeneralEnemyTypeSelectorAction.Text", "")
+                .set("#GeneralRewardSelectorAction.Text", "")
                 .set("#GeneralPickerCloseButton.Text", "X")
                 .set("#SpawnLabel.Text", HordeConfigPage.t(language, english, "Center (X Y Z)", "Centro (X Y Z)"))
                 .set("#SetSpawnButton.Text", HordeConfigPage.t(language, english, "Use my current position", "Usar mi posicion actual"))
@@ -5672,7 +5737,7 @@ extends CustomUIPage {
         commandBuilder.set("#CategoryTabs.SelectedTab", tab);
         this.setVisible(commandBuilder, definitionsBackdrop, "#DefinitionsColumnBackdrop");
         this.setVisible(commandBuilder, editorBackdrop, "#EditorColumnBackdrop");
-        this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaSelectorCard", "#GeneralArenaSelectorAccent", "#GeneralArenaSelectorIcon", "#GeneralArenaSelectorName", "#GeneralArenaSelectorMeta", "#GeneralArenaSelectorAction", "#GeneralArenaPickerOpenButton", "#GeneralBossLabel", "#GeneralBossSelectorCard", "#GeneralBossSelectorAccent", "#GeneralBossSelectorIcon", "#GeneralBossSelectorName", "#GeneralBossSelectorMeta", "#GeneralBossSelectorAction", "#GeneralBossPickerOpenButton", "#GeneralHordeLabel", "#GeneralHordeSelectorCard", "#GeneralHordeSelectorAccent", "#GeneralHordeSelectorIcon", "#GeneralHordeSelectorName", "#GeneralHordeSelectorMeta", "#GeneralHordeSelectorAction", "#GeneralHordePickerOpenButton", "#GeneralEnemyTypeLabel", "#GeneralEnemyTypeSelectorCard", "#GeneralEnemyTypeSelectorAccent", "#GeneralEnemyTypeSelectorIcon", "#GeneralEnemyTypeSelectorName", "#GeneralEnemyTypeSelectorMeta", "#GeneralEnemyTypeSelectorAction", "#GeneralEnemyTypePickerOpenButton", "#GeneralRewardLabel", "#GeneralRewardSelectorCard", "#GeneralRewardSelectorAccent", "#GeneralRewardSelectorIcon", "#GeneralRewardSelectorName", "#GeneralRewardSelectorMeta", "#GeneralRewardSelectorAction", "#GeneralRewardPickerOpenButton", "#FinalBossLabel", "#FinalBossEnabled", "#RpgLevelingDebugLabel", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
+        this.setVisible(commandBuilder, generalTab, "#GeneralArenaLabel", "#GeneralArenaSelectorCard", "#GeneralArenaSelectorAccent", "#GeneralArenaSelectorIcon", "#GeneralArenaSelectorFace", "#GeneralArenaSelectorName", "#GeneralArenaSelectorMeta", "#GeneralArenaSelectorAction", "#GeneralArenaPickerOpenButton", "#GeneralBossLabel", "#GeneralBossSelectorCard", "#GeneralBossSelectorAccent", "#GeneralBossSelectorIcon", "#GeneralBossSelectorFace", "#GeneralBossSelectorName", "#GeneralBossSelectorMeta", "#GeneralBossSelectorAction", "#GeneralBossPickerOpenButton", "#GeneralHordeLabel", "#GeneralHordeSelectorCard", "#GeneralHordeSelectorAccent", "#GeneralHordeSelectorIcon", "#GeneralHordeSelectorFace", "#GeneralHordeSelectorName", "#GeneralHordeSelectorMeta", "#GeneralHordeSelectorAction", "#GeneralHordePickerOpenButton", "#GeneralEnemyTypeLabel", "#GeneralEnemyTypeSelectorCard", "#GeneralEnemyTypeSelectorAccent", "#GeneralEnemyTypeSelectorIcon", "#GeneralEnemyTypeSelectorFace", "#GeneralEnemyTypeSelectorName", "#GeneralEnemyTypeSelectorMeta", "#GeneralEnemyTypeSelectorAction", "#GeneralEnemyTypePickerOpenButton", "#GeneralRewardLabel", "#GeneralRewardSelectorCard", "#GeneralRewardSelectorAccent", "#GeneralRewardSelectorIcon", "#GeneralRewardSelectorFace", "#GeneralRewardSelectorName", "#GeneralRewardSelectorMeta", "#GeneralRewardSelectorAction", "#GeneralRewardPickerOpenButton", "#FinalBossLabel", "#FinalBossEnabled", "#RpgLevelingDebugLabel", "#LanguageLabel", "#Language", "#AutoStartEnabledLabel", "#AutoStartEnabled", "#AutoStartIntervalLabel", "#AutoStartInterval", "#AutoStartApplyButton");
         this.setVisible(commandBuilder, enemiesTab, "#EnemyCatTitleLabel", "#EnemyCatAddButton", "#EnemyCatListInset", "#EnemyCatRowsList", "#EnemyCatEmptyLabel", "#EnemyCatOverflowLabel");
         this.setVisible(commandBuilder, hordeTab, "#HordesTitleLabel", "#HordeAddButton", "#HordeListInset", "#HordeRowsList", "#HordeEmptyLabel", "#HordeOverflowLabel");
         this.setVisible(commandBuilder, playersTab, "#ArenaJoinRadiusLabel", "#ArenaJoinRadius", "#PlayersTitleLabel", "#PlayersAddButton", "#PlayersListInset", "#PlayersRowsList", "#PlayersEmptyLabel", "#PlayersOverflowLabel");

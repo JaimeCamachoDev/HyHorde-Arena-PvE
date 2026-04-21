@@ -1,9 +1,9 @@
 # HyHorde Arena PVE
 
 Mod de hordas PVE por rondas para Hytale.  
-Version actual: `1.5.0`.
+Version actual: `1.5.1`.
 
-## Novedades 1.5.0
+## Novedades 1.5.1
 
 - Compatibilidad con Update 4: `ServerVersion` fijada a `2026.03.26-89796e57b` para eliminar aviso de version objetivo no definida.
 - Refactor de internacionalizacion para UI/HUD/comandos con prioridad de traduccion correcta al cambiar idioma.

@@ -650,6 +650,7 @@ Group {
   }
   Panel #GeneralArenaSelectorAccent { Anchor: (Left: 456, Top: 262, Width: 6, Height: 62); Background: #e0b84a; }
   ItemIcon #GeneralArenaSelectorIcon { Anchor: (Left: 468, Top: 268, Width: 50, Height: 50); }
+  AssetImage #GeneralArenaSelectorFace { Anchor: (Left: 468, Top: 268, Width: 50, Height: 50); Visible: false; Background: #000000(0); }
   Label #GeneralArenaSelectorName { Anchor: (Left: 532, Top: 272, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
   Label #GeneralArenaSelectorMeta { Anchor: (Left: 532, Top: 295, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
   Label #GeneralArenaSelectorAction {
@@ -671,6 +672,7 @@ Group {
   }
   Panel #GeneralBossSelectorAccent { Anchor: (Left: 456, Top: 364, Width: 6, Height: 62); Background: #e0b84a; }
   ItemIcon #GeneralBossSelectorIcon { Anchor: (Left: 468, Top: 370, Width: 50, Height: 50); }
+  AssetImage #GeneralBossSelectorFace { Anchor: (Left: 468, Top: 370, Width: 50, Height: 50); Visible: false; Background: #000000(0); }
   Label #GeneralBossSelectorName { Anchor: (Left: 532, Top: 374, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
   Label #GeneralBossSelectorMeta { Anchor: (Left: 532, Top: 397, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
   Label #GeneralBossSelectorAction {
@@ -692,6 +694,7 @@ Group {
   }
   Panel #GeneralHordeSelectorAccent { Anchor: (Left: 456, Top: 466, Width: 6, Height: 62); Background: #e0b84a; }
   ItemIcon #GeneralHordeSelectorIcon { Anchor: (Left: 468, Top: 472, Width: 50, Height: 50); }
+  AssetImage #GeneralHordeSelectorFace { Anchor: (Left: 468, Top: 472, Width: 50, Height: 50); Visible: false; Background: #000000(0); }
   Label #GeneralHordeSelectorName { Anchor: (Left: 532, Top: 476, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
   Label #GeneralHordeSelectorMeta { Anchor: (Left: 532, Top: 499, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
   Label #GeneralHordeSelectorAction {
@@ -715,6 +718,7 @@ Group {
   }
   Panel #GeneralEnemyTypeSelectorAccent { Anchor: (Left: 456, Top: 568, Width: 6, Height: 62); Background: #e0b84a; }
   ItemIcon #GeneralEnemyTypeSelectorIcon { Anchor: (Left: 468, Top: 574, Width: 50, Height: 50); }
+  AssetImage #GeneralEnemyTypeSelectorFace { Anchor: (Left: 468, Top: 574, Width: 50, Height: 50); Visible: false; Background: #000000(0); }
   Label #GeneralEnemyTypeSelectorName { Anchor: (Left: 532, Top: 578, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
   Label #GeneralEnemyTypeSelectorMeta { Anchor: (Left: 532, Top: 601, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
   Label #GeneralEnemyTypeSelectorAction {
@@ -736,6 +740,7 @@ Group {
   }
   Panel #GeneralRewardSelectorAccent { Anchor: (Left: 456, Top: 670, Width: 6, Height: 62); Background: #e0b84a; }
   ItemIcon #GeneralRewardSelectorIcon { Anchor: (Left: 468, Top: 676, Width: 50, Height: 50); }
+  AssetImage #GeneralRewardSelectorFace { Anchor: (Left: 468, Top: 676, Width: 50, Height: 50); Visible: false; Background: #000000(0); }
   Label #GeneralRewardSelectorName { Anchor: (Left: 532, Top: 680, Width: 298, Height: 22); Text: ""; Style: @ArenaNameLabelStyle; }
   Label #GeneralRewardSelectorMeta { Anchor: (Left: 532, Top: 703, Width: 298, Height: 18); Text: ""; Style: @ArenaCoordsLabelStyle; }
   Label #GeneralRewardSelectorAction {
